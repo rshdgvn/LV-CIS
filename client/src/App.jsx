@@ -1,8 +1,9 @@
 import React from 'react'
+import LandingPage from './pages/LandingPage'
 
 function App() {
   return (
-    <div className='text-xl text-indigo font-bold'>App</div>
+    <LandingPage />
   )
 }
 

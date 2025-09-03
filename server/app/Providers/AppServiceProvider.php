@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Validator::replacer('laverdad_email', function ($message, $attribute, $rule, $parameters) {
-            return "Only @student.laverdad.edu.ph emails are allowed.";
+            return "Only La Verdad emails are allowed.";
         });
     }
 }

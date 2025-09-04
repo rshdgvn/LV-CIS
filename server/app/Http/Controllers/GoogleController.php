@@ -37,11 +37,9 @@ class GoogleController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            return response()->json([
-                'message' => 'Google login successful',
-                'user' => $user,
-                'token' => $token,
-            ], 200);
+            return redirect("http://localhost:5173/google/callback?token={$token}");
+
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Google login failed',

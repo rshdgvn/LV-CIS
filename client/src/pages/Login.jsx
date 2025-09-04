@@ -21,7 +21,6 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrors({});
-    console.log("working");
 
     try {
       const res = await fetch("http://127.0.0.1:8000/api/login", {
@@ -50,6 +49,10 @@ function Login() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:8000/api/auth/google";
+  };
+
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -61,6 +64,7 @@ function Login() {
           handleChange={handleChange}
           submitLogin={handleLogin}
           errors={errors}
+          handleGoogleLogin={handleGoogleLogin}
         />
       </div>
     </div>

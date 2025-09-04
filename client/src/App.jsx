@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Dashboard from "./pages/admin/Dashboard";
-import GoogleCallback from "./pages/GoogleCallback";
+import GoogleCallback from "./GoogleCallback";
 
 function App() {
   return (

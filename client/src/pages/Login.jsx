@@ -1,22 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LoginForm } from "@/components/login-form";
-import { useNavigate } from "react-router"; 
+import { useNavigate } from "react-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 function Login() {
-  const [formData, setFormData] = useState({
-    login: "",
-    password: "",
-  });
-
+  const [formData, setFormData] = useState({ login: "", password: "" });
   const [errors, setErrors] = useState({});
-  const [token, setToken] = useState(null);
-
+  const { user, token, setToken } = useAuth(); 
   const nav = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const handleNavigate = (role) => {
+
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -40,10 +40,7 @@ function Login() {
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      setToken(data.token);
-
-      nav("/dashboard"); 
+      setToken(data.token); 
     } catch (error) {
       console.error("Login error:", error);
     }
@@ -52,6 +49,24 @@ function Login() {
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8000/api/auth/google";
   };
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        nav("/admin/dashboard");
+      } else {
+        nav("/dashboard");
+      }
+    }
+  }, [user]);
+
+  if (token) {
+    return(
+      <div>
+        <h1>continue</h1>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">

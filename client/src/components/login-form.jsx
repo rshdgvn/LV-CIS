@@ -9,30 +9,26 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
 
-export function LoginForm({ className, ...props }) {
-  const [formData, setFormData] = useState({
-    login: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
+export function LoginForm({
+  className,
+  formData,
+  handleChange,
+  submitLogin,
+  errors = {},
+  ...props
+}) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome to LV CIC</CardTitle>
+          <CardTitle className="text-xl">Welcome to LV CIS</CardTitle>
           <CardDescription>
             Login with your La verdad work account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={submitLogin}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -45,11 +41,13 @@ export function LoginForm({ className, ...props }) {
                   Sign in with Google
                 </Button>
               </div>
+
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                 <span className="bg-card text-muted-foreground relative z-10 px-2">
                   Or continue with
                 </span>
               </div>
+
               <div className="grid gap-6">
                 <div className="grid gap-3">
                   <Label htmlFor="login">Email or Username</Label>
@@ -61,7 +59,13 @@ export function LoginForm({ className, ...props }) {
                     type="text"
                     placeholder="Email or Username"
                   />
+                  {errors.login ? (
+                    <p className="text-destructive text-xs">{errors.login}</p>
+                  ) : (
+                    <p className="text-destructive text-xs">{errors.general}</p>
+                  )}
                 </div>
+
                 <div className="grid gap-3">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
@@ -79,11 +83,18 @@ export function LoginForm({ className, ...props }) {
                     id="password"
                     type="password"
                   />
+                  {errors.password && (
+                    <p className="text-destructive text-xs">
+                      {errors.password}
+                    </p>
+                  )}
                 </div>
+
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
               </div>
+
               <div className="text-muted-foreground text-center text-xs">
                 Only La Verdad work accounts are accepted. For help, contact IT
                 support.
@@ -92,6 +103,7 @@ export function LoginForm({ className, ...props }) {
           </form>
         </CardContent>
       </Card>
+
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.

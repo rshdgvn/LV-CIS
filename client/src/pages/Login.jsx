@@ -14,10 +14,6 @@ function Login() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNavigate = (role) => {
-
-  }
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrors({});

@@ -9,8 +9,19 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
 export function LoginForm({ className, ...props }) {
+  const [formData, setFormData] = useState({
+    login: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -41,12 +52,14 @@ export function LoginForm({ className, ...props }) {
               </div>
               <div className="grid gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="login">Email or Username</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
+                    name="login"
+                    value={formData.login}
+                    onChange={handleChange}
+                    id="login"
+                    type="text"
+                    placeholder="Email or Username"
                   />
                 </div>
                 <div className="grid gap-3">
@@ -59,7 +72,13 @@ export function LoginForm({ className, ...props }) {
                       Forgot your password?
                     </a>
                   </div>
-                  <Input id="password" type="password" required />
+                  <Input
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    id="password"
+                    type="password"
+                  />
                 </div>
                 <Button type="submit" className="w-full">
                   Login

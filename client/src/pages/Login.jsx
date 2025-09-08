@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { LoginForm } from "@/components/login-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 function Login() {
   const [formData, setFormData] = useState({ login: "", password: "" });
   const [errors, setErrors] = useState({});
-  const { user, token, setToken } = useAuth(); 
+  const { user, token, setToken } = useAuth();
   const nav = useNavigate();
 
   const handleChange = (e) => {
@@ -29,14 +29,15 @@ function Login() {
       });
 
       const data = await res.json();
-      console.log(data);
 
       if (!res.ok) {
         setErrors(data.errors || { general: data.message });
         return;
       }
 
-      setToken(data.token); 
+      await setToken(data.token);
+      localStorage.setItem("token", data.token);
+      nav('/dashboard')
     } catch (error) {
       console.error("Login error:", error);
     }
@@ -45,16 +46,6 @@ function Login() {
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8000/api/auth/google";
   };
-
-  useEffect(() => {
-    if (user) {
-      if (user.role === "admin") {
-        nav("/admin/dashboard");
-      } else {
-        nav("/dashboard");
-      }
-    }
-  }, [user]);
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">

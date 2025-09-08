@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "./AuthContext";
-import { Outlet } from "react-router";
+import { Outlet } from "react-router-dom";
 
 const ProtectedRoute = () => {
   const { token } = useAuth();

@@ -21,7 +21,6 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
       setUser(data);
       console.log("User:", data);
-      console.log('role: ', data.role)
       return data;
     } catch (error) {
       console.error("Error fetching user:", error);

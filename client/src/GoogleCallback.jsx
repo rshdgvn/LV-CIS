@@ -1,21 +1,25 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "./contexts/AuthContext";
 
 function GoogleCallback() {
-  const nav = useNavigate();
+  const navigate = useNavigate();
+  const { setToken } = useAuth(); 
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
-    console.log(token);
+    console.log("Received token:", token);
+
     if (token) {
-      localStorage.setItem("token", token);
-      nav("/dashboard");
+      setToken(token); 
+      localStorage.setItem("token", token); 
+      navigate("/dashboard");
     } else {
-      nav("/login");
+      navigate("/login");
     }
-  }, [nav]);
+  }, [navigate, setToken]);
 
   return <p>Signing you in with Google...</p>;
 }

@@ -3,9 +3,9 @@ import { useAuth } from "./AuthContext";
 import { Outlet } from "react-router-dom";
 
 const ProtectedRoute = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
 
-  if (!token) {
+  if (!user) {
     return (
       <div>
         <h1>Unauthenticated</h1>

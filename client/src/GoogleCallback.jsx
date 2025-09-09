@@ -4,7 +4,7 @@ import { useAuth } from "./contexts/AuthContext";
 
 function GoogleCallback() {
   const navigate = useNavigate();
-  const { setToken } = useAuth(); 
+  const { setToken, user } = useAuth(); 
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -15,13 +15,15 @@ function GoogleCallback() {
     if (token) {
       setToken(token); 
       localStorage.setItem("token", token); 
-      navigate("/dashboard");
-    } else {
-      navigate("/login");
     }
   }, [navigate, setToken]);
 
-  return <p>Signing you in with Google...</p>;
+  useEffect(() => {
+    if(user){
+      navigate('/dashboard');
+    }
+  },[user])
+  return;
 }
 
 export default GoogleCallback;

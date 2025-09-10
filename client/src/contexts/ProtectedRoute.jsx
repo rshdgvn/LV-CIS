@@ -12,7 +12,7 @@ const ProtectedRoute = () => {
       </div>
     );
   }
-
+  
   return <Outlet />;
 };
 

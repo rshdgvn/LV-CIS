@@ -2,6 +2,7 @@ import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import Layout from "@/components/app/layout";
 
 function Dashboard() {
   const { token, setToken } = useAuth();
@@ -36,12 +37,12 @@ function Dashboard() {
   };
   
   return (
-    <div>
+    <Layout>
       <div>Dashboard</div>
       <div className="flex min-h-svh flex-col items-center justify-center">
         <Button onClick={handleLogout}>Logout</Button>
       </div>
-    </div>
+    </Layout>
   );
 }
 

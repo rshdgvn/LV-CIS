@@ -3,7 +3,6 @@ import * as React from "react";
 import {
   BookOpen,
   Bot,
-  GalleryVerticalEnd,
   Settings2,
   SquareTerminal,
 } from "lucide-react";
@@ -55,7 +54,7 @@ export function AppSidebar({ ...props }) {
       {...props}
     >
       <SidebarHeader className="flex">
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher/>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

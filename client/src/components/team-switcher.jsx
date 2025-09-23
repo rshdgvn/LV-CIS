@@ -31,7 +31,7 @@ export function TeamSwitcher() {
                 src={logo}
                 alt="La Verdad Club"
                 className={`object-contain ${
-                  isCollapsed ? "h-10 w-10" : "h-13 w-13"
+                  isCollapsed ? "h-13 w-13" : "h-13 w-13"
                 }`}
               />
               {!isCollapsed && (

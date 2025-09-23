@@ -8,11 +8,13 @@ import {
   SquareTerminal,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
+import { NavUser } from "./nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarFooter,
   SidebarRail,
 } from "@/components/ui/sidebar";
 const data = {
@@ -24,25 +26,23 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: SquareTerminal,
       isActive: true,
     },
     {
       title: "Attendance",
-      url: "#",
+      url: "/attendance",
       icon: Bot,
-      
     },
     {
       title: "Clubs",
-      url: "#",
+      url: "/clubs",
       icon: BookOpen,
-    
     },
     {
       title: "Events",
-      url: "#",
+      url: "/events",
       icon: Settings2,
     },
   ],
@@ -60,6 +60,9 @@ export function AppSidebar({ ...props }) {
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={data.user} />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

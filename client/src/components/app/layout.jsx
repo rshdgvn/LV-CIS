@@ -1,14 +1,19 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 export default function Layout({ children }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      style={{
+        "--sidebar-width": "16rem",   
+        "--sidebar-width-icon": "8rem", 
+      }}
+    >
       <AppSidebar />
-      <main>
-        <SidebarTrigger />
+      <main className="flex-1 p-0 m-0">
+        <SidebarTrigger className="mt-4" />
         {children}
       </main>
     </SidebarProvider>
-  )
+  );
 }

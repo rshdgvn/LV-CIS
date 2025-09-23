@@ -24,9 +24,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome to LV CIS</CardTitle>
+          <CardTitle className="text-xl">La Verdad Club Integrated System</CardTitle>
           <CardDescription>
-            Login with your La verdad work account
+            Login with your La verdad account
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { LoginForm } from "@/components/login-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import logo from "../assets/lvcc-logo.png"
 
 function Login() {
   const [formData, setFormData] = useState({ login: "", password: "" });
@@ -37,7 +38,7 @@ function Login() {
 
       await setToken(data.token);
       localStorage.setItem("token", data.token);
-      nav('/dashboard')
+      nav("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
     }
@@ -51,7 +52,11 @@ function Login() {
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="/" className="flex items-center gap-2 self-center font-medium">
-          La verdad Club integrated system
+          <img
+            src={logo}
+            alt="La Verdad Club"
+            className="h-16 w-16 object-contain"
+          />
         </a>
         <LoginForm
           formData={formData}

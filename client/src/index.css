@@ -118,3 +118,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide scrollbar for Chrome, Safari and Edge */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+html {
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+
+}
+
+/* Hide scrollbar for IE, Edge (old versions) */
+body {
+  -ms-overflow-style: none;
+}

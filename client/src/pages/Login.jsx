@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { LoginForm } from "@/components/login-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import logo from "../assets/lvcc-logo.png"
+import logo from "../assets/lvcc-logo.png";
 
 function Login() {
   const [formData, setFormData] = useState({ login: "", password: "" });
@@ -49,8 +49,8 @@ function Login() {
   };
 
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
+    <div className="bg-[radial-gradient(ellipse,theme(colors.slate.800)_0%,theme(colors.slate.900)_30%,theme(colors.slate.950)_80%)] flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+      <div className="flex w-full max-w-sm flex-col gap-6 bg-s">
         <a href="/" className="flex items-center gap-2 self-center font-medium">
           <img
             src={logo}

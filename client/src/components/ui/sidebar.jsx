@@ -436,15 +436,12 @@ const sidebarMenuButtonVariants = cva(
     "disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 " +
     "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground " +
 
-    // **collapsed state overrides** (center, bigger icon, hide label, reduce inner padding if needed)
-    "group-data-[state=collapsed]:justify-center " +                       // horizontally center when collapsed
-    "group-data-[state=collapsed]:p-2! " +                                  // ensure consistent padding on collapsed
-    "group-data-[state=collapsed]:pl-0! group-data-[state=collapsed]:pr-0! " + // remove extra left/right paddings that can offset icon
-    // default children rules:
-    "[&>span:last-child]:truncate " +                                       // keep truncated label normally
-    "[&>svg]:h-5 [&>svg]:w-5 [&>svg]:shrink-0 " +                           // default svg sizing
-    // **increase svg size when collapsed** and hide the last-child span when collapsed
-    "group-data-[state=collapsed]:[&>svg]: group-data-[state=collapsed]:[&>svg]: " +
+    "group-data-[state=collapsed]:justify-center " +                  
+    "group-data-[state=collapsed]:p-2! " +                               
+    "group-data-[state=collapsed]:pl-0! group-data-[state=collapsed]:pr-0! " +
+    "[&>span:last-child]:truncate " +                                      
+    "[&>svg]:h-5 [&>svg]:w-5 [&>svg]:shrink-0 " +                          
+    "group-data-[state=collapsed]:[&>svg]: group-data-[state=collapsed]:[&>svg]:   " +
     "group-data-[state=collapsed]:[&>span:last-child]:hidden",
   {
     variants: {

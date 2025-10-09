@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Club;
+use App\Models\Member;
 
 class DatabaseSeeder extends Seeder
 {
@@ -44,10 +45,22 @@ class DatabaseSeeder extends Seeder
             ]);
         });
 
-        $users = User::factory(10)->create();
+        $users = User::factory(10)->create([
+            'role' => 'user',
+        ]);
 
         foreach ($users as $user) {
-            $randomClubs = $clubs->random(rand(2, 4)); 
+            Member::firstOrCreate([
+                'user_id' => $user->id,
+            ], [
+                'student_id' => fake()->unique()->numerify('STU###'),
+                'course' => fake()->randomElement(['BSIT', 'BSBA', 'BSHM', 'BSED']),
+                'year_level' => fake()->numberBetween(1, 4),
+            ]);
+        }
+
+        foreach ($users as $user) {
+            $randomClubs = $clubs->random(rand(2, 4));
             foreach ($randomClubs as $club) {
                 $club->users()->attach($user->id, [
                     'role' => 'member',
@@ -64,6 +77,5 @@ class DatabaseSeeder extends Seeder
                 'joined_at' => now(),
             ]);
         }
-
     }
 }

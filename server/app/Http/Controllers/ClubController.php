@@ -49,4 +49,15 @@ class ClubController extends Controller
         $club->delete();
         return response()->json(['message' => 'Club deleted successfully']);
     }
+
+    public function yourClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'approved')
+            ->get();
+
+        return response()->json($clubs);
+    }
 }

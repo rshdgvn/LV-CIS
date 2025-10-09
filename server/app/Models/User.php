@@ -53,4 +53,11 @@ class User extends Authenticatable
     {
         return $this->hasOne(Member::class);
     }
+
+    public function clubs()
+    {
+        return $this->belongsToMany(Club::class, 'club_memberships')
+            ->withPivot('status', 'role', 'joined_at')
+            ->withTimestamps();
+    }
 }

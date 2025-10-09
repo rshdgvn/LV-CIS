@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Club;
@@ -25,7 +26,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $clubs = collect([
+        $clubNames = [
             'AIM',
             'JPIA',
             'BroadSoc',
@@ -35,19 +36,21 @@ class DatabaseSeeder extends Seeder
             'DRRT',
             'LV de corale',
             'Sports Club',
-        ])->map(function ($clubName) {
-            return Club::firstOrCreate([
-                'name' => $clubName,
+        ];
+
+        foreach ($clubNames as $name) {
+            Club::firstOrCreate([
+                'name' => $name,
             ], [
                 'description' => fake()->sentence(10),
                 'adviser' => fake()->name(),
                 'logo' => null,
             ]);
-        });
+        }
 
-        $users = User::factory(10)->create([
-            'role' => 'user',
-        ]);
+        $clubs = Club::all();
+
+        $users = User::factory(10)->create(['role' => 'user']);
 
         foreach ($users as $user) {
             Member::firstOrCreate([
@@ -62,20 +65,29 @@ class DatabaseSeeder extends Seeder
         foreach ($users as $user) {
             $randomClubs = $clubs->random(rand(2, 4));
             foreach ($randomClubs as $club) {
-                $club->users()->attach($user->id, [
+                DB::table('club_memberships')->insert([
+                    'club_id' => $club->id,
+                    'user_id' => $user->id,
                     'role' => 'member',
                     'status' => fake()->randomElement(['approved', 'pending']),
                     'joined_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
         }
 
         foreach ($clubs as $club) {
-            $club->users()->attach($admin->id, [
+            DB::table('club_memberships')->insertOrIgnore([
+                'club_id' => $club->id,
+                'user_id' => $admin->id,
                 'role' => 'adviser',
                 'status' => 'approved',
                 'joined_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
+
     }
 }

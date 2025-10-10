@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Models\Club;
+use App\Models\Member;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,15 +15,79 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-{
-    User::firstOrCreate(
-        ['email' => env('ADMIN_EMAIL')],
-        [
-            'name' => env('ADMIN_NAME'),
-            'username' => 'bossDan',
-            'password' => bcrypt(env('ADMIN_PASSWORD')),
-            'role' => 'admin',
-        ]
-    );
-}
+    {
+        $admin = User::firstOrCreate(
+            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
+            [
+                'name' => env('ADMIN_NAME', 'Administrator'),
+                'username' => 'bossDan',
+                'password' => Hash::make(env('ADMIN_PASSWORD', 'password')),
+                'role' => 'admin',
+            ]
+        );
+
+        $clubNames = [
+            'AIM',
+            'JPIA',
+            'BroadSoc',
+            'Social Sheet',
+            'Cyverdarians',
+            'MaArtees',
+            'DRRT',
+            'LV de corale',
+            'Sports Club',
+        ];
+
+        foreach ($clubNames as $name) {
+            Club::firstOrCreate([
+                'name' => $name,
+            ], [
+                'description' => fake()->sentence(10),
+                'adviser' => fake()->name(),
+                'logo' => null,
+            ]);
+        }
+
+        $clubs = Club::all();
+
+        $users = User::factory(10)->create(['role' => 'user']);
+
+        foreach ($users as $user) {
+            Member::firstOrCreate([
+                'user_id' => $user->id,
+            ], [
+                'student_id' => fake()->unique()->numerify('STU###'),
+                'course' => fake()->randomElement(['BSIT', 'BSBA', 'BSHM', 'BSED']),
+                'year_level' => fake()->numberBetween(1, 4),
+            ]);
+        }
+
+        foreach ($users as $user) {
+            $randomClubs = $clubs->random(rand(2, 4));
+            foreach ($randomClubs as $club) {
+                DB::table('club_memberships')->insert([
+                    'club_id' => $club->id,
+                    'user_id' => $user->id,
+                    'role' => 'member',
+                    'status' => fake()->randomElement(['approved', 'pending']),
+                    'joined_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        foreach ($clubs as $club) {
+            DB::table('club_memberships')->insertOrIgnore([
+                'club_id' => $club->id,
+                'user_id' => $admin->id,
+                'role' => 'adviser',
+                'status' => 'approved',
+                'joined_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+    }
 }

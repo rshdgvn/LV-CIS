@@ -21,6 +21,7 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 Route::middleware('auth:sanctum')->group(function () {
     // Club CRUD
     Route::get('/clubs', [ClubController::class, 'index']);
+    Route::get('/your/clubs', [ClubController::class, 'yourClubs']);
     Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::post('/clubs', [ClubController::class, 'store']);
     Route::put('/clubs/{id}', [ClubController::class, 'update']);

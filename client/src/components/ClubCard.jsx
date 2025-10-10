@@ -1,6 +1,40 @@
-import 'react'
+import React from "react";
 
-const ClubCard = ({ name, description, logo, onEnter }) => {
+function ClubCard({ name, description, logo, status, onJoin, onEnter }) {
+  const renderButton = () => {
+    if (status === "pending") {
+      return (
+        <button
+          disabled
+          className="mt-4 w-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold py-2 rounded-lg cursor-not-allowed"
+        >
+          PENDING
+        </button>
+      );
+    }
+
+    if (status === "member") {
+      return (
+        <button
+          onClick={onEnter}
+          className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+        >
+          ENTER NOW
+        </button>
+      );
+    }
+
+    // Default: not a member
+    return (
+      <button
+        onClick={onJoin}
+        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+      >
+        JOIN NOW
+      </button>
+    );
+  };
+
   return (
     <div className="w-[200px] bg-neutral-900 rounded-2xl overflow-hidden shadow-lg text-white">
       <div className="bg-white h-[100px] flex items-center justify-center">
@@ -21,15 +55,10 @@ const ClubCard = ({ name, description, logo, onEnter }) => {
           {description || "No description available."}
         </p>
 
-        <button
-          onClick={onEnter}
-          className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
-        >
-          JOIN NOW
-        </button>
+        {renderButton()}
       </div>
     </div>
   );
 }
 
-export default ClubCard
+export default ClubCard;

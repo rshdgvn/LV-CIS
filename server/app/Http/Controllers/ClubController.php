@@ -71,4 +71,15 @@ class ClubController extends Controller
 
         return response()->json($clubs);
     }
+
+    public function yourPendingClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'pending')
+            ->get();
+
+        return response()->json($clubs);
+    }
 }

@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/clubs', [ClubController::class, 'index']);
     Route::get('/your/clubs', [ClubController::class, 'yourClubs']);
     Route::get('/other/clubs', [ClubController::class, 'otherClubs']);
+    Route::get('/your/pending-clubs/', [ClubController::class, 'yourPendingClubs']);
     Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::post('/clubs', [ClubController::class, 'store']);
     Route::put('/clubs/{id}', [ClubController::class, 'update']);

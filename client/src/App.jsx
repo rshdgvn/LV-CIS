@@ -9,6 +9,7 @@ import Clubs from "./pages/Clubs";
 import GoogleCallback from "./GoogleCallback";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./contexts/ProtectedRoute";
+import PendingClubs from "./pages/PendingClubs";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/events" element={<Events />} />
             <Route path="/clubs" element={<Clubs />} />
+            <Route path="/pending-clubs" element={<PendingClubs />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Route>
         </Routes>

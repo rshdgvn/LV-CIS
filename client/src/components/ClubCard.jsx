@@ -13,7 +13,7 @@ function ClubCard({ name, description, logo, status, onJoin, onEnter }) {
       );
     }
 
-    if (status === "member") {
+    if (status === "approved") {
       return (
         <button
           onClick={onEnter}

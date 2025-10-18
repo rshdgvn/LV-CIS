@@ -19,9 +19,10 @@ Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallb
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    // Club CRUD
+    // Club membership routes
     Route::get('/clubs', [ClubController::class, 'index']);
     Route::get('/your/clubs', [ClubController::class, 'yourClubs']);
+    Route::get('/other/clubs', [ClubController::class, 'otherClubs']);
     Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::post('/clubs', [ClubController::class, 'store']);
     Route::put('/clubs/{id}', [ClubController::class, 'update']);

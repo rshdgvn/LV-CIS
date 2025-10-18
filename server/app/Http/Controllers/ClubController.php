@@ -60,4 +60,15 @@ class ClubController extends Controller
 
         return response()->json($clubs);
     }
+
+    public function otherClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $joinedClubIds = $user->clubs()->pluck('clubs.id');
+
+        $clubs = Club::whereNotIn('id', $joinedClubIds)->get();
+
+        return response()->json($clubs);
+    }
 }

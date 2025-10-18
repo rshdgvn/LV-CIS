@@ -31,7 +31,7 @@ function Clubs() {
             headers,
             signal: controller.signal,
           }),
-          fetch("http://localhost:8000/api/clubs", {
+          fetch("http://localhost:8000/api/other/clubs", {
             headers,
             signal: controller.signal,
           }),

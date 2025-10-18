@@ -48,6 +48,7 @@ function Clubs() {
 
         setYourClubs(yourData);
         setClubs(allData);
+        console.log(clubs)
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error fetching clubs:", err);
@@ -63,7 +64,6 @@ function Clubs() {
     return () => controller.abort();
   }, [token]);
 
-  // 🧠 Join Club Logic
   const handleJoinClub = async (clubId) => {
     if (!token) return alert("Please log in first.");
 
@@ -88,7 +88,6 @@ function Clubs() {
 
       alert(data.message);
 
-      // ✅ Optional: Update UI after joining
       setClubs((prev) => prev.filter((club) => club.id !== clubId));
       setYourClubs((prev) => [
         ...prev,
@@ -118,7 +117,7 @@ function Clubs() {
                 name={club.name}
                 description={club.description}
                 logo={club.logo}
-                status={club.status === "approved" ? "member" : "pending"}
+                status="member"
                 onEnter={() => console.log(`Entering ${club.name}`)}
               />
             ))}

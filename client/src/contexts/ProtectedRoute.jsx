@@ -1,15 +1,15 @@
 import React from "react";
 import { useAuth } from "./AuthContext";
 import { Outlet } from "react-router-dom";
-import LandingPage from "@/pages/LandingPage";
+import Forbidden from "@/pages/errors/Forbidden";
 
 const ProtectedRoute = () => {
-  const { user } = useAuth();
+  const { token } = useAuth();
 
-  if (user) {
+  if (token) {
     return <Outlet />;
   } else {
-    return <LandingPage/>
+    return <Forbidden/>
   }
 };
 

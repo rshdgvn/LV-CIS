@@ -22,44 +22,6 @@ export default function ClubDetails() {
     { name: "Pending", href: "/pending-clubs" },
   ];
 
-  useEffect(() => {
-    if (!token || !id) return;
-
-    const controller = new AbortController();
-
-    const fetchClub = async () => {
-      try {
-        setError(null);
-
-        const res = await fetch(`http://localhost:8000/api/clubs/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          signal: controller.signal,
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch club details");
-
-        const data = await res.json();
-        setClub(data);
-        sessionStorage.setItem("clubDetails", JSON.stringify(data));
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Error fetching club details:", err);
-          setError("Failed to load club details.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClub();
-
-    return () => controller.abort();
-  }, [id, token]);
-
   if (error) {
     return (
       <Layout>

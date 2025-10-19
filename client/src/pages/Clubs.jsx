@@ -3,9 +3,11 @@ import Layout from "@/components/app/layout";
 import ClubCard from "@/components/ClubCard";
 import { useAuth } from "@/contexts/AuthContext";
 import NavTabs from "@/components/NavTabs";
+import { useNavigate } from "react-router-dom"; // ✅ added
 
 function Clubs() {
   const { token } = useAuth();
+  const navigate = useNavigate(); // ✅ added
   const [yourClubs, setYourClubs] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,6 @@ function Clubs() {
 
         setYourClubs(yourData);
         setClubs(allData);
-        console.log(clubs);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error fetching clubs:", err);
@@ -125,7 +126,7 @@ function Clubs() {
                 description={club.description}
                 logo={club.logo}
                 status="approved"
-                onEnter={() => console.log(`Entering ${club.name}`)}
+                onEnter={() => navigate(`/club/${club.id}`)} 
               />
             ))}
           </div>

@@ -47,7 +47,7 @@ function LandingPage() {
         <div className="flex flex-col items-center justify-center mb-20 text-center flex-1">
           <h1 className="text-6xl font-bold py-5 px-3 rounded-3xl">
             La Verdad{" "}
-            <span className="block text-5xl bg-gradient-to-r from-blue-300 via-blue-500 to-blue-700 bg-clip-text text-transparent">
+            <span className="block text-5xl bg-gradient-to-r from-blue-300 via-blue-500 to-blue-700 bg-clip-text text-transparent py-2">
               Club Integrated System
             </span>
           </h1>

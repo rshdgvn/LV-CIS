@@ -18,7 +18,6 @@ function Profile() {
     student_id: "",
     course: "",
     year_level: "",
-    contact: "",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,7 +44,6 @@ function Profile() {
             student_id: data.member?.student_id || "",
             course: data.member?.course || "",
             year_level: data.member?.year_level || "",
-            contact: data.member?.contact || "",
           });
         }
       } catch (err) {
@@ -66,8 +64,11 @@ function Profile() {
 
   const handleSave = async () => {
     try {
+      setLoading(true);
+      setError(null);
+
       const res = await fetch("http://localhost:8000/api/user/member-info", {
-        method: "POST", 
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -75,12 +76,28 @@ function Profile() {
         body: JSON.stringify(member),
       });
 
-      if (!res.ok) throw new Error("Failed to save profile");
+      if (!res.ok) {
+        if (res.status === 404) {
+          setError("No member profile found. Please join a club first.");
+        } else {
+          throw new Error("Failed to save profile");
+        }
+        return;
+      }
+
+      const data = await res.json();
+      setMember({
+        student_id: data.member?.student_id || "",
+        course: data.member?.course || "",
+        year_level: data.member?.year_level || "",
+      });
 
       setEditMode(false);
     } catch (err) {
       console.error(err);
       setError("Failed to save profile.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -144,22 +161,6 @@ function Profile() {
                 type="text"
                 name="year_level"
                 value={member.year_level}
-                onChange={handleChange}
-                readOnly={!editMode}
-                className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
-                  editMode ? "border-blue-500" : ""
-                }`}
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-300 text-sm mb-1">
-                Contact
-              </label>
-              <input
-                type="text"
-                name="contact"
-                value={member.contact}
                 onChange={handleChange}
                 readOnly={!editMode}
                 className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${

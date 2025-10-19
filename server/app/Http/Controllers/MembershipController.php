@@ -115,17 +115,44 @@ class MembershipController extends Controller
 
         $member = $user->member;
 
+
         if (!$member) {
             return response()->json(['message' => 'Member profile not found'], 404);
         }
-
-        // Include clubs joined by this member
-        $clubs = $member->clubs()->withPivot('role', 'status', 'joined_at')->get();
-
+        
         return response()->json([
             'member' => $member,
-            'clubs' => $clubs,
         ]);
     }
-    
+
+    // Create or update the current user's member info
+    public function editMemberInfo(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'student_id' => 'required|string|max:50',
+            'course' => 'required|string|max:100',
+            'year_level' => 'required|string|max:10',
+        ]);
+
+        $member = $user->member;
+
+        if ($member) {
+            // Update existing member profile
+            $member->update($validated);
+        } else {
+            // Create new member profile
+            $member = User::member()->create($validated);
+        }
+
+        // Include clubs joined by this member
+        // $clubs = $member->clubs()->withPivot('role', 'status', 'joined_at')->get();
+
+        return response()->json([
+            'message' => 'Member profile saved successfully',
+            'member' => $member,
+            // 'clubs' => $clubs,
+        ]);
+    }
 }

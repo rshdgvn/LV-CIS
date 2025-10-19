@@ -77,12 +77,11 @@ function Clubs() {
     if (token) fetchClubs(!sessionStorage.getItem("yourClubs"));
   }, [token]);
 
-  // ✅ Listen for updates from PendingClubs
   useEffect(() => {
     const handleUpdate = () => {
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
-      fetchClubs(false); // silent refetch without "Loading..."
+      fetchClubs(false); 
     };
 
     window.addEventListener("clubsUpdated", handleUpdate);
@@ -112,11 +111,10 @@ function Clubs() {
 
       alert(data.message);
 
-      // ✅ Remove cache and refetch fresh data
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
 
-      await fetchClubs(false); // silent refetch (no “Loading clubs...”)
+      await fetchClubs(false); 
       window.dispatchEvent(new Event("pendingClubsUpdated"));
     } catch (err) {
       alert(err.message || "An error occurred while joining the club.");

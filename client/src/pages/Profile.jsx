@@ -4,6 +4,10 @@ import Layout from "@/components/app/layout";
 import NavTabs from "@/components/NavTabs";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+
+NProgress.configure({ showSpinner: false });
 
 function Profile() {
   const { token } = useAuth();
@@ -14,47 +18,56 @@ function Profile() {
     { name: "Profile", href: "/profile" },
   ];
 
-  const [member, setMember] = useState({
-    student_id: "",
-    course: "",
-    year_level: "",
+  const [member, setMember] = useState(() => {
+    const cached = sessionStorage.getItem("memberProfile");
+    return cached
+      ? JSON.parse(cached)
+      : { student_id: "", course: "", year_level: "" };
   });
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(
+    !sessionStorage.getItem("memberProfile")
+  );
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
+  const fetchMemberInfo = async (showLoading = true) => {
     if (!token) return;
 
-    const fetchMemberInfo = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      if (showLoading) setLoading(true);
+      setError(null);
+      NProgress.start();
 
-        const res = await fetch("http://localhost:8000/api/user/member-info", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      const res = await fetch("http://localhost:8000/api/user/member-info", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          setMember({
-            student_id: data.member?.student_id || "",
-            course: data.member?.course || "",
-            year_level: data.member?.year_level || "",
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load profile.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      if (!res.ok) throw new Error("Failed to fetch profile data");
 
-    fetchMemberInfo();
+      const data = await res.json();
+      const newMember = {
+        student_id: data.member?.student_id || "",
+        course: data.member?.course || "",
+        year_level: data.member?.year_level || "",
+      };
+
+      setMember(newMember);
+      sessionStorage.setItem("memberProfile", JSON.stringify(newMember));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load profile.");
+    } finally {
+      setLoading(false);
+      NProgress.done();
+    }
+  };
+
+  useEffect(() => {
+    if (token) fetchMemberInfo(!sessionStorage.getItem("memberProfile"));
   }, [token]);
 
   const handleChange = (e) => {
@@ -63,9 +76,12 @@ function Profile() {
   };
 
   const handleSave = async () => {
+    if (!token) return;
+
     try {
       setLoading(true);
       setError(null);
+      NProgress.start();
 
       const res = await fetch("http://localhost:8000/api/user/member-info", {
         method: "PATCH",
@@ -86,24 +102,31 @@ function Profile() {
       }
 
       const data = await res.json();
-      setMember({
+      const updated = {
         student_id: data.member?.student_id || "",
         course: data.member?.course || "",
         year_level: data.member?.year_level || "",
-      });
+      };
 
+      setMember(updated);
       setEditMode(false);
+
+      // ✅ Clear old cache & refresh
+      sessionStorage.removeItem("memberProfile");
+      await fetchMemberInfo(false);
     } catch (err) {
       console.error(err);
       setError("Failed to save profile.");
     } finally {
       setLoading(false);
+      NProgress.done();
     }
   };
 
   return (
     <Layout>
       <NavTabs tabs={tabs} />
+
       <div className="min-h-screen bg-black p-6 text-white max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold">Profile</h1>

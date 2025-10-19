@@ -29,6 +29,28 @@ class MembershipController extends Controller
         return response()->json(['message' => 'Membership request sent successfully']);
     }
 
+    public function cancelMembershipRequest(Request $request, $clubId)
+    {
+        $club = Club::findOrFail($clubId);
+        $user = $request->user(); // authenticated user
+
+        // Check if user has a pending membership
+        $membership = $club->users()
+            ->where('user_id', $user->id)
+            ->wherePivot('status', 'pending')
+            ->first();
+
+        if (!$membership) {
+            return response()->json(['message' => 'No pending membership request found'], 404);
+        }
+
+        // Detach the pending membership
+        $club->users()->detach($user->id);
+
+        return response()->json(['message' => 'Membership request cancelled successfully']);
+    }
+
+
     // Approve or reject a membership
     public function updateMembershipStatus(Request $request, $clubId, $userId)
     {
@@ -72,7 +94,7 @@ class MembershipController extends Controller
 
         return response()->json([
             'member' => $membership,
-            'user' => $user->member, 
+            'user' => $user->member,
         ]);
     }
 

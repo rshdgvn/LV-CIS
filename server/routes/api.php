@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Membership routes
     Route::post('/clubs/{clubId}/join', [MembershipController::class, 'joinClub']);
+    Route::delete('/clubs/{clubId}/cancel', [MembershipController::class, 'cancelMembershipRequest']);
     Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::patch('/clubs/{clubId}/members/{userId}', [MembershipController::class, 'updateMembershipStatus']);
     Route::get('/clubs/{clubId}/members', [MembershipController::class, 'getClubMembers']);

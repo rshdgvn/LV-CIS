@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import NavTabs from "@/components/NavTabs";
 
 NProgress.configure({ showSpinner: false });
 
@@ -40,7 +41,7 @@ export default function MemberDetails() {
         if (!res.ok) throw new Error("Failed to fetch member details");
 
         const data = await res.json();
-        console.log(JSON.stringify(data))
+        console.log(JSON.stringify(data));
 
         const combined = {
           ...data.user,
@@ -62,9 +63,16 @@ export default function MemberDetails() {
     fetchMember();
   }, [token, clubId, userId]);
 
+  const tabs = [
+    { name: "Overview", href: "/clubs" },
+    { name: "Pending", href: "/pending-clubs" },
+    { name: "Profile", href: "/profile" },
+  ];
+
   if (error) {
     return (
       <Layout>
+        <NavTabs tabs={tabs} />
         <div className="min-h-screen bg-black text-red-400 flex items-center justify-center">
           <p>{error}</p>
         </div>
@@ -75,6 +83,7 @@ export default function MemberDetails() {
   if (loading || !member) {
     return (
       <Layout>
+        <NavTabs tabs={tabs} />
         <div className="min-h-screen bg-black text-gray-400 flex items-center justify-center">
           <p>Loading member details...</p>
         </div>
@@ -84,6 +93,7 @@ export default function MemberDetails() {
 
   return (
     <Layout>
+      <NavTabs tabs={tabs} />
       <div className="min-h-screen bg-black text-white p-6">
         <div className="flex flex-col items-center mb-8">
           <img

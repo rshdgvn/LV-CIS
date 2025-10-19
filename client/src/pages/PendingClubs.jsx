@@ -24,6 +24,7 @@ function PendingClubs() {
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
+    { name: "Profile", href: "/profile" },
   ];
 
   useEffect(() => {
@@ -37,14 +38,17 @@ function PendingClubs() {
         setError(null);
         NProgress.start();
 
-        const res = await fetch("http://localhost:8000/api/your/pending-clubs", {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          signal: controller.signal,
-        });
+        const res = await fetch(
+          "http://localhost:8000/api/your/pending-clubs",
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
 
         if (!res.ok) throw new Error("Failed to fetch pending clubs");
 
@@ -66,6 +70,34 @@ function PendingClubs() {
     return () => controller.abort();
   }, [token]);
 
+  // Cancel pending membership
+  const cancelApplication = async (clubId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/clubs/${clubId}/cancel`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to cancel membership request");
+
+      // Remove cancelled club from state
+      setPendingClubs((prev) => prev.filter((club) => club.id !== clubId));
+      sessionStorage.setItem(
+        "pendingClubs",
+        JSON.stringify(pendingClubs.filter((club) => club.id !== clubId))
+      );
+    } catch (err) {
+      console.error("Error cancelling application:", err);
+      alert("Failed to cancel application. Try again.");
+    }
+  };
+
   return (
     <Layout>
       <NavTabs tabs={tabs} />
@@ -77,8 +109,12 @@ function PendingClubs() {
         )}
         {error && <p className="text-red-400 text-center">{error}</p>}
 
-        {!loading && !error && (
-          <ClubList clubs={pendingClubs} status="pending" />
+        {!loading && !error && pendingClubs.length > 0 && (
+          <ClubList
+            clubs={pendingClubs}
+            status="pending"
+            onCancel={cancelApplication}
+          />
         )}
 
         {!loading && !error && pendingClubs.length === 0 && (

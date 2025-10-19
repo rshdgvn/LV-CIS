@@ -31,6 +31,7 @@ function Clubs() {
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
+    { name: "Profile", href: "/profile" },
   ];
 
   useEffect(() => {

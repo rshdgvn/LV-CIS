@@ -27,6 +27,7 @@ export default function ClubDetails() {
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
+    { name: "Profile", href: "/profile" },
   ];
 
   useEffect(() => {
@@ -110,7 +111,7 @@ export default function ClubDetails() {
               <div
                 key={user.id}
                 className="flex items-center gap-4 bg-gray-900 hover:bg-gray-800 transition-colors p-4 rounded-xl border border-gray-800 cursor-pointer"
-                onClick={() => navigate(`/clubs/${id}/members/${user.id}`)}
+                onClick={() => navigate(`/club/${id}/members/${user.id}`)}
               >
                 <img
                   src={

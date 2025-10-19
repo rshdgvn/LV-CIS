@@ -7,7 +7,7 @@ import logo from "../assets/lvcc-logo.png";
 function Login() {
   const [formData, setFormData] = useState({ login: "", password: "" });
   const [errors, setErrors] = useState({});
-  const { user, token, setToken } = useAuth();
+  const { setToken, user } = useAuth();
   const nav = useNavigate();
 
   const handleChange = (e) => {
@@ -38,7 +38,11 @@ function Login() {
 
       await setToken(data.token);
       localStorage.setItem("token", data.token);
-      nav("/dashboard");
+      if (user.role == 'admin'){  
+        nav('/admin/dashboard')
+      } else {
+        nav('/dashboard')
+      }
     } catch (error) {
       console.error("Login error:", error);
     }

@@ -5,7 +5,7 @@ function ClubCard({ name, description, logo, status, onJoin, onEnter }) {
     if (status === "pending") {
       return (
         <button
-          disabled
+          // disabled
           className="mt-4 w-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold py-2 rounded-lg cursor-not-allowed"
         >
           PENDING
@@ -13,7 +13,7 @@ function ClubCard({ name, description, logo, status, onJoin, onEnter }) {
       );
     }
 
-    if (status === "member") {
+    if (status === "approved") {
       return (
         <button
           onClick={onEnter}
@@ -24,7 +24,6 @@ function ClubCard({ name, description, logo, status, onJoin, onEnter }) {
       );
     }
 
-    // Default: not a member
     return (
       <button
         onClick={onJoin}

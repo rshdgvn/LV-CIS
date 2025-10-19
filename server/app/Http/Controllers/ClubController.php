@@ -60,4 +60,26 @@ class ClubController extends Controller
 
         return response()->json($clubs);
     }
+
+    public function otherClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $joinedClubIds = $user->clubs()->pluck('clubs.id');
+
+        $clubs = Club::whereNotIn('id', $joinedClubIds)->get();
+
+        return response()->json($clubs);
+    }
+
+    public function yourPendingClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'pending')
+            ->get();
+
+        return response()->json($clubs);
+    }
 }

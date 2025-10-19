@@ -22,7 +22,7 @@ export function TeamSwitcher() {
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground my-4 flex flex-col items-center justify-center"
           >
             <a
-              href="/dashboard"
+              href="/"
               className={`flex items-center font-medium ${
                 isCollapsed ? "justify-center" : "gap-4"
               }`}

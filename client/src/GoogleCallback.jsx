@@ -15,12 +15,15 @@ function GoogleCallback() {
     if (token) {
       setToken(token); 
       localStorage.setItem("token", token); 
+      navigate('/dashboard');
     }
   }, [navigate, setToken]);
 
   useEffect(() => {
-    if(user){
-      navigate('/dashboard');
+    if(user.role == 'admin'){
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/dashboard')
     }
   },[user])
   return;

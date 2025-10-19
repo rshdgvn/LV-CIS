@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Layout from "@/components/app/layout";
 import ClubCard from "@/components/ClubCard";
 import { useAuth } from "@/contexts/AuthContext";
+import NavTabs from "@/components/NavTabs";
 
 function Clubs() {
   const { token } = useAuth();
@@ -9,6 +10,11 @@ function Clubs() {
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const tabs = [
+    { name: "Overview", href: "/clubs" },
+    { name: "Pending", href: "/pending-clubs" },
+  ];
 
   useEffect(() => {
     if (!token) return;
@@ -31,7 +37,7 @@ function Clubs() {
             headers,
             signal: controller.signal,
           }),
-          fetch("http://localhost:8000/api/clubs", {
+          fetch("http://localhost:8000/api/other/clubs", {
             headers,
             signal: controller.signal,
           }),
@@ -48,6 +54,7 @@ function Clubs() {
 
         setYourClubs(yourData);
         setClubs(allData);
+        console.log(clubs);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error fetching clubs:", err);
@@ -63,7 +70,6 @@ function Clubs() {
     return () => controller.abort();
   }, [token]);
 
-  // 🧠 Join Club Logic
   const handleJoinClub = async (clubId) => {
     if (!token) return alert("Please log in first.");
 
@@ -88,7 +94,6 @@ function Clubs() {
 
       alert(data.message);
 
-      // ✅ Optional: Update UI after joining
       setClubs((prev) => prev.filter((club) => club.id !== clubId));
       setYourClubs((prev) => [
         ...prev,
@@ -101,6 +106,7 @@ function Clubs() {
 
   return (
     <Layout>
+      <NavTabs tabs={tabs} />
       <div className="min-h-screen bg-black p-6 text-white">
         <h1 className="text-2xl font-semibold mb-6">Your Clubs</h1>
 
@@ -118,7 +124,7 @@ function Clubs() {
                 name={club.name}
                 description={club.description}
                 logo={club.logo}
-                status={club.status === "approved" ? "member" : "pending"}
+                status="approved"
                 onEnter={() => console.log(`Entering ${club.name}`)}
               />
             ))}

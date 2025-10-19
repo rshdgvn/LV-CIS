@@ -7,7 +7,7 @@ import NavTabs from "@/components/NavTabs";
 import { useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import ClubList from "@/components/ClubList"; // ✅ import new component
+import ClubList from "@/components/ClubList";
 
 NProgress.configure({ showSpinner: false });
 
@@ -25,7 +25,7 @@ function Clubs() {
     return cached ? JSON.parse(cached) : [];
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!sessionStorage.getItem("yourClubs"));
   const [error, setError] = useState(null);
 
   const tabs = [
@@ -34,50 +34,59 @@ function Clubs() {
     { name: "Profile", href: "/profile" },
   ];
 
-  useEffect(() => {
+  const fetchClubs = async (showLoading = true) => {
     if (!token) return;
 
-    const fetchClubs = async () => {
-      try {
-        setLoading(true);
-        NProgress.start();
-        setError(null);
+    try {
+      if (showLoading) setLoading(true);
+      setError(null);
+      NProgress.start();
 
-        const headers = {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        };
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
 
-        const [yourRes, allRes] = await Promise.all([
-          fetch("http://localhost:8000/api/your/clubs", { headers }),
-          fetch("http://localhost:8000/api/other/clubs", { headers }),
-        ]);
+      const [yourRes, allRes] = await Promise.all([
+        fetch("http://localhost:8000/api/your/clubs", { headers }),
+        fetch("http://localhost:8000/api/other/clubs", { headers }),
+      ]);
 
-        if (!yourRes.ok || !allRes.ok) throw new Error("Failed to fetch clubs");
+      if (!yourRes.ok || !allRes.ok) throw new Error("Failed to fetch clubs");
 
-        const [yourData, allData] = await Promise.all([
-          yourRes.json(),
-          allRes.json(),
-        ]);
+      const [yourData, allData] = await Promise.all([
+        yourRes.json(),
+        allRes.json(),
+      ]);
 
-        setYourClubs(yourData);
-        setClubs(allData);
+      setYourClubs(yourData);
+      setClubs(allData);
+      sessionStorage.setItem("yourClubs", JSON.stringify(yourData));
+      sessionStorage.setItem("otherClubs", JSON.stringify(allData));
+    } catch (err) {
+      console.error("Error fetching clubs:", err);
+      setError("Failed to load clubs.");
+    } finally {
+      setLoading(false);
+      NProgress.done();
+    }
+  };
 
-        sessionStorage.setItem("yourClubs", JSON.stringify(yourData));
-        sessionStorage.setItem("otherClubs", JSON.stringify(allData));
-      } catch (err) {
-        console.error("Error fetching clubs:", err);
-        setError("Failed to load clubs.");
-      } finally {
-        setLoading(false);
-        NProgress.done();
-      }
+  useEffect(() => {
+    if (token) fetchClubs(!sessionStorage.getItem("yourClubs"));
+  }, [token]);
+
+  // ✅ Listen for updates from PendingClubs
+  useEffect(() => {
+    const handleUpdate = () => {
+      sessionStorage.removeItem("yourClubs");
+      sessionStorage.removeItem("otherClubs");
+      fetchClubs(false); // silent refetch without "Loading..."
     };
 
-    if (yourClubs.length === 0 && clubs.length === 0) {
-      fetchClubs();
-    }
+    window.addEventListener("clubsUpdated", handleUpdate);
+    return () => window.removeEventListener("clubsUpdated", handleUpdate);
   }, [token]);
 
   const handleJoinClub = async (clubId) => {
@@ -103,17 +112,12 @@ function Clubs() {
 
       alert(data.message);
 
-      const updatedClubs = clubs.filter((club) => club.id !== clubId);
-      const updatedYourClubs = [
-        ...yourClubs,
-        { id: clubId, status: "pending", role: "member" },
-      ];
+      // ✅ Remove cache and refetch fresh data
+      sessionStorage.removeItem("yourClubs");
+      sessionStorage.removeItem("otherClubs");
 
-      setClubs(updatedClubs);
-      setYourClubs(updatedYourClubs);
-
-      sessionStorage.setItem("yourClubs", JSON.stringify(updatedYourClubs));
-      sessionStorage.setItem("otherClubs", JSON.stringify(updatedClubs));
+      await fetchClubs(false); // silent refetch (no “Loading clubs...”)
+      window.dispatchEvent(new Event("pendingClubsUpdated"));
     } catch (err) {
       alert(err.message || "An error occurred while joining the club.");
     } finally {
@@ -153,7 +157,6 @@ function Clubs() {
   return (
     <Layout>
       <NavTabs tabs={tabs} />
-
       <div className="min-h-screen bg-black p-6 text-white">
         <h1 className="text-2xl font-semibold mb-6">Your Clubs</h1>
 

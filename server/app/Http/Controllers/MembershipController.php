@@ -29,6 +29,7 @@ class MembershipController extends Controller
         return response()->json(['message' => 'Membership request sent successfully']);
     }
 
+    // Cancel pending club
     public function cancelMembershipRequest(Request $request, $clubId)
     {
         $club = Club::findOrFail($clubId);
@@ -98,9 +99,6 @@ class MembershipController extends Controller
         ]);
     }
 
-
-
-
     // Get all clubs joined by the logged-in user
     public function getUserClubs(Request $request)
     {
@@ -109,4 +107,25 @@ class MembershipController extends Controller
 
         return response()->json($clubs);
     }
+
+    // Get the current user's member info
+    public function getCurrentUserMemberInfo(Request $request)
+    {
+        $user = $request->user();
+
+        $member = $user->member;
+
+        if (!$member) {
+            return response()->json(['message' => 'Member profile not found'], 404);
+        }
+
+        // Include clubs joined by this member
+        $clubs = $member->clubs()->withPivot('role', 'status', 'joined_at')->get();
+
+        return response()->json([
+            'member' => $member,
+            'clubs' => $clubs,
+        ]);
+    }
+    
 }

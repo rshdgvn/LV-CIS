@@ -1,13 +1,20 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import Layout from "@/components/app/layout";
 import { useAuth } from "@/contexts/AuthContext";
 import NavTabs from "@/components/NavTabs";
 import { useParams, useNavigate } from "react-router-dom";
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+
+NProgress.configure({ showSpinner: false });
 
 export default function ClubDetails() {
   const { token } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [club, setClub] = useState(() => {
     const cached = sessionStorage.getItem("clubDetails");
     return cached ? JSON.parse(cached) : {};
@@ -22,6 +29,40 @@ export default function ClubDetails() {
     { name: "Pending", href: "/pending-clubs" },
   ];
 
+  useEffect(() => {
+    if (!token || !id) return;
+
+    const fetchClubDetails = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        NProgress.start();
+
+        const res = await fetch(`http://localhost:8000/api/clubs/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch club details");
+
+        const data = await res.json();
+        setClub(data);
+        sessionStorage.setItem("clubDetails", JSON.stringify(data));
+      } catch (err) {
+        console.error("Error fetching club details:", err);
+        setError("Failed to load club details.");
+      } finally {
+        setLoading(false);
+        NProgress.done();
+      }
+    };
+
+    if (!sessionStorage.getItem("clubDetails")) fetchClubDetails();
+  }, [token, id]);
+
   if (error) {
     return (
       <Layout>
@@ -32,10 +73,21 @@ export default function ClubDetails() {
     );
   }
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-black text-gray-400 flex items-center justify-center">
+          <p>Loading club details...</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <NavTabs tabs={tabs} />
       <div className="min-h-screen bg-black p-6 text-white">
+        {/* Club Info */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-10 border-b border-gray-800 pb-6">
           {club.logo && (
             <img
@@ -50,13 +102,15 @@ export default function ClubDetails() {
           </div>
         </div>
 
+        {/* Member List */}
         <h2 className="text-2xl font-semibold mb-4">Members</h2>
         <div className="max-w-4xl mx-auto space-y-4">
           {club.users?.length > 0 ? (
             club.users.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center gap-4 bg-gray-900 hover:bg-gray-800 transition-colors p-4 rounded-xl border border-gray-800"
+                className="flex items-center gap-4 bg-gray-900 hover:bg-gray-800 transition-colors p-4 rounded-xl border border-gray-800 cursor-pointer"
+                onClick={() => navigate(`/clubs/${id}/members/${user.id}`)}
               >
                 <img
                   src={
@@ -68,7 +122,6 @@ export default function ClubDetails() {
                   alt={user.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />
-
                 <div>
                   <p className="font-medium text-lg">{user.name}</p>
                   {user.pivot && (
@@ -84,6 +137,7 @@ export default function ClubDetails() {
           )}
         </div>
 
+        {/* Back Button */}
         <div className="mt-10">
           <button
             onClick={() => navigate(-1)}

@@ -13,6 +13,7 @@ import ProtectedRoute from "./contexts/ProtectedRoute";
 import PendingClubs from "./pages/PendingClubs";
 import NotFound from "./pages/errors/NotFound";
 import AdminRoute from "./contexts/AdminRoute";
+import MemberDetails from "./pages/MemberDetails";
 
 function App() {
   return (
@@ -31,6 +32,8 @@ function App() {
             <Route path="/clubs" element={<Clubs />} />
             <Route path="/club/:id" element={<ClubDetails />} /> 
             <Route path="/pending-clubs" element={<PendingClubs />} />
+            <Route path="/clubs/:clubId/members/:userId" element={<MemberDetails />} />
+
 
             <Route element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />

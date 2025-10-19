@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Club;
+use App\Models\ClubMembership;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -51,6 +53,31 @@ class MembershipController extends Controller
 
         return response()->json($club->users);
     }
+
+    public function getClubMember($clubId, $userId)
+    {
+        $membership = ClubMembership::where('club_id', $clubId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$membership) {
+            return response()->json(['message' => 'Member not found'], 404);
+        }
+
+        $user = User::with('member')->find($userId);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        return response()->json([
+            'member' => $membership,
+            'user' => $user->member, 
+        ]);
+    }
+
+
+
 
     // Get all clubs joined by the logged-in user
     public function getUserClubs(Request $request)

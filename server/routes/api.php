@@ -35,6 +35,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::patch('/clubs/{clubId}/members/{userId}', [MembershipController::class, 'updateMembershipStatus']);
     Route::get('/clubs/{clubId}/members', [MembershipController::class, 'getClubMembers']);
+    Route::get('/clubs/{clubId}/members/{userId}', [MembershipController::class, 'getClubMember']);
     Route::get('/my/clubs', [MembershipController::class, 'getUserClubs']);
 });
-

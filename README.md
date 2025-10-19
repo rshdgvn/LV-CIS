@@ -32,7 +32,7 @@ Designed to simplify **membership, events, attendance, and analytics** — all i
 
 ---
 
-## 🛠️ Installation Guide
+## Installation Guide
 
 ### 1. Clone the Repository
 
@@ -61,7 +61,7 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-3. Client Setup (React)
+## 3. Client Setup (React)
 ```bash
 cd ../client
 

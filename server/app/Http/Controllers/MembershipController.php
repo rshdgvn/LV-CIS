@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Club;
+use App\Models\ClubMembership;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,29 @@ class MembershipController extends Controller
 
         return response()->json(['message' => 'Membership request sent successfully']);
     }
+
+    // Cancel pending club
+    public function cancelMembershipRequest(Request $request, $clubId)
+    {
+        $club = Club::findOrFail($clubId);
+        $user = $request->user(); // authenticated user
+
+        // Check if user has a pending membership
+        $membership = $club->users()
+            ->where('user_id', $user->id)
+            ->wherePivot('status', 'pending')
+            ->first();
+
+        if (!$membership) {
+            return response()->json(['message' => 'No pending membership request found'], 404);
+        }
+
+        // Detach the pending membership
+        $club->users()->detach($user->id);
+
+        return response()->json(['message' => 'Membership request cancelled successfully']);
+    }
+
 
     // Approve or reject a membership
     public function updateMembershipStatus(Request $request, $clubId, $userId)
@@ -52,6 +77,28 @@ class MembershipController extends Controller
         return response()->json($club->users);
     }
 
+    public function getClubMember($clubId, $userId)
+    {
+        $membership = ClubMembership::where('club_id', $clubId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$membership) {
+            return response()->json(['message' => 'Member not found'], 404);
+        }
+
+        $user = User::with('member')->find($userId);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        return response()->json([
+            'member' => $membership,
+            'user' => $user->member,
+        ]);
+    }
+
     // Get all clubs joined by the logged-in user
     public function getUserClubs(Request $request)
     {
@@ -59,5 +106,53 @@ class MembershipController extends Controller
         $clubs = $user->clubs()->withPivot('role', 'status', 'joined_at')->get();
 
         return response()->json($clubs);
+    }
+
+    // Get the current user's member info
+    public function getCurrentUserMemberInfo(Request $request)
+    {
+        $user = $request->user();
+
+        $member = $user->member;
+
+
+        if (!$member) {
+            return response()->json(['message' => 'Member profile not found'], 404);
+        }
+        
+        return response()->json([
+            'member' => $member,
+        ]);
+    }
+
+    // Create or update the current user's member info
+    public function editMemberInfo(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'student_id' => 'required|string|max:50',
+            'course' => 'required|string|max:100',
+            'year_level' => 'required|string|max:10',
+        ]);
+
+        $member = $user->member;
+
+        if ($member) {
+            // Update existing member profile
+            $member->update($validated);
+        } else {
+            // Create new member profile
+            $member = User::member()->create($validated);
+        }
+
+        // Include clubs joined by this member
+        // $clubs = $member->clubs()->withPivot('role', 'status', 'joined_at')->get();
+
+        return response()->json([
+            'message' => 'Member profile saved successfully',
+            'member' => $member,
+            // 'clubs' => $clubs,
+        ]);
     }
 }

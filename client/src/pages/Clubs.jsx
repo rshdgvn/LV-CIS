@@ -1,80 +1,100 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import Layout from "@/components/app/layout";
-import ClubCard from "@/components/ClubCard";
 import { useAuth } from "@/contexts/AuthContext";
 import NavTabs from "@/components/NavTabs";
-import { useNavigate } from "react-router-dom"; // ✅ added
+import { useNavigate } from "react-router-dom";
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+import ClubList from "@/components/ClubList";
+
+NProgress.configure({ showSpinner: false });
 
 function Clubs() {
   const { token } = useAuth();
-  const navigate = useNavigate(); // ✅ added
-  const [yourClubs, setYourClubs] = useState([]);
-  const [clubs, setClubs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const [yourClubs, setYourClubs] = useState(() => {
+    const cached = sessionStorage.getItem("yourClubs");
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  const [clubs, setClubs] = useState(() => {
+    const cached = sessionStorage.getItem("otherClubs");
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  const [loading, setLoading] = useState(!sessionStorage.getItem("yourClubs"));
   const [error, setError] = useState(null);
 
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
+    { name: "Profile", href: "/profile" },
   ];
 
-  useEffect(() => {
+  const fetchClubs = async (showLoading = true) => {
     if (!token) return;
 
-    const controller = new AbortController();
+    try {
+      if (showLoading) setLoading(true);
+      setError(null);
+      NProgress.start();
 
-    const fetchClubs = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      };
 
-        const headers = {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        };
+      const [yourRes, allRes] = await Promise.all([
+        fetch("http://localhost:8000/api/your/clubs", { headers }),
+        fetch("http://localhost:8000/api/other/clubs", { headers }),
+      ]);
 
-        const [yourRes, allRes] = await Promise.all([
-          fetch("http://localhost:8000/api/your/clubs", {
-            headers,
-            signal: controller.signal,
-          }),
-          fetch("http://localhost:8000/api/other/clubs", {
-            headers,
-            signal: controller.signal,
-          }),
-        ]);
+      if (!yourRes.ok || !allRes.ok) throw new Error("Failed to fetch clubs");
 
-        if (!yourRes.ok || !allRes.ok) {
-          throw new Error("Failed to fetch clubs");
-        }
+      const [yourData, allData] = await Promise.all([
+        yourRes.json(),
+        allRes.json(),
+      ]);
 
-        const [yourData, allData] = await Promise.all([
-          yourRes.json(),
-          allRes.json(),
-        ]);
+      setYourClubs(yourData);
+      setClubs(allData);
+      sessionStorage.setItem("yourClubs", JSON.stringify(yourData));
+      sessionStorage.setItem("otherClubs", JSON.stringify(allData));
+    } catch (err) {
+      console.error("Error fetching clubs:", err);
+      setError("Failed to load clubs.");
+    } finally {
+      setLoading(false);
+      NProgress.done();
+    }
+  };
 
-        setYourClubs(yourData);
-        setClubs(allData);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Error fetching clubs:", err);
-          setError("Failed to load clubs.");
-        }
-      } finally {
-        setLoading(false);
-      }
+  useEffect(() => {
+    if (token) fetchClubs(!sessionStorage.getItem("yourClubs"));
+  }, [token]);
+
+  // ✅ Listen for updates from PendingClubs
+  useEffect(() => {
+    const handleUpdate = () => {
+      sessionStorage.removeItem("yourClubs");
+      sessionStorage.removeItem("otherClubs");
+      fetchClubs(false); // silent refetch without "Loading..."
     };
 
-    fetchClubs();
-
-    return () => controller.abort();
+    window.addEventListener("clubsUpdated", handleUpdate);
+    return () => window.removeEventListener("clubsUpdated", handleUpdate);
   }, [token]);
 
   const handleJoinClub = async (clubId) => {
     if (!token) return alert("Please log in first.");
 
     try {
+      NProgress.start();
+
       const res = await fetch(
         `http://localhost:8000/api/clubs/${clubId}/join`,
         {
@@ -88,20 +108,49 @@ function Clubs() {
       );
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to join club.");
-      }
+      if (!res.ok) throw new Error(data.message || "Failed to join club.");
 
       alert(data.message);
 
-      setClubs((prev) => prev.filter((club) => club.id !== clubId));
-      setYourClubs((prev) => [
-        ...prev,
-        { id: clubId, status: "pending", role: "member" },
-      ]);
+      // ✅ Remove cache and refetch fresh data
+      sessionStorage.removeItem("yourClubs");
+      sessionStorage.removeItem("otherClubs");
+
+      await fetchClubs(false); // silent refetch (no “Loading clubs...”)
+      window.dispatchEvent(new Event("pendingClubsUpdated"));
     } catch (err) {
       alert(err.message || "An error occurred while joining the club.");
+    } finally {
+      NProgress.done();
+    }
+  };
+
+  const handleEnterClub = async (clubId) => {
+    if (!token) return alert("Please log in first.");
+
+    try {
+      NProgress.start();
+      document.body.style.cursor = "wait";
+
+      const res = await fetch(`http://localhost:8000/api/clubs/${clubId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch club details");
+
+      const data = await res.json();
+      sessionStorage.setItem("clubDetails", JSON.stringify(data));
+
+      navigate(`/club/${clubId}`);
+    } catch (err) {
+      alert(err.message || "Error loading club details");
+    } finally {
+      NProgress.done();
+      document.body.style.cursor = "default";
     }
   };
 
@@ -115,44 +164,22 @@ function Clubs() {
           <p className="text-gray-400 text-center">Loading clubs...</p>
         ) : error ? (
           <p className="text-red-400 text-center">{error}</p>
-        ) : yourClubs.length === 0 ? (
-          <p className="text-gray-400 mb-10 text-center">You have no clubs.</p>
         ) : (
-          <div className="flex flex-wrap gap-6 mb-12">
-            {yourClubs.map((club) => (
-              <ClubCard
-                key={club.id}
-                name={club.name}
-                description={club.description}
-                logo={club.logo}
-                status="approved"
-                onEnter={() => navigate(`/club/${club.id}`)} 
-              />
-            ))}
-          </div>
+          <ClubList
+            clubs={yourClubs}
+            status="approved"
+            onEnter={handleEnterClub}
+          />
         )}
 
-        <h1 className="text-2xl font-semibold mb-6">Other Clubs</h1>
+        <h1 className="text-2xl font-semibold mt-12 mb-6">Other Clubs</h1>
 
         {loading ? (
           <p className="text-gray-400 text-center">Loading clubs...</p>
         ) : error ? (
           <p className="text-red-400 text-center">{error}</p>
-        ) : clubs.length === 0 ? (
-          <p className="text-gray-400 text-center">No other clubs available.</p>
         ) : (
-          <div className="flex flex-wrap gap-6">
-            {clubs.map((club) => (
-              <ClubCard
-                key={club.id}
-                name={club.name}
-                description={club.description}
-                logo={club.logo}
-                status="none"
-                onJoin={() => handleJoinClub(club.id)}
-              />
-            ))}
-          </div>
+          <ClubList clubs={clubs} status="none" onJoin={handleJoinClub} />
         )}
       </div>
     </Layout>

@@ -135,3 +135,13 @@ html {
 body {
   -ms-overflow-style: none;
 }
+
+#nprogress .bar {
+  background: #3b82f6 !important; /* Tailwind blue-500 */
+  height: 3px !important;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #3b82f6, 0 0 5px #3b82f6 !important;
+}
+

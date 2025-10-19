@@ -1,15 +1,33 @@
 import React from "react";
 
-function ClubCard({ name, description, logo, status, onJoin, onEnter }) {
+function ClubCard({
+  name,
+  description,
+  logo,
+  status,
+  onJoin,
+  onEnter,
+  onCancel,
+}) {
   const renderButton = () => {
     if (status === "pending") {
       return (
-        <button
-          // disabled
-          className="mt-4 w-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold py-2 rounded-lg cursor-not-allowed"
-        >
-          PENDING
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            className="mt-4 w-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold py-2 rounded-lg cursor-not-allowed"
+          >
+            PENDING
+          </button>
+
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="w-full bg-red-700 hover:bg-red-800 text-gray-200 text-xs font-semibold py-2 rounded-lg transition-colors"
+            >
+              Cancel Application
+            </button>
+          )}
+        </div>
       );
     }
 

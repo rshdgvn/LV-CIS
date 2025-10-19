@@ -10,6 +10,7 @@ use App\Http\Controllers\MembershipController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+Route::get('/verify-token', [AuthController::class, 'verifyToken'])->middleware('auth:sanctum');
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -31,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Membership routes
     Route::post('/clubs/{clubId}/join', [MembershipController::class, 'joinClub']);
+    Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::patch('/clubs/{clubId}/members/{userId}', [MembershipController::class, 'updateMembershipStatus']);
     Route::get('/clubs/{clubId}/members', [MembershipController::class, 'getClubMembers']);
     Route::get('/my/clubs', [MembershipController::class, 'getUserClubs']);

@@ -4,9 +4,9 @@ import { Outlet } from "react-router-dom";
 import Unauthorized from "@/pages/errors/Unauthorized";
 
 const AdminRoute = () => {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
 
-  if (token && user?.role === "admin") {
+  if (user?.role === "admin") {
     return <Outlet />;
   } else {
     return <Unauthorized />;

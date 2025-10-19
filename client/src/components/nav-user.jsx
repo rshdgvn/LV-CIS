@@ -32,7 +32,8 @@ import {
 export function NavUser({ user }) {
   const { token, setToken } = useAuth();
   const nav = useNavigate();
-  const { isMobile } = useSidebar();
+  const { isMobile, state } = useSidebar();
+  const isCollapsed = state === "";
 
   const handleLogout = async () => {
     try {
@@ -70,7 +71,7 @@ export function NavUser({ user }) {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className={`h-12 w-12 rounded-lg ${isCollapsed ? 'ml-4' : ''}`}>
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>

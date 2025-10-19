@@ -16,9 +16,13 @@ class ClubController extends Controller
     // Show a single club
     public function show($id)
     {
-        $club = Club::with('users')->findOrFail($id);
+        $club = Club::with([
+            'users.member',
+        ])->findOrFail($id);
+
         return response()->json($club);
     }
+
 
     // Create a new club
     public function store(Request $request)

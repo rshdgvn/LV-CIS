@@ -3,14 +3,24 @@ import Layout from "@/components/app/layout";
 import ClubCard from "@/components/ClubCard";
 import { useAuth } from "@/contexts/AuthContext";
 import NavTabs from "@/components/NavTabs";
-import { useNavigate } from "react-router-dom"; // ✅ added
+import { useNavigate } from "react-router-dom";
 
 function Clubs() {
   const { token } = useAuth();
-  const navigate = useNavigate(); // ✅ added
-  const [yourClubs, setYourClubs] = useState([]);
-  const [clubs, setClubs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [yourClubs, setYourClubs] = useState(() => {
+    const cached = sessionStorage.getItem("yourClubs");
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  const [clubs, setClubs] = useState(() => {
+    const cached = sessionStorage.getItem("otherClubs");
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  const [loading, setLoading] = useState(
+    yourClubs.length === 0 && clubs.length === 0
+  );
   const [error, setError] = useState(null);
 
   const tabs = [
@@ -20,6 +30,8 @@ function Clubs() {
 
   useEffect(() => {
     if (!token) return;
+
+    if (yourClubs.length > 0 || clubs.length > 0) return;
 
     const controller = new AbortController();
 
@@ -45,9 +57,7 @@ function Clubs() {
           }),
         ]);
 
-        if (!yourRes.ok || !allRes.ok) {
-          throw new Error("Failed to fetch clubs");
-        }
+        if (!yourRes.ok || !allRes.ok) throw new Error("Failed to fetch clubs");
 
         const [yourData, allData] = await Promise.all([
           yourRes.json(),
@@ -56,6 +66,9 @@ function Clubs() {
 
         setYourClubs(yourData);
         setClubs(allData);
+
+        sessionStorage.setItem("yourClubs", JSON.stringify(yourData));
+        sessionStorage.setItem("otherClubs", JSON.stringify(allData));
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error fetching clubs:", err);
@@ -88,20 +101,50 @@ function Clubs() {
       );
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to join club.");
-      }
+      if (!res.ok) throw new Error(data.message || "Failed to join club.");
 
       alert(data.message);
 
-      setClubs((prev) => prev.filter((club) => club.id !== clubId));
-      setYourClubs((prev) => [
-        ...prev,
+      const updatedClubs = clubs.filter((club) => club.id !== clubId);
+      const updatedYourClubs = [
+        ...yourClubs,
         { id: clubId, status: "pending", role: "member" },
-      ]);
+      ];
+
+      setClubs(updatedClubs);
+      setYourClubs(updatedYourClubs);
+
+      sessionStorage.setItem("yourClubs", JSON.stringify(updatedYourClubs));
+      sessionStorage.setItem("otherClubs", JSON.stringify(updatedClubs));
     } catch (err) {
       alert(err.message || "An error occurred while joining the club.");
+    }
+  };
+
+  const handleEnterClub = async (clubId) => {
+    if (!token) return alert("Please log in first.");
+
+    try {
+      document.body.style.cursor = "wait";
+
+      const res = await fetch(`http://localhost:8000/api/clubs/${clubId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch club details");
+
+      const data = await res.json();
+      sessionStorage.setItem("clubDetails", JSON.stringify(data));
+
+      navigate(`/club/${clubId}`);
+    } catch (err) {
+      alert(err.message || "Error loading club details");
+    } finally {
+      document.body.style.cursor = "default";
     }
   };
 
@@ -126,7 +169,7 @@ function Clubs() {
                 description={club.description}
                 logo={club.logo}
                 status="approved"
-                onEnter={() => navigate(`/club/${club.id}`)} 
+                onEnter={() => handleEnterClub(club.id)}
               />
             ))}
           </div>

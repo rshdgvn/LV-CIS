@@ -45,19 +45,19 @@ cd LV-CIS
 ```bash
 cd server
 
-<!-- Install Dependencies -->
+# Install Dependencies
 composer install
 
-<!-- Create environment file -->
+# Create environment file
 cp .env.example .env
 
-<!-- Generate app key -->
+# Generate app key
 php artisan key:generate
 
-<!-- Run Migrations & Seeders -->
+# Run Migrations & Seeders
 php artisan migrate --seed
 
-<!-- Start the Laravel Server -->
+# Start the Laravel Server
 php artisan serve
 ```
 
@@ -65,10 +65,10 @@ php artisan serve
 ```bash
 cd ../client
 
-<!-- Install Dependencies -->
+# Install Dependencies
 npm install
 
-<!-- Start the react app -->
+# Start the react app
 npm run dev
 ```
 

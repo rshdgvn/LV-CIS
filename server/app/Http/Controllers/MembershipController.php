@@ -74,7 +74,7 @@ class MembershipController extends Controller
         $this->authorize('updateStatus', $membership);
 
         $membership->update(['status' => $validated['status']]);
-        
+
         return response()->json(['message' => 'Membership status updated successfully']);
     }
 
@@ -83,23 +83,34 @@ class MembershipController extends Controller
      */
     public function requestRoleChange(Request $request, $clubId)
     {
-        $validated = $request->validate([
-            'new_role' => 'required|in:member,officer,admin',
-        ]);
-
         $user = $request->user();
 
         $membership = ClubMembership::where('club_id', $clubId)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        // Cannot change directly — must be approved
+        // Only allow members to request a promotion
+        if ($membership->role !== 'member') {
+            return response()->json([
+                'message' => 'Only members can request a role change to officer'
+            ], 403); // Forbidden
+        }
+
+        // Validate input (only officer allowed)
+        $validated = $request->validate([
+            'new_role' => 'required|in:officer',
+        ]);
+
+        // Set the requested role
         $membership->update([
             'requested_role' => $validated['new_role'],
         ]);
 
-        return response()->json(['message' => 'Role change request submitted for approval']);
+        return response()->json([
+            'message' => 'Role change request submitted for approval'
+        ], 200);
     }
+
 
     /**
      * Admin or officer approves a role change request

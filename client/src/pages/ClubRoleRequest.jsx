@@ -38,10 +38,8 @@ export default function ClubRoleRequests() {
         if (!res.ok) throw new Error("Failed to fetch role change requests");
 
         const data = await res.json();
-        console.log(data)
         setRequests(data);
       } catch (err) {
-        console.error(err);
         setError(err.message || "Failed to load data.");
       } finally {
         setLoading(false);
@@ -51,6 +49,58 @@ export default function ClubRoleRequests() {
 
     fetchRequests();
   }, [token, clubId]);
+
+  const handleApprove = async (userId) => {
+    if (!confirm("Approve this role request?")) return;
+    try {
+      NProgress.start();
+      const res = await fetch(
+        `http://localhost:8000/api/clubs/${clubId}/role-change/${userId}/approve`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to approve request");
+
+      setRequests((prev) => prev.filter((r) => r.user_id !== userId));
+      alert("Role change approved!");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      NProgress.done();
+    }
+  };
+
+  const handleReject = async (userId) => {
+    if (!confirm("Reject this role request?")) return;
+    try {
+      NProgress.start();
+      const res = await fetch(
+        `http://localhost:8000/api/clubs/${clubId}/role-change/${userId}/reject`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to reject request");
+
+      setRequests((prev) => prev.filter((r) => r.user_id !== userId));
+      alert("Role change rejected!");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      NProgress.done();
+    }
+  };
 
   return (
     <Layout>
@@ -93,17 +143,13 @@ export default function ClubRoleRequests() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() =>
-                      alert(`Approve ${req.name}'s request coming soon!`)
-                    }
+                    onClick={() => handleApprove(req.user_id)}
                     className="px-3 py-2 bg-green-600 hover:bg-green-700 text-black rounded"
                   >
                     Approve
                   </button>
                   <button
-                    onClick={() =>
-                      alert(`Reject ${req.name}'s request coming soon!`)
-                    }
+                    onClick={() => handleReject(req.user_id)}
                     className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
                   >
                     Reject

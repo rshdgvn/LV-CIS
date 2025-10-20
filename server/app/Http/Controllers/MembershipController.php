@@ -111,7 +111,6 @@ class MembershipController extends Controller
         ], 200);
     }
 
-
     /**
      * Admin or officer approves a role change request
      */
@@ -122,7 +121,7 @@ class MembershipController extends Controller
             ->firstOrFail();
 
         // Policy check (only officer/admin)
-        $this->authorize('updateRole', $membership);
+        $this->authorize('approveRoleChange', $membership);
 
         if (!$membership->requested_role) {
             return response()->json(['message' => 'No pending role change request'], 404);

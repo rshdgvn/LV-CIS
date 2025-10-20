@@ -25,9 +25,19 @@ class ClubMembershipPolicy
             return false; // Not part of this club
         }
 
-        // Only admin or officer can update statuses
-        return in_array($authMembership->role, ['admin', 'officer']);
+        // Admin can approve/reject anyone
+        if ($authMembership->role === 'admin') {
+            return true;
+        }
+
+        // Officer can only manage members (not admins/officers)
+        if ($authMembership->role === 'officer' && $membership->role === 'member') {
+            return true;
+        }
+
+        return false;
     }
+
 
     /**
      * Determine if the user can request a role change.
@@ -58,10 +68,19 @@ class ClubMembershipPolicy
             ->first();
 
         if (!$authMembership) {
-            return false;
+            return false; // Not part of this club
         }
 
-        // Admin or officer can approve
-        return in_array($authMembership->role, ['admin', 'officer']);
+        // Admin can approve anyone
+        if ($authMembership->role === 'admin') {
+            return true;
+        }
+
+        // Officer can only approve role changes for members
+        if ($authMembership->role === 'officer' && $membership->role === 'member') {
+            return true;
+        }
+
+        return false; // Everyone else denied
     }
 }

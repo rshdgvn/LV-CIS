@@ -121,7 +121,7 @@ class MembershipController extends Controller
             ->firstOrFail();
 
         // Policy check (only officer/admin)
-        $this->authorize('approveRoleChange', $membership);
+        $this->authorize('updateRoleChange', $membership);
 
         if (!$membership->requested_role) {
             return response()->json(['message' => 'No pending role change request'], 404);
@@ -134,6 +134,28 @@ class MembershipController extends Controller
 
         return response()->json(['message' => 'Role change approved successfully']);
     }
+
+    public function rejectRoleChange(Request $request, $clubId, $userId)
+    {
+        $membership = ClubMembership::where('club_id', $clubId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        // Policy check (only officer/admin)
+        $this->authorize('updateRoleChange', $membership);
+
+        if (!$membership->requested_role) {
+            return response()->json(['message' => 'No pending role change request'], 404);
+        }
+
+        // Remove the pending request
+        $membership->update([
+            'requested_role' => null,
+        ]);
+
+        return response()->json(['message' => 'Role change request rejected successfully']);
+    }
+
 
     /**
      * Get all role change requests for a specific club

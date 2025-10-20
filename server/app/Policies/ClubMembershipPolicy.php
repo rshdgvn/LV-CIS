@@ -26,7 +26,7 @@ class ClubMembershipPolicy
         }
 
         // Admin can approve/reject anyone
-        if ($authMembership->role === 'admin') {
+        if ($user->role === 'admin') {
             return true;
         }
 
@@ -72,7 +72,7 @@ class ClubMembershipPolicy
         }
 
         // Admin can approve anyone
-        if ($authMembership->role === 'admin') {
+        if ($user->role === 'admin') {
             return true;
         }
 

@@ -20,7 +20,6 @@ return new class extends Migration
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamp('joined_at')->useCurrent();
             $table->timestamps();
-
             $table->unique(['club_id', 'user_id']); 
         });
     }

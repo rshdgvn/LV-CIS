@@ -25,7 +25,7 @@ class ClubMembershipPolicy
             return false; // Not part of this club
         }
 
-        // ✅ Only admin or officer can update statuses
+        // Only admin or officer can update statuses
         return in_array($authMembership->role, ['admin', 'officer']);
     }
 
@@ -43,7 +43,7 @@ class ClubMembershipPolicy
             return false;
         }
 
-        // ✅ Members can request role change
+        // Members can request role change
         return $authMembership->role === 'member';
     }
 
@@ -61,7 +61,7 @@ class ClubMembershipPolicy
             return false;
         }
 
-        // ✅ Admin or officer can approve
+        // Admin or officer can approve
         return in_array($authMembership->role, ['admin', 'officer']);
     }
 }

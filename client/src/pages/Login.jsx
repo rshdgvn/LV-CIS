@@ -34,7 +34,7 @@ function Login() {
       if (!res.ok) {
         setErrors(data.errors || { general: data.message });
         return;
-      }
+      } 
 
       await setToken(data.token);
       localStorage.setItem("token", data.token);

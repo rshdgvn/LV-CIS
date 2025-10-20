@@ -61,11 +61,10 @@ export default function PendingClubs() {
     if (token) fetchPendingClubs(!sessionStorage.getItem("pendingClubs"));
   }, [token]);
 
-  // ✅ Listen for updates (e.g. from Clubs.jsx after join)
   useEffect(() => {
     const handleRefresh = () => {
       sessionStorage.removeItem("pendingClubs");
-      fetchPendingClubs(false); // silent refetch
+      fetchPendingClubs(false); 
     };
 
     window.addEventListener("pendingClubsUpdated", handleRefresh);
@@ -99,7 +98,6 @@ export default function PendingClubs() {
 
       alert(data.message);
 
-      // ✅ Remove cache & refetch
       sessionStorage.removeItem("pendingClubs");
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");

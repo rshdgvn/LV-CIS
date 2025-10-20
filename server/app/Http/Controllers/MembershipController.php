@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Club;
 use App\Models\ClubMembership;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -216,13 +217,15 @@ class MembershipController extends Controller
             ], 400);
         }
 
+
         $validated = $request->validate([
             'student_id' => 'required|string|max:50',
             'course' => 'required|string|max:100',
             'year_level' => 'required|string|max:10',
         ]);
 
-        $member = $user->member()->create($validated);
+        $data = array_merge(['user_id' => $user->id], $validated);
+        $member = Member::create($data);
 
         return response()->json([
             'message' => 'Profile setup successfully',

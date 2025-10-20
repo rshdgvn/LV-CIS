@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ClubMembership extends Model
 {
-    protected $fillable = ['club_id', 'user_id', 'role', 'status', 'joined_at'];
+    protected $fillable = ['club_id', 'user_id', 'role', 'requested_role', 'status', 'joined_at'];
 
     public function club()
     {

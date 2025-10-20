@@ -16,6 +16,7 @@ import AdminRoute from "./contexts/AdminRoute";
 import MemberDetails from "./pages/MemberDetails";
 import Profile from "./pages/Profile";
 import PendingRequests from "./pages/PendingRequests";
+import ClubRoleRequests from "./pages/ClubRoleRequest";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="/pending-clubs" element={<PendingClubs />} />
             <Route path="/club/:clubId/members/:userId" element={<MemberDetails />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/club/:clubId/role-change-requests"element={<ClubRoleRequests />}/>
             <Route element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
             </Route>

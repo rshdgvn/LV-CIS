@@ -137,6 +137,33 @@ class MembershipController extends Controller
     }
 
     /**
+     * Get all role change requests for a specific club
+     */
+    public function getRoleChangeRequests($clubId)
+    {
+        $club = Club::findOrFail($clubId);
+
+        $requests = ClubMembership::with('user.member')
+            ->where('club_id', $clubId)
+            ->whereNotNull('requested_role')
+            ->get()
+            ->map(function ($membership) {
+                return [
+                    'user_id' => $membership->user->id,
+                    'name' => $membership->user->name,
+                    'email' => $membership->user->email,
+                    'requested_role' => $membership->requested_role,
+                    'course' => $membership->user->member?->course,
+                    'year_level' => $membership->user->member?->year_level,
+                    'student_id' => $membership->user->member?->student_id,
+                    'requested_at' => $membership->updated_at,
+                ];
+            });
+
+        return response()->json($requests);
+    }
+
+    /**
      * Get all members of a club
      */
     public function getClubMembers($clubId)

@@ -122,13 +122,21 @@ export default function ClubDetails() {
           <div className="text-center md:text-left flex-1">
             <div className="flex items-center justify-between md:justify-start gap-4">
               <h1 className="text-3xl font-bold mb-2">{club.name}</h1>
-              {/* Pending Requests Button */}
-              <button
-                onClick={() => navigate(`/club/${id}/pending-requests`)}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-black font-semibold text-sm"
-              >
-                Pending Requests
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate(`/club/${id}/pending-requests`)}
+                  className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-black font-semibold text-sm"
+                >
+                  Pending Requests
+                </button>
+
+                <button
+                  onClick={() => navigate(`/club/${id}/role-change-requests`)}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold text-sm"
+                >
+                  Role Requests
+                </button>
+              </div>
             </div>
             <p className="text-gray-400 max-w-2xl">{club.description}</p>
           </div>
@@ -189,9 +197,7 @@ export default function ClubDetails() {
                       disabled={requestingRole}
                       className="px-4 py-2 bg-green-600 hover:bg-green-700 text-black font-semibold rounded mt-2 md:mt-0"
                     >
-                      {requestingRole
-                        ? "Requesting..."
-                        : "Apply Officer"}
+                      {requestingRole ? "Requesting..." : "Apply Officer"}
                     </button>
                   )}
                 </div>

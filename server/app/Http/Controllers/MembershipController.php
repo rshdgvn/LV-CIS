@@ -6,17 +6,21 @@ use App\Models\Club;
 use App\Models\ClubMembership;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
 
 class MembershipController extends Controller
 {
-    // Join a club
+    use AuthorizesRequests;
+    /**
+     * Join a club (creates a pending membership request)
+     */
     public function joinClub(Request $request, $clubId)
     {
         $club = Club::findOrFail($clubId);
-        $user = $request->user(); // authenticated user
+        $user = $request->user();
 
-        // Check if already a member
+        // Already requested or a member?
         if ($club->users()->where('user_id', $user->id)->exists()) {
             return response()->json(['message' => 'Already a member or pending approval'], 409);
         }
@@ -29,13 +33,14 @@ class MembershipController extends Controller
         return response()->json(['message' => 'Membership request sent successfully']);
     }
 
-    // Cancel pending club
+    /**
+     * Cancel a pending membership request
+     */
     public function cancelMembershipRequest(Request $request, $clubId)
     {
         $club = Club::findOrFail($clubId);
-        $user = $request->user(); // authenticated user
+        $user = $request->user();
 
-        // Check if user has a pending membership
         $membership = $club->users()
             ->where('user_id', $user->id)
             ->wherePivot('status', 'pending')
@@ -45,29 +50,82 @@ class MembershipController extends Controller
             return response()->json(['message' => 'No pending membership request found'], 404);
         }
 
-        // Detach the pending membership
         $club->users()->detach($user->id);
 
         return response()->json(['message' => 'Membership request cancelled successfully']);
     }
 
-
-    // Approve or reject a membership
+    /**
+     * Approve or reject membership — only officers/admins can do this
+     */
     public function updateMembershipStatus(Request $request, $clubId, $userId)
     {
         $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected',
         ]);
 
-        DB::table('club_memberships')
-            ->where('club_id', $clubId)
+        $membership = ClubMembership::where('club_id', $clubId)
             ->where('user_id', $userId)
-            ->update(['status' => $validated['status']]);
+            ->firstOrFail();
 
-        return response()->json(['message' => 'Membership status updated']);
+        // Policy check
+        $this->authorize('updateStatus', $membership);
+
+        $membership->update(['status' => $validated['status']]);
+
+        return response()->json(['message' => 'Membership status updated successfully']);
     }
 
-    // Get all members of a club
+    /**
+     * Member requests a role change (e.g., member → officer)
+     */
+    public function requestRoleChange(Request $request, $clubId)
+    {
+        $validated = $request->validate([
+            'new_role' => 'required|in:member,officer,admin',
+        ]);
+
+        $user = $request->user();
+
+        $membership = ClubMembership::where('club_id', $clubId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Cannot change directly — must be approved
+        $membership->update([
+            'requested_role' => $validated['new_role'],
+        ]);
+
+        return response()->json(['message' => 'Role change request submitted for approval']);
+    }
+
+    /**
+     * Admin or officer approves a role change request
+     */
+    public function approveRoleChange(Request $request, $clubId, $userId)
+    {
+        $membership = ClubMembership::where('club_id', $clubId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        // Policy check (only officer/admin)
+        $this->authorize('updateRole', $membership);
+
+        if (!$membership->requested_role) {
+            return response()->json(['message' => 'No pending role change request'], 404);
+        }
+
+        $membership->update([
+            'role' => $membership->requested_role,
+            'requested_role' => null,
+        ]);
+
+        return response()->json(['message' => 'Role change approved successfully']);
+    }
+
+    /**
+     * Get all members of a club
+     */
     public function getClubMembers($clubId)
     {
         $club = Club::with(['users' => function ($query) {
@@ -77,6 +135,9 @@ class MembershipController extends Controller
         return response()->json($club->users);
     }
 
+    /**
+     * Get a specific club member’s info
+     */
     public function getClubMember($clubId, $userId)
     {
         $membership = ClubMembership::where('club_id', $clubId)
@@ -89,17 +150,15 @@ class MembershipController extends Controller
 
         $user = User::with('member')->find($userId);
 
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
         return response()->json([
             'member' => $membership,
-            'user' => $user->member,
+            'user' => $user?->member,
         ]);
     }
 
-    // Get all clubs joined by the logged-in user
+    /**
+     * Get all clubs joined by the logged-in user
+     */
     public function getUserClubs(Request $request)
     {
         $user = $request->user();
@@ -108,24 +167,24 @@ class MembershipController extends Controller
         return response()->json($clubs);
     }
 
-    // Get the current user's member info
+    /**
+     * Get the current user’s member info
+     */
     public function getCurrentUserMemberInfo(Request $request)
     {
         $user = $request->user();
-
         $member = $user->member;
-
 
         if (!$member) {
             return response()->json(['message' => 'Member profile not found'], 404);
         }
-        
-        return response()->json([
-            'member' => $member,
-        ]);
+
+        return response()->json(['member' => $member]);
     }
 
-    // Create or update the current user's member info
+    /**
+     * Create or update the current user’s member info
+     */
     public function editMemberInfo(Request $request)
     {
         $user = $request->user();
@@ -139,20 +198,14 @@ class MembershipController extends Controller
         $member = $user->member;
 
         if ($member) {
-            // Update existing member profile
             $member->update($validated);
         } else {
-            // Create new member profile
-            $member = User::member()->create($validated);
+            $user->member()->create($validated);
         }
-
-        // Include clubs joined by this member
-        // $clubs = $member->clubs()->withPivot('role', 'status', 'joined_at')->get();
 
         return response()->json([
             'message' => 'Member profile saved successfully',
-            'member' => $member,
-            // 'clubs' => $clubs,
+            'member' => $member ?? $user->member,
         ]);
     }
 }

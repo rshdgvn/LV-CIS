@@ -175,10 +175,6 @@ class MembershipController extends Controller
         $user = $request->user();
         $member = $user->member;
 
-        if (!$member) {
-            return response()->json(['message' => 'Member profile not found'], 404);
-        }
-
         return response()->json(['member' => $member]);
     }
 
@@ -210,28 +206,27 @@ class MembershipController extends Controller
     }
 
     public function setupMemberProfile(Request $request)
-{
-    $user = $request->user();
+    {
+        $user = $request->user();
 
-    // Check if the user already has a member profile
-    if ($user->member) {
+        // Check if the user already has a member profile
+        if ($user->member) {
+            return response()->json([
+                'message' => 'Profile already exists. You can edit it instead.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'student_id' => 'required|string|max:50',
+            'course' => 'required|string|max:100',
+            'year_level' => 'required|string|max:10',
+        ]);
+
+        $member = $user->member()->create($validated);
+
         return response()->json([
-            'message' => 'Profile already exists. You can edit it instead.',
-        ], 400);
+            'message' => 'Profile setup successfully',
+            'member' => $member,
+        ], 201);
     }
-
-    $validated = $request->validate([
-        'student_id' => 'required|string|max:50',
-        'course' => 'required|string|max:100',
-        'year_level' => 'required|string|max:10',
-    ]);
-
-    $member = $user->member()->create($validated);
-
-    return response()->json([
-        'message' => 'Profile setup successfully',
-        'member' => $member,
-    ], 201);
-}
-
 }

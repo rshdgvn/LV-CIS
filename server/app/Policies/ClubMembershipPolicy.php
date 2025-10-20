@@ -60,7 +60,7 @@ class ClubMembershipPolicy
     /**
      * Determine if the user can approve or deny a role change.
      */
-    public function approveRoleChange(User $user, ClubMembership $membership)
+    public function updateRoleChange(User $user, ClubMembership $membership)
     {
         $authMembership = DB::table('club_memberships')
             ->where('club_id', $membership->club_id)

@@ -141,6 +141,7 @@ function Clubs() {
       if (!res.ok) throw new Error("Failed to fetch club details");
 
       const data = await res.json();
+      console.log(data)
       sessionStorage.setItem("clubDetails", JSON.stringify(data));
 
       navigate(`/club/${clubId}`);

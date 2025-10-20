@@ -69,11 +69,12 @@ class MembershipController extends Controller
             ->where('user_id', $userId)
             ->firstOrFail();
 
+
         // Policy check
         $this->authorize('updateStatus', $membership);
 
         $membership->update(['status' => $validated['status']]);
-
+        
         return response()->json(['message' => 'Membership status updated successfully']);
     }
 
@@ -178,6 +179,33 @@ class MembershipController extends Controller
 
         return response()->json(['member' => $member]);
     }
+
+    /**
+     * Get all pending requests for a specific club
+     */
+    public function getPendingRequests($clubId)
+    {
+        $club = Club::findOrFail($clubId);
+
+        $pendingMembers = $club->users()
+            ->wherePivot('status', 'pending')
+            ->with('member') // Include member info if needed
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'student_id' => $user->member?->student_id,
+                    'course' => $user->member?->course,
+                    'year_level' => $user->member?->year_level,
+                    'requested_at' => $user->pivot->created_at,
+                ];
+            });
+
+        return response()->json($pendingMembers);
+    }
+
 
     /**
      * Create or update the current user’s member info

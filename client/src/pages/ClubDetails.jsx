@@ -89,6 +89,7 @@ export default function ClubDetails() {
       <NavTabs tabs={tabs} />
       <div className="min-h-screen bg-black p-6 text-white">
         {/* Club Info */}
+        {/* Club Info */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-10 border-b border-gray-800 pb-6">
           {club.logo && (
             <img
@@ -97,8 +98,17 @@ export default function ClubDetails() {
               className="w-32 h-32 rounded-xl object-cover border border-gray-700"
             />
           )}
-          <div className="text-center md:text-left">
-            <h1 className="text-3xl font-bold mb-2">{club.name}</h1>
+          <div className="text-center md:text-left flex-1">
+            <div className="flex items-center justify-between md:justify-start gap-4">
+              <h1 className="text-3xl font-bold mb-2">{club.name}</h1>
+              {/* Pending Requests Button */}
+              <button
+                onClick={() => navigate(`/club/${id}/pending-requests`)}
+                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-black font-semibold text-sm"
+              >
+                Pending Requests
+              </button>
+            </div>
             <p className="text-gray-400 max-w-2xl">{club.description}</p>
           </div>
         </div>

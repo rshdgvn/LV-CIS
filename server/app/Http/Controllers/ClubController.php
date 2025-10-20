@@ -17,7 +17,9 @@ class ClubController extends Controller
     public function show($id)
     {
         $club = Club::with([
-            'users.member',
+            'users' => function ($query) {
+                $query->wherePivot('status', 'approved');
+            }
         ])->findOrFail($id);
 
         return response()->json($club);

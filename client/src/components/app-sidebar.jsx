@@ -11,33 +11,36 @@ import {
   SidebarFooter,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: SquareTerminal,
-      isActive: true,
-    },
-    {
-      title: "Attendance",
-      url: "/attendance",
-      icon: Bot,
-    },
-    {
-      title: "Clubs",
-      url: "/clubs",
-      icon: BookOpen,
-    },
-    {
-      title: "Events",
-      url: "/events",
-      icon: Settings2,
-    },
-  ],
-};
 export function AppSidebar({ ...props }) {
+  const { user } = useAuth();
+  const admin = user.role == "admin";
+  const data = {
+    navMain: [
+      {
+        title: admin ? "Admin" : "Dashboard",
+        url: admin? "/admin/dashboard" : "/dashboard",
+        icon: SquareTerminal,
+        isActive: true,
+      },
+      {
+        title: "Attendance",
+        url: "/attendance",
+        icon: Bot,
+      },
+      {
+        title: "Clubs",
+        url: "/clubs",
+        icon: BookOpen,
+      },
+      {
+        title: "Events",
+        url: "/events",
+        icon: Settings2,
+      },
+    ],
+  };
   return (
     <Sidebar
       collapsible="icon"

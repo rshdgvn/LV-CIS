@@ -3,10 +3,13 @@ import { isLoggedIn } from "@/lib/auth";
 import { useNavigate } from "react-router";
 import logo from "../assets/lvcc-logo.png";
 import LVCIS from "../assets/LVCIS.png";
+import { useAuth } from "@/contexts/AuthContext";
 import dashboard from "../assets/Dashboard.png";
 
 function LandingPage() {
   const nav = useNavigate();
+  const { user } = useAuth();
+  const admin = user.role == 'admin'
 
   return (
     <div className="w-full bg-black text-white">
@@ -32,7 +35,7 @@ function LandingPage() {
 
           <div>
             {isLoggedIn() ? (
-              <Button variant="outline" onClick={() => nav("/dashboard")}>
+              <Button variant="outline" onClick={() => nav(admin? '/admin/dashboard' : "/dashboard")}>
                 Dashboard
               </Button>
             ) : (

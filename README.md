@@ -1,6 +1,6 @@
 # La Verdad Club Integrated System (LVCIS)
 
-![LVCIS Screenshot](https://github.com/rshdgvn/LV-CIS/blob/main/client/public/Screenshot%202025-09-24%20231125.png?raw=true)
+![LVCIS Screenshot](https://github.com/rshdgvn/LV-CIS/blob/main/client/public/Screenshot%202025-10-20%20192135.png?raw=true)
 
 A **centralized platform** for managing student clubs at **La Verdad Christian College**.  
 Designed to simplify **membership, events, attendance, and analytics** — all in one place.

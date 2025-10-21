@@ -6,6 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import NavTabs from "@/components/NavTabs";
+import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
+import { AlertTemplate } from "@/components/AlertTemplate";
+import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
@@ -13,9 +18,15 @@ export default function ClubRoleRequests() {
   const { token } = useAuth();
   const { clubId } = useParams();
   const navigate = useNavigate();
+
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [alert, setAlert] = useState(null);
+
+  const tabs = [
+    { name: "Overview", href: "/clubs" },
+    { name: "Pending", href: "/pending-clubs" },
+  ];
 
   useEffect(() => {
     if (!token || !clubId) return;
@@ -26,7 +37,7 @@ export default function ClubRoleRequests() {
         NProgress.start();
 
         const res = await fetch(
-          `http://localhost:8000/api/clubs/${clubId}/role-change-requests`,
+          `${APP_URL}/clubs/${clubId}/role-change-requests`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -40,7 +51,11 @@ export default function ClubRoleRequests() {
         const data = await res.json();
         setRequests(data);
       } catch (err) {
-        setError(err.message || "Failed to load data.");
+        setAlert({
+          icon: <AlertCircleIcon className="text-red-500" />,
+          title: "Error",
+          description: err.message || "Failed to load requests.",
+        });
       } finally {
         setLoading(false);
         NProgress.done();
@@ -50,12 +65,17 @@ export default function ClubRoleRequests() {
     fetchRequests();
   }, [token, clubId]);
 
+  useEffect(() => {
+    if (!alert) return;
+    const timer = setTimeout(() => setAlert(null), 4000);
+    return () => clearTimeout(timer);
+  }, [alert]);
+
   const handleApprove = async (userId) => {
-    if (!confirm("Approve this role request?")) return;
     try {
       NProgress.start();
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${clubId}/role-change/${userId}/approve`,
+        `${APP_URL}/clubs/${clubId}/role-change/${userId}/approve`,
         {
           method: "POST",
           headers: {
@@ -64,24 +84,31 @@ export default function ClubRoleRequests() {
           },
         }
       );
-
       if (!res.ok) throw new Error("Failed to approve request");
 
       setRequests((prev) => prev.filter((r) => r.user_id !== userId));
-      alert("Role change approved!");
+
+      setAlert({
+        icon: <CheckCircle2Icon className="text-green-500" />,
+        title: "Approved",
+        description: "Role request approved successfully.",
+      });
     } catch (err) {
-      alert(err.message);
+      setAlert({
+        icon: <AlertCircleIcon className="text-red-500" />,
+        title: "Error",
+        description: err.message || "Failed to approve request.",
+      });
     } finally {
       NProgress.done();
     }
   };
 
   const handleReject = async (userId) => {
-    if (!confirm("Reject this role request?")) return;
     try {
       NProgress.start();
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${clubId}/role-change/${userId}/reject`,
+        `${APP_URL}/clubs/${clubId}/role-change/${userId}/reject`,
         {
           method: "POST",
           headers: {
@@ -90,13 +117,21 @@ export default function ClubRoleRequests() {
           },
         }
       );
-
       if (!res.ok) throw new Error("Failed to reject request");
 
       setRequests((prev) => prev.filter((r) => r.user_id !== userId));
-      alert("Role change rejected!");
+
+      setAlert({
+        icon: <CheckCircle2Icon className="text-red-500" />,
+        title: "Rejected",
+        description: "Role request rejected successfully.",
+      });
     } catch (err) {
-      alert(err.message);
+      setAlert({
+        icon: <AlertCircleIcon className="text-red-500" />,
+        title: "Error",
+        description: err.message || "Failed to reject request.",
+      });
     } finally {
       NProgress.done();
     }
@@ -104,7 +139,19 @@ export default function ClubRoleRequests() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-black text-white p-6">
+      <NavTabs tabs={tabs} />
+
+      {alert && (
+        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <AlertTemplate
+            icon={alert.icon}
+            title={alert.title}
+            description={alert.description}
+          />
+        </div>
+      )}
+
+      <div className="min-h-screen text-white p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Officer Role Requests</h1>
           <button
@@ -116,9 +163,9 @@ export default function ClubRoleRequests() {
         </div>
 
         {loading ? (
-          <p className="text-gray-400">Loading...</p>
-        ) : error ? (
-          <p className="text-red-500">{error}</p>
+          <div className="min-h-screen flex items-center justify-center text-white">
+            <div className="loader"></div>
+          </div>
         ) : requests.length === 0 ? (
           <p className="text-gray-400">No role change requests found.</p>
         ) : (
@@ -142,18 +189,27 @@ export default function ClubRoleRequests() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => handleApprove(req.user_id)}
-                    className="px-3 py-2 bg-green-600 hover:bg-green-700 text-black rounded"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleReject(req.user_id)}
-                    className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
-                  >
-                    Reject
-                  </button>
+                  <AlertDialogTemplate
+                    title="Approve Role Request?"
+                    description="Are you sure you want to approve this role request?"
+                    onConfirm={() => handleApprove(req.user_id)}
+                    button={
+                      <button className="px-3 py-2 bg-green-600 hover:bg-green-700 text-black rounded">
+                        Approve
+                      </button>
+                    }
+                  />
+
+                  <AlertDialogTemplate
+                    title="Reject Role Request?"
+                    description="Are you sure you want to reject this role request?"
+                    onConfirm={() => handleReject(req.user_id)}
+                    button={
+                      <button className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded">
+                        Reject
+                      </button>
+                    }
+                  />
                 </div>
               </div>
             ))}

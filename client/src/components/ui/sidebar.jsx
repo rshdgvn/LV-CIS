@@ -245,7 +245,7 @@ function SidebarTrigger({ className, onClick, ...props }) {
       }}
       {...props}
     >
-      <img src={burgerIcon} alt="menu" />
+      <img src={burgerIcon} alt="menu" className="h-4 w-auto" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

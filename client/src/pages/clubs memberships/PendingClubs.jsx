@@ -7,8 +7,17 @@ import NavTabs from "@/components/NavTabs";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import ClubList from "@/components/ClubList";
+import { AlertTemplate } from "@/components/AlertTemplate";
+import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
+
+const finishProgress = () =>
+  new Promise((resolve) => {
+    NProgress.done();
+    setTimeout(resolve, 250);
+  });
 
 export default function PendingClubs() {
   const { token } = useAuth();
@@ -22,21 +31,25 @@ export default function PendingClubs() {
     !sessionStorage.getItem("pendingClubs")
   );
   const [error, setError] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
-    { name: "Profile", href: "/profile" },
   ];
 
   const fetchPendingClubs = async (showLoading = true) => {
     if (!token) return;
-    try {
-      if (showLoading) setLoading(true);
-      setError(null);
-      NProgress.start();
 
-      const res = await fetch("http://localhost:8000/api/your/pending-clubs", {
+    try {
+      if (showLoading) {
+        setLoading(true);
+        NProgress.start();
+      }
+
+      setError(null);
+
+      const res = await fetch(`${APP_URL}/your/pending-clubs`, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -50,21 +63,24 @@ export default function PendingClubs() {
       setPendingClubs(data);
       sessionStorage.setItem("pendingClubs", JSON.stringify(data));
     } catch (err) {
+      console.error("Error fetching pending clubs:", err);
       setError(err.message || "Error loading pending clubs");
     } finally {
       setLoading(false);
-      NProgress.done();
+      await finishProgress();
     }
   };
 
   useEffect(() => {
-    if (token) fetchPendingClubs(!sessionStorage.getItem("pendingClubs"));
+    if (!token) return;
+    const hasCache = sessionStorage.getItem("pendingClubs");
+    fetchPendingClubs(!hasCache);
   }, [token]);
 
   useEffect(() => {
     const handleRefresh = () => {
       sessionStorage.removeItem("pendingClubs");
-      fetchPendingClubs(false); 
+      fetchPendingClubs(false);
     };
 
     window.addEventListener("pendingClubsUpdated", handleRefresh);
@@ -73,15 +89,13 @@ export default function PendingClubs() {
   }, [token]);
 
   const handleCancel = async (clubId) => {
-    if (!token) return alert("Please log in first.");
-    if (!window.confirm("Are you sure you want to cancel your application?"))
-      return;
+    if (!token) return;
 
     try {
       NProgress.start();
 
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${clubId}/cancel`,
+        `${APP_URL}/clubs/${clubId}/cancel`,
         {
           method: "DELETE",
           headers: {
@@ -96,39 +110,75 @@ export default function PendingClubs() {
       if (!res.ok)
         throw new Error(data.message || "Failed to cancel application.");
 
-      alert(data.message);
-
       sessionStorage.removeItem("pendingClubs");
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
 
       await fetchPendingClubs(false);
       window.dispatchEvent(new Event("clubsUpdated"));
+      await finishProgress();
+
+      setAlert({
+        type: "success",
+        title: "Application Cancelled",
+        description:
+          data.message || "Your club application has been cancelled.",
+      });
     } catch (err) {
-      alert(err.message || "Error canceling club application.");
-    } finally {
-      NProgress.done();
+      await finishProgress();
+      setAlert({
+        type: "error",
+        title: "Failed to Cancel",
+        description: err.message || "An error occurred while cancelling.",
+      });
     }
   };
+
+  useEffect(() => {
+    if (!alert) return;
+    const timer = setTimeout(() => setAlert(null), 4000);
+    return () => clearTimeout(timer);
+  }, [alert]);
 
   return (
     <Layout>
       <NavTabs tabs={tabs} />
-      <div className="min-h-screen bg-black p-6 text-white">
-        <h1 className="text-2xl font-semibold mb-6">Pending Clubs</h1>
 
-        {loading ? (
-          <p className="text-gray-400 text-center">Loading pending clubs...</p>
-        ) : error ? (
-          <p className="text-red-400 text-center">{error}</p>
-        ) : (
-          <ClubList
-            clubs={pendingClubs}
-            status="pending"
-            onCancel={handleCancel}
+      {alert && (
+        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <AlertTemplate
+            icon={
+              alert.type === "success" ? (
+                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
+              ) : (
+                <AlertCircleIcon className="h-6 w-6 text-red-500" />
+              )
+            }
+            title={alert.title}
+            description={alert.description}
           />
-        )}
-      </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center text-white">
+          <div className="loader"></div>
+        </div>
+      ) : (
+        <div className="min-h-screen p-6 text-white">
+          <h1 className="text-2xl font-semibold mb-6">Pending Clubs</h1>
+
+          {error ? (
+            <p className="text-red-400 text-center">{error}</p>
+          ) : (
+            <ClubList
+              clubs={pendingClubs}
+              status="pending"
+              onCancel={handleCancel}
+            />
+          )}
+        </div>
+      )}
     </Layout>
   );
 }

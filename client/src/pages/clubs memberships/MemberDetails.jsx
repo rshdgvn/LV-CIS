@@ -7,6 +7,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import NavTabs from "@/components/NavTabs";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
@@ -28,7 +29,7 @@ export default function MemberDetails() {
         NProgress.start();
 
         const res = await fetch(
-          `http://localhost:8000/api/clubs/${clubId}/members/${userId}`,
+          `${APP_URL}/clubs/${clubId}/members/${userId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -66,14 +67,13 @@ export default function MemberDetails() {
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
-    { name: "Profile", href: "/profile" },
   ];
 
   if (error) {
     return (
       <Layout>
         <NavTabs tabs={tabs} />
-        <div className="min-h-screen bg-black text-red-400 flex items-center justify-center">
+        <div className="min-h-screen text-red-400 flex items-center justify-center">
           <p>{error}</p>
         </div>
       </Layout>
@@ -84,8 +84,8 @@ export default function MemberDetails() {
     return (
       <Layout>
         <NavTabs tabs={tabs} />
-        <div className="min-h-screen bg-black text-gray-400 flex items-center justify-center">
-          <p>Loading member details...</p>
+        <div className="min-h-screen flex items-center justify-center text-white">
+          <div className="loader"></div>
         </div>
       </Layout>
     );
@@ -94,7 +94,7 @@ export default function MemberDetails() {
   return (
     <Layout>
       <NavTabs tabs={tabs} />
-      <div className="min-h-screen bg-black text-white p-6">
+      <div className="min-h-screen text-white p-6">
         <div className="flex flex-col items-center mb-8">
           <img
             src={

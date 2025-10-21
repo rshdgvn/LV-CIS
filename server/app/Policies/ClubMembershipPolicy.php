@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\ClubMembership;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\DB;
 
 class ClubMembershipPolicy
@@ -22,22 +23,21 @@ class ClubMembershipPolicy
             ->first();
 
         if (!$authMembership) {
-            return false; // Not part of this club
+            return Response::deny('You are not a member of this club.');
         }
 
         // Admin can approve/reject anyone
         if ($user->role === 'admin') {
-            return true;
+            return Response::allow();
         }
 
         // Officer can only manage members (not admins/officers)
         if ($authMembership->role === 'officer' && $membership->role === 'member') {
-            return true;
+            return Response::allow();
         }
 
-        return false;
+        return Response::deny('Only officers and admins can approve or reject members.');
     }
-
 
     /**
      * Determine if the user can request a role change.
@@ -50,11 +50,15 @@ class ClubMembershipPolicy
             ->first();
 
         if (!$authMembership) {
-            return false;
+            return Response::deny('You must be a member of this club to request a role change.');
         }
 
         // Members can request role change
-        return $authMembership->role === 'member';
+        if ($authMembership->role === 'member') {
+            return Response::allow();
+        }
+
+        return Response::deny('Only members can request to become officers.');
     }
 
     /**
@@ -68,19 +72,19 @@ class ClubMembershipPolicy
             ->first();
 
         if (!$authMembership) {
-            return false; // Not part of this club
+            return Response::deny('You are not part of this club.');
         }
 
         // Admin can approve anyone
         if ($user->role === 'admin') {
-            return true;
+            return Response::allow();
         }
 
         // Officer can only approve role changes for members
         if ($authMembership->role === 'officer' && $membership->role === 'member') {
-            return true;
+            return Response::allow();
         }
 
-        return false; // Everyone else denied
+        return Response::deny('You do not have permission to approve role changes.');
     }
 }

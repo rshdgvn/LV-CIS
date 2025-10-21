@@ -1,4 +1,5 @@
 import React from "react";
+import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
 
 function ClubCard({
   name,
@@ -13,19 +14,21 @@ function ClubCard({
     if (status === "pending") {
       return (
         <div className="flex flex-col gap-2">
-          <button
-            className="mt-4 w-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold py-2 rounded-lg cursor-not-allowed"
-          >
+          <button className="mt-4 w-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold py-2 rounded-lg cursor-not-allowed">
             PENDING
           </button>
 
           {onCancel && (
-            <button
-              onClick={onCancel}
-              className="w-full bg-red-700 hover:bg-red-800 text-gray-200 text-xs font-semibold py-2 rounded-lg transition-colors"
-            >
-              Cancel Application
-            </button>
+            <AlertDialogTemplate
+              title="Cancel Application?"
+              description="Are you sure you want to cancel your club application?"
+              onConfirm={onCancel}
+              button={
+                <button className="w-full bg-red-700 hover:bg-red-800 text-gray-200 text-xs font-semibold py-2 rounded-lg transition-colors">
+                  Cancel Application
+                </button>
+              }
+            />
           )}
         </div>
       );
@@ -43,12 +46,16 @@ function ClubCard({
     }
 
     return (
-      <button
-        onClick={onJoin}
-        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
-      >
-        JOIN NOW
-      </button>
+      <AlertDialogTemplate
+        title="Join this club?"
+        description="Are you sure you want to send a join request to this club?"
+        onConfirm={onJoin}
+        button={
+          <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
+            JOIN NOW
+          </button>
+        }
+      />
     );
   };
 

@@ -53,7 +53,7 @@ function Login() {
   };
 
   return (
-    <div className="bg-[radial-gradient(ellipse,theme(colors.slate.800)_0%,theme(colors.slate.900)_30%,theme(colors.slate.950)_80%)] flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+    <div className="bg-[radial-gradient(ellipse,theme(colors.blue.800)_0%,theme(colors.blue.900)_30%,theme(colors.black)_80%)] flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6 bg-s">
         <a href="/" className="flex items-center gap-2 self-center font-medium">
           <img

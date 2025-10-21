@@ -5,18 +5,18 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Dashboard from "./pages/Dashboard";
 import Attendance from "./pages/Attendance";
 import Events from "./pages/Events";
-import Clubs from "./pages/Clubs";
-import ClubDetails from "./pages/ClubDetails"; 
+import Clubs from "./pages/clubs memberships/Clubs";
+import ClubDetails from "./pages/clubs memberships/ClubDetails"; 
 import GoogleCallback from "./GoogleCallback";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./contexts/ProtectedRoute";
-import PendingClubs from "./pages/PendingClubs";
+import PendingClubs from "./pages/clubs memberships/PendingClubs";
 import NotFound from "./pages/errors/NotFound";
 import AdminRoute from "./contexts/AdminRoute";
-import MemberDetails from "./pages/MemberDetails";
+import MemberDetails from "./pages/clubs memberships/MemberDetails";
 import Profile from "./pages/Profile";
-import PendingRequests from "./pages/PendingRequests";
-import ClubRoleRequests from "./pages/ClubRoleRequest";
+import PendingRequests from "./pages/clubs memberships/PendingRequests";
+import ClubRoleRequests from "./pages/clubs memberships/ClubRoleRequest";
 
 function App() {
   return (

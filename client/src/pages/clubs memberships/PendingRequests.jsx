@@ -6,9 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import { toast } from "sonner";
 import NavTabs from "@/components/NavTabs";
 import { AlertTemplate } from "@/components/AlertTemplate";
+import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 
@@ -43,15 +43,12 @@ export default function PendingRequests() {
       setError(null);
       NProgress.start();
 
-      const res = await fetch(
-        `${APP_URL}/clubs/${id}/pending-requests`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${APP_URL}/clubs/${id}/pending-requests`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) throw new Error("Failed to fetch pending requests");
 
@@ -75,17 +72,14 @@ export default function PendingRequests() {
 
     try {
       NProgress.start();
-      const res = await fetch(
-        `${APP_URL}/clubs/${id}/members/${userId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status }),
-        }
-      );
+      const res = await fetch(`${APP_URL}/clubs/${id}/members/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to update status");
@@ -95,7 +89,9 @@ export default function PendingRequests() {
 
       setAlert({
         type: "success",
-        title: "Request Updated",
+        title: status === "approved"
+            ? "Approved!"
+            : "Rejected!",
         description:
           status === "approved"
             ? "Membership approved successfully!"
@@ -174,18 +170,26 @@ export default function PendingRequests() {
               </div>
 
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleUpdateStatus(user.user_id, "approved")}
-                  className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-white text-sm"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleUpdateStatus(user.user_id, "rejected")}
-                  className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
-                >
-                  Reject
-                </button>
+                <AlertDialogTemplate
+                  title="Accept applicant?"
+                  description="Are you sure you want to approve this applicant?"
+                  onConfirm={() => handleUpdateStatus(user.user_id, "approved")}
+                  button={
+                    <button className="px-3 py-2 bg-green-600 hover:bg-green-700 text-black rounded">
+                      Approve
+                    </button>
+                  }
+                />
+                <AlertDialogTemplate
+                  title="Reject applicant?"
+                  description="Are you sure you want to reject this applicant?"
+                  onConfirm={() => handleUpdateStatus(user.user_id, "rejected")}
+                  button={
+                    <button className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded">
+                      Reject
+                    </button>
+                  }
+                />
               </div>
             </div>
           ))}

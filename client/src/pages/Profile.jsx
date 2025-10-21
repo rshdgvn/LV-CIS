@@ -7,17 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { toast } from "sonner";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
 function Profile() {
   const { token } = useAuth();
-
-  const tabs = [
-    { name: "Overview", href: "/clubs" },
-    { name: "Pending", href: "/pending-clubs" },
-    { name: "Profile", href: "/profile" },
-  ];
 
   const [member, setMember] = useState(() => {
     const cached = sessionStorage.getItem("memberProfile");
@@ -41,7 +36,7 @@ function Profile() {
       setError(null);
       NProgress.start();
 
-      const res = await fetch("http://localhost:8000/api/user/member-info", {
+      const res = await fetch(`${APP_URL}/user/member-info`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -76,6 +71,7 @@ function Profile() {
 
   useEffect(() => {
     if (token) fetchMemberInfo(!sessionStorage.getItem("memberProfile"));
+    console.log('APP_URL', APP_URL)
   }, [token]);
 
   const handleChange = (e) => {
@@ -91,7 +87,7 @@ function Profile() {
       setError(null);
       NProgress.start();
 
-      const res = await fetch("http://localhost:8000/api/user/member-info", {
+      const res = await fetch(`${APP_URL}/user/member-info`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -138,7 +134,7 @@ function Profile() {
       setError(null);
       NProgress.start();
 
-      const res = await fetch("http://localhost:8000/api/user/setup-profile", {
+      const res = await fetch(`${APP_URL}/user/setup-profile`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -148,13 +144,13 @@ function Profile() {
       });
 
       const data = await res.json();
-      console.log(JSON.stringify(data))
+      console.log(JSON.stringify(data));
 
       if (!res.ok) throw new Error(data.message || "Failed to setup profile");
 
-      // setMember(data.member);
-      // sessionStorage.setItem("memberProfile", JSON.stringify(data.member));
-      // setShowSetupModal(false);
+      setMember(data.member);
+      sessionStorage.setItem("memberProfile", JSON.stringify(data.member));
+      setShowSetupModal(false);
       toast.success("Profile setup successfully!");
     } catch (err) {
       console.error(err);
@@ -167,8 +163,6 @@ function Profile() {
 
   return (
     <Layout>
-      <NavTabs tabs={tabs} />
-
       <div className="min-h-screen bg-black p-6 text-white max-w-md mx-auto relative">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold">Profile</h1>

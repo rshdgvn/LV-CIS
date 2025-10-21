@@ -9,6 +9,7 @@ import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { AlertTemplate } from "@/components/AlertTemplate";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
@@ -47,7 +48,7 @@ export default function ClubDetails() {
         setError(null);
         NProgress.start();
 
-        const res = await fetch(`http://localhost:8000/api/clubs/${id}`, {
+        const res = await fetch(`${APP_URL}/clubs/${id}`, {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -85,7 +86,7 @@ export default function ClubDetails() {
       setRequestingRole(true);
 
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${id}/role-change`,
+        `${APP_URL}/clubs/${id}/role-change`,
         {
           method: "POST",
           headers: {

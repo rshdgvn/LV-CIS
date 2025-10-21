@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/login-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "../assets/lvcc-logo.png";
+import { APP_URL } from "@/lib/config";
 
 function Login() {
   const [formData, setFormData] = useState({ login: "", password: "" });
@@ -20,7 +21,7 @@ function Login() {
     setErrors({});
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/login", {
+      const res = await fetch(`${APP_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,7 +50,7 @@ function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8000/api/auth/google";
+    window.location.href = `${APP_URL}/auth/google`;
   };
 
   return (

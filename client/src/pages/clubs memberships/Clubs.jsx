@@ -11,6 +11,7 @@ import ClubList from "@/components/ClubList";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTemplate } from "@/components/AlertTemplate";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
@@ -61,8 +62,8 @@ function Clubs() {
       };
 
       const [yourRes, otherRes] = await Promise.all([
-        fetch("http://localhost:8000/api/your/clubs", { headers }),
-        fetch("http://localhost:8000/api/other/clubs", { headers }),
+        fetch(`${APP_URL}/your/clubs`, { headers }),
+        fetch(`${APP_URL}/other/clubs`, { headers }),
       ]);
 
       if (!yourRes.ok || !otherRes.ok)
@@ -130,7 +131,7 @@ function Clubs() {
       NProgress.start();
 
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${clubId}/join`,
+        `${APP_URL}/clubs/${clubId}/join`,
         {
           method: "POST",
           headers: {

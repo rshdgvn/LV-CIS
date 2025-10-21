@@ -7,6 +7,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import NavTabs from "@/components/NavTabs";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
@@ -28,7 +29,7 @@ export default function MemberDetails() {
         NProgress.start();
 
         const res = await fetch(
-          `http://localhost:8000/api/clubs/${clubId}/members/${userId}`,
+          `${APP_URL}/clubs/${clubId}/members/${userId}`,
           {
             headers: {
               "Content-Type": "application/json",

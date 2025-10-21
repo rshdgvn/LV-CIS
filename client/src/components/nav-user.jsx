@@ -28,43 +28,44 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { APP_URL } from "@/lib/config";
 
-export function NavUser({ user }) {
+export function NavUser() {
   const { token, setToken } = useAuth();
+  const { user } = useAuth();
   const nav = useNavigate();
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "";
 
   const handleLogout = async () => {
-  try {
-    if (!token) return;
+    try {
+      if (!token) return;
 
-    const res = await fetch("http://127.0.0.1:8000/api/logout", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch(`${APP_URL}/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (res.ok) {
-      setToken(null);
-      localStorage.removeItem("token");
-      sessionStorage.clear(); 
+      if (res.ok) {
+        setToken(null);
+        localStorage.removeItem("token");
+        sessionStorage.clear();
 
-      const data = await res.json();
-      console.log("Logout response:", data);
+        const data = await res.json();
+        console.log("Logout response:", data);
 
-      nav("/"); 
-    } else {
-      console.error("Logout failed:", await res.json());
+        nav("/");
+      } else {
+        console.error("Logout failed:", await res.json());
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
     }
-  } catch (error) {
-    console.error("Logout error:", error);
-  }
-};
-
+  };
 
   return (
     <SidebarMenu>
@@ -75,7 +76,9 @@ export function NavUser({ user }) {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className={`h-12 w-12 rounded-lg ${isCollapsed ? 'ml-4' : ''}`}>
+              <Avatar
+                className={`h-12 w-12 rounded-lg ${isCollapsed ? "ml-4" : ""}`}
+              >
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
@@ -106,15 +109,15 @@ export function NavUser({ user }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => nav("/profile")}>
                 <BadgeCheck />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => nav("/account")}>
                 <CreditCard />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => nav("/notifications")}>
                 <Bell />
                 Notifications
               </DropdownMenuItem>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { APP_URL } from "@/lib/config";
 
 export const AuthContext = createContext();
 
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }) => {
 
   const getUser = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/user", {
+      const res = await fetch(`${APP_URL}/user`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

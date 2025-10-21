@@ -9,6 +9,7 @@ import "nprogress/nprogress.css";
 import ClubList from "@/components/ClubList";
 import { AlertTemplate } from "@/components/AlertTemplate";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
@@ -48,7 +49,7 @@ export default function PendingClubs() {
 
       setError(null);
 
-      const res = await fetch("http://localhost:8000/api/your/pending-clubs", {
+      const res = await fetch(`${APP_URL}/your/pending-clubs`, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -94,7 +95,7 @@ export default function PendingClubs() {
       NProgress.start();
 
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${clubId}/cancel`,
+        `${APP_URL}/clubs/${clubId}/cancel`,
         {
           method: "DELETE",
           headers: {

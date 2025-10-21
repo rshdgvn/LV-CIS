@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import NavTabs from "@/components/NavTabs";
 import { AlertTemplate } from "@/components/AlertTemplate";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
 
@@ -43,7 +44,7 @@ export default function PendingRequests() {
       NProgress.start();
 
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${id}/pending-requests`,
+        `${APP_URL}/clubs/${id}/pending-requests`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -75,7 +76,7 @@ export default function PendingRequests() {
     try {
       NProgress.start();
       const res = await fetch(
-        `http://localhost:8000/api/clubs/${id}/members/${userId}`,
+        `${APP_URL}/clubs/${id}/members/${userId}`,
         {
           method: "PATCH",
           headers: {

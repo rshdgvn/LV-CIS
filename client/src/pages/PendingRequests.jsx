@@ -7,17 +7,32 @@ import { useParams, useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { toast } from "sonner";
+import NavTabs from "@/components/NavTabs";
+import { AlertTemplate } from "@/components/AlertTemplate";
+import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
 
 NProgress.configure({ showSpinner: false });
 
+const finishProgress = () =>
+  new Promise((resolve) => {
+    NProgress.done();
+    setTimeout(resolve, 250);
+  });
+
 export default function PendingRequests() {
   const { token } = useAuth();
-  const { id } = useParams(); // club ID
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [pending, setPending] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [alert, setAlert] = useState(null);
+
+  const tabs = [
+    { name: "Overview", href: "/clubs" },
+    { name: "Pending", href: "/pending-clubs" },
+  ];
 
   const fetchPendingRequests = async () => {
     if (!token || !id) return;
@@ -41,13 +56,12 @@ export default function PendingRequests() {
 
       const data = await res.json();
       setPending(data);
-      console.log(pending)
     } catch (err) {
       console.error(err);
       setError("Failed to load pending requests.");
     } finally {
       setLoading(false);
-      NProgress.done();
+      await finishProgress();
     }
   };
 
@@ -73,41 +87,73 @@ export default function PendingRequests() {
       );
 
       const data = await res.json();
-      console.log(data)
       if (!res.ok) throw new Error(data.message || "Failed to update status");
 
-      toast.success(
-        `Membership ${
-          status === "approved" ? "approved" : "rejected"
-        } successfully!`
-      );
-      fetchPendingRequests(); 
+      await fetchPendingRequests();
+      await finishProgress();
+
+      setAlert({
+        type: "success",
+        title: "Request Updated",
+        description:
+          status === "approved"
+            ? "Membership approved successfully!"
+            : "Membership rejected successfully!",
+      });
     } catch (err) {
-      console.error(err);
-      toast.error(err.message);
-    } finally {
-      NProgress.done();
+      await finishProgress();
+      setAlert({
+        type: "error",
+        title: "Action Failed",
+        description: err.message || "An error occurred while updating status.",
+      });
     }
   };
 
+  useEffect(() => {
+    if (!alert) return;
+    const timer = setTimeout(() => setAlert(null), 4000);
+    return () => clearTimeout(timer);
+  }, [alert]);
+
   return (
     <Layout>
-      <div className="min-h-screen bg-black p-6 text-white max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Pending Membership Requests</h1>
+      <NavTabs tabs={tabs} />
+
+      {alert && (
+        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <AlertTemplate
+            icon={
+              alert.type === "success" ? (
+                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
+              ) : (
+                <AlertCircleIcon className="h-6 w-6 text-red-500" />
+              )
+            }
+            title={alert.title}
+            description={alert.description}
+          />
+        </div>
+      )}
+
+      <div className="min-h-screen p-6 text-white max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Applicants</h1>
 
         {loading && (
-          <p className="text-gray-400">Loading pending requests...</p>
+          <div className="min-h-screen flex items-center justify-center text-white">
+            <div className="loader"></div>
+          </div>
         )}
         {error && <p className="text-red-400">{error}</p>}
 
         {!loading && pending.length === 0 && (
-          <p className="text-gray-400">No pending requests.</p>
+          <p className="text-gray-400">No applicants.</p>
         )}
 
         <div className="space-y-4">
           {pending.map((user) => (
             <div
-              key={user.id}
+              key={user.user_id}
               className="flex items-center justify-between bg-gray-900 hover:bg-gray-800 transition-colors p-4 rounded-xl border border-gray-800"
             >
               <div className="flex items-center gap-4">
@@ -144,7 +190,6 @@ export default function PendingRequests() {
           ))}
         </div>
 
-        {/* Back Button */}
         <div className="mt-10">
           <button
             onClick={() => navigate(-1)}

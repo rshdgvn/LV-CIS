@@ -89,27 +89,31 @@ class MembershipController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        // Only allow members to request a promotion
         if ($membership->role !== 'member') {
             return response()->json([
-                'message' => 'Only members can request a role change to officer'
-            ], 403); // Forbidden
+                'message' => 'Only members can request a role change to officer.'
+            ], 403);
         }
 
-        // Validate input (only officer allowed)
         $validated = $request->validate([
             'new_role' => 'required|in:officer',
         ]);
 
-        // Set the requested role
+        if ($membership->requested_role === 'officer') {
+            return response()->json([
+                'message' => 'You have already requested a role change to officer. Please wait for approval.'
+            ], 409); 
+        }
+
         $membership->update([
             'requested_role' => $validated['new_role'],
         ]);
 
         return response()->json([
-            'message' => 'Role change request submitted for approval'
+            'message' => 'Role change request submitted successfully for approval.'
         ], 200);
     }
+
 
     /**
      * Admin or officer approves a role change request

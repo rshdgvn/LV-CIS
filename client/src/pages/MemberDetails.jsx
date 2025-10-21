@@ -66,14 +66,13 @@ export default function MemberDetails() {
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
-    { name: "Profile", href: "/profile" },
   ];
 
   if (error) {
     return (
       <Layout>
         <NavTabs tabs={tabs} />
-        <div className="min-h-screen bg-black text-red-400 flex items-center justify-center">
+        <div className="min-h-screen text-red-400 flex items-center justify-center">
           <p>{error}</p>
         </div>
       </Layout>
@@ -84,8 +83,8 @@ export default function MemberDetails() {
     return (
       <Layout>
         <NavTabs tabs={tabs} />
-        <div className="min-h-screen bg-black text-gray-400 flex items-center justify-center">
-          <p>Loading member details...</p>
+        <div className="min-h-screen flex items-center justify-center text-white">
+          <div className="loader"></div>
         </div>
       </Layout>
     );
@@ -94,7 +93,7 @@ export default function MemberDetails() {
   return (
     <Layout>
       <NavTabs tabs={tabs} />
-      <div className="min-h-screen bg-black text-white p-6">
+      <div className="min-h-screen text-white p-6">
         <div className="flex flex-col items-center mb-8">
           <img
             src={

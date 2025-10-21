@@ -1,15 +1,24 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Layout from "@/components/app/layout";
-import { useAuth } from "@/contexts/AuthContext";
-import NavTabs from "@/components/NavTabs";
 import { useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+
+import Layout from "@/components/app/layout";
+import NavTabs from "@/components/NavTabs";
 import ClubList from "@/components/ClubList";
+import { useAuth } from "@/contexts/AuthContext";
+import { AlertTemplate } from "@/components/AlertTemplate";
+import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
 
 NProgress.configure({ showSpinner: false });
+
+const finishProgress = () =>
+  new Promise((resolve) => {
+    NProgress.done();
+    setTimeout(resolve, 250);
+  });
 
 function Clubs() {
   const { token } = useAuth();
@@ -20,27 +29,30 @@ function Clubs() {
     return cached ? JSON.parse(cached) : [];
   });
 
-  const [clubs, setClubs] = useState(() => {
+  const [otherClubs, setOtherClubs] = useState(() => {
     const cached = sessionStorage.getItem("otherClubs");
     return cached ? JSON.parse(cached) : [];
   });
 
   const [loading, setLoading] = useState(!sessionStorage.getItem("yourClubs"));
   const [error, setError] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const tabs = [
     { name: "Overview", href: "/clubs" },
     { name: "Pending", href: "/pending-clubs" },
-    { name: "Profile", href: "/profile" },
   ];
 
   const fetchClubs = async (showLoading = true) => {
     if (!token) return;
 
     try {
-      if (showLoading) setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+        NProgress.start(); 
+      }
+
       setError(null);
-      NProgress.start();
 
       const headers = {
         "Content-Type": "application/json",
@@ -48,48 +60,71 @@ function Clubs() {
         Authorization: `Bearer ${token}`,
       };
 
-      const [yourRes, allRes] = await Promise.all([
+      const [yourRes, otherRes] = await Promise.all([
         fetch("http://localhost:8000/api/your/clubs", { headers }),
         fetch("http://localhost:8000/api/other/clubs", { headers }),
       ]);
 
-      if (!yourRes.ok || !allRes.ok) throw new Error("Failed to fetch clubs");
+      if (!yourRes.ok || !otherRes.ok)
+        throw new Error("Failed to fetch clubs.");
 
-      const [yourData, allData] = await Promise.all([
+      const [yourData, otherData] = await Promise.all([
         yourRes.json(),
-        allRes.json(),
+        otherRes.json(),
       ]);
 
       setYourClubs(yourData);
-      setClubs(allData);
+      setOtherClubs(otherData);
+
       sessionStorage.setItem("yourClubs", JSON.stringify(yourData));
-      sessionStorage.setItem("otherClubs", JSON.stringify(allData));
+      sessionStorage.setItem("otherClubs", JSON.stringify(otherData));
     } catch (err) {
       console.error("Error fetching clubs:", err);
       setError("Failed to load clubs.");
     } finally {
-      setLoading(false);
-      NProgress.done();
+      if (showLoading) {
+        setLoading(false);
+        await finishProgress();
+      }
     }
   };
 
   useEffect(() => {
-    if (token) fetchClubs(!sessionStorage.getItem("yourClubs"));
+    if (!token) return;
+
+    const hasCache =
+      sessionStorage.getItem("yourClubs") &&
+      sessionStorage.getItem("otherClubs");
+
+    fetchClubs(!hasCache);
   }, [token]);
 
   useEffect(() => {
     const handleUpdate = () => {
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
-      fetchClubs(false); 
+      fetchClubs(false);
     };
 
     window.addEventListener("clubsUpdated", handleUpdate);
     return () => window.removeEventListener("clubsUpdated", handleUpdate);
   }, [token]);
 
+  useEffect(() => {
+    if (!alert) return;
+    const timer = setTimeout(() => setAlert(null), 4000);
+    return () => clearTimeout(timer);
+  }, [alert]);
+
   const handleJoinClub = async (clubId) => {
-    if (!token) return alert("Please log in first.");
+    if (!token) {
+      setAlert({
+        type: "error",
+        title: "Unauthorized",
+        description: "Please log in first.",
+      });
+      return;
+    }
 
     try {
       NProgress.start();
@@ -109,78 +144,94 @@ function Clubs() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to join club.");
 
-      alert(data.message);
-
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
-
-      await fetchClubs(false); 
+      await fetchClubs(false);
       window.dispatchEvent(new Event("pendingClubsUpdated"));
+
+      await finishProgress();
+
+      setAlert({
+        type: "success",
+        title: "Join Request Sent!",
+        description: data.message || "Your join request has been submitted.",
+      });
     } catch (err) {
-      alert(err.message || "An error occurred while joining the club.");
-    } finally {
-      NProgress.done();
+      await finishProgress();
+
+      setAlert({
+        type: "error",
+        title: "Failed to Join",
+        description: err.message || "An error occurred while joining the club.",
+      });
     }
   };
 
-  const handleEnterClub = async (clubId) => {
-    if (!token) return alert("Please log in first.");
-
-    try {
-      NProgress.start();
-      document.body.style.cursor = "wait";
-
-      const res = await fetch(`http://localhost:8000/api/clubs/${clubId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+  const handleEnterClub = (clubId) => {
+    if (!token) {
+      setAlert({
+        type: "error",
+        title: "Unauthorized",
+        description: "Please log in first.",
       });
-
-      if (!res.ok) throw new Error("Failed to fetch club details");
-
-      const data = await res.json();
-      console.log(data)
-      sessionStorage.setItem("clubDetails", JSON.stringify(data));
-
-      navigate(`/club/${clubId}`);
-    } catch (err) {
-      alert(err.message || "Error loading club details");
-    } finally {
-      NProgress.done();
-      document.body.style.cursor = "default";
+      return;
     }
+    navigate(`/club/${clubId}`);
   };
 
   return (
     <Layout>
       <NavTabs tabs={tabs} />
-      <div className="min-h-screen bg-black p-6 text-white">
-        <h1 className="text-2xl font-semibold mb-6">Your Clubs</h1>
 
-        {loading ? (
-          <p className="text-gray-400 text-center">Loading clubs...</p>
-        ) : error ? (
-          <p className="text-red-400 text-center">{error}</p>
-        ) : (
-          <ClubList
-            clubs={yourClubs}
-            status="approved"
-            onEnter={handleEnterClub}
+      {alert && (
+        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <AlertTemplate
+            icon={
+              alert.type === "success" ? (
+                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
+              ) : (
+                <AlertCircleIcon className="h-6 w-6 text-red-500" />
+              )
+            }
+            title={alert.title}
+            description={alert.description}
           />
-        )}
+        </div>
+      )}
 
-        <h1 className="text-2xl font-semibold mt-12 mb-6">Other Clubs</h1>
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center text-white">
+          <div className="loader"></div>
+        </div>
+      ) : (
+        <div className="min-h-screen p-6 text-white">
+          <section>
+            <h1 className="text-2xl font-semibold mb-6">Your Clubs</h1>
+            {error ? (
+              <p className="text-red-400 text-center">{error}</p>
+            ) : (
+              <ClubList
+                clubs={yourClubs}
+                status="approved"
+                onEnter={handleEnterClub}
+              />
+            )}
+          </section>
 
-        {loading ? (
-          <p className="text-gray-400 text-center">Loading clubs...</p>
-        ) : error ? (
-          <p className="text-red-400 text-center">{error}</p>
-        ) : (
-          <ClubList clubs={clubs} status="none" onJoin={handleJoinClub} />
-        )}
-      </div>
+          <section className="mt-12">
+            <h1 className="text-2xl font-semibold mb-6">Other Clubs</h1>
+            {error ? (
+              <p className="text-red-400 text-center">{error}</p>
+            ) : (
+              <ClubList
+                clubs={otherClubs}
+                status="none"
+                onJoin={handleJoinClub}
+              />
+            )}
+          </section>
+        </div>
+      )}
     </Layout>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import ClubCard from "@/components/ClubCard";
 
 export default function ClubList({ clubs = [], status, onEnter, onJoin, onCancel }) {
@@ -14,6 +14,10 @@ export default function ClubList({ clubs = [], status, onEnter, onJoin, onCancel
     );
   }
 
+  useEffect(() => {
+    console.log(clubs)
+  },[])
+
   return (
     <div className="flex flex-wrap gap-6">
       {clubs.map((club) => (
@@ -21,7 +25,7 @@ export default function ClubList({ clubs = [], status, onEnter, onJoin, onCancel
           key={club.id}
           name={club.name}
           description={club.description}
-          logo={club.logo}
+          logo={club.logo_url}
           status={status}
           onEnter={onEnter ? () => onEnter(club.id) : undefined}
           onJoin={onJoin ? () => onJoin(club.id) : undefined}

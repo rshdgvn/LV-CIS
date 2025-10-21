@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ClubResource;
 use App\Models\Club;
 use Illuminate\Http\Request;
 
@@ -72,10 +73,9 @@ class ClubController extends Controller
         $user = $request->user();
 
         $joinedClubIds = $user->clubs()->pluck('clubs.id');
-
         $clubs = Club::whereNotIn('id', $joinedClubIds)->get();
 
-        return response()->json($clubs);
+        return ClubResource::collection($clubs);
     }
 
     public function yourPendingClubs(Request $request)
@@ -86,6 +86,6 @@ class ClubController extends Controller
             ->wherePivot('status', 'pending')
             ->get();
 
-        return response()->json($clubs);
+        return ClubResource::collection($clubs);
     }
 }

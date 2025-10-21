@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
+import { APP_URL } from "@/lib/config";
 
 function ClubCard({
   name,

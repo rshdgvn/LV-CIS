@@ -23,19 +23,28 @@ class MembershipController extends Controller
 
         $validated = $request->validate([
             'role' => 'required|in:member,officer',
+            'officerTitle' => 'nullable|string|max:255',
         ]);
 
         if ($club->users()->where('user_id', $user->id)->exists()) {
-            return response()->json(['message' => 'Already a member or pending approval'], 409);
+            return response()->json([
+                'message' => 'Already a member or pending approval'
+            ], 409);
         }
 
         $club->users()->attach($user->id, [
             'role' => $validated['role'],
             'status' => 'pending',
+            'officer_title' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
         ]);
 
-        return response()->json(['message' => 'Membership request sent successfully']);
+        return response()->json([
+            'message' => 'Membership request sent successfully',
+            'role' => $validated['role'],
+            'officerTitle' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
+        ]);
     }
+
 
     /**
      * Cancel a pending membership request

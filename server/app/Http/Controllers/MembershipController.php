@@ -21,13 +21,16 @@ class MembershipController extends Controller
         $club = Club::findOrFail($clubId);
         $user = $request->user();
 
-        // Already requested or a member?
+        $validated = $request->validate([
+            'role' => 'required|in:member,officer',
+        ]);
+
         if ($club->users()->where('user_id', $user->id)->exists()) {
             return response()->json(['message' => 'Already a member or pending approval'], 409);
         }
 
         $club->users()->attach($user->id, [
-            'role' => 'member',
+            'role' => $validated['role'],
             'status' => 'pending',
         ]);
 

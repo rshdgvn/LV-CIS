@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
 import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
-import { APP_URL } from "@/lib/config";
 
 function ClubCard({
   name,
@@ -11,6 +10,12 @@ function ClubCard({
   onEnter,
   onCancel,
 }) {
+  const [selectedRole, setSelectedRole] = useState("member");
+
+  const handleConfirmJoin = () => {
+    if (onJoin) onJoin(selectedRole); 
+  };
+
   const renderButton = () => {
     if (status === "pending") {
       return (
@@ -49,8 +54,36 @@ function ClubCard({
     return (
       <AlertDialogTemplate
         title="Join this club?"
-        description="Are you sure you want to send a join request to this club?"
-        onConfirm={onJoin}
+        description={
+          <div>
+            <p className="mb-3 text-sm text-gray-300">
+              Choose your role before sending the join request:
+            </p>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="role"
+                  value="member"
+                  checked={selectedRole === "member"}
+                  onChange={() => setSelectedRole("member")}
+                />
+                Member
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="role"
+                  value="officer"
+                  checked={selectedRole === "officer"}
+                  onChange={() => setSelectedRole("officer")}
+                />
+                Officer
+              </label>
+            </div>
+          </div>
+        }
+        onConfirm={handleConfirmJoin}
         button={
           <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
             JOIN NOW

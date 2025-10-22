@@ -3,7 +3,13 @@
 import React, { useEffect } from "react";
 import ClubCard from "@/components/ClubCard";
 
-export default function ClubList({ clubs = [], status, onEnter, onJoin, onCancel }) {
+export default function ClubList({
+  clubs = [],
+  status,
+  onEnter,
+  onJoin,
+  onCancel,
+}) {
   if (clubs.length === 0) {
     return (
       <p className="text-gray400 text-center">
@@ -15,8 +21,8 @@ export default function ClubList({ clubs = [], status, onEnter, onJoin, onCancel
   }
 
   useEffect(() => {
-    console.log(clubs)
-  },[])
+    console.log(clubs);
+  }, []);
 
   return (
     <div className="flex flex-wrap gap-6">
@@ -28,7 +34,7 @@ export default function ClubList({ clubs = [], status, onEnter, onJoin, onCancel
           logo={club.logo_url}
           status={status}
           onEnter={onEnter ? () => onEnter(club.id) : undefined}
-          onJoin={onJoin ? () => onJoin(club.id) : undefined}
+          onJoin={onJoin ? (role) => onJoin(club.id, role) : undefined} 
           onCancel={onCancel ? () => onCancel(club.id) : undefined}
         />
       ))}

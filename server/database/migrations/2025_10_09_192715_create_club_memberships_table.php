@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('club_id')->constrained('clubs')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
             $table->string('role')->default('member');
+            $table->string('officer_title')->nullable();
             $table->string('requested_role')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamp('joined_at')->useCurrent();

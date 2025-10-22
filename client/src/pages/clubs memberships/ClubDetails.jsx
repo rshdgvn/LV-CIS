@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useDebugValue } from "react";
 import Layout from "@/components/app/layout";
 import { useAuth } from "@/contexts/AuthContext";
 import NavTabs from "@/components/NavTabs";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { AlertTemplate } from "@/components/AlertTemplate";
@@ -22,22 +22,14 @@ const finishProgress = () =>
 export default function ClubDetails() {
   const { token, user } = useAuth();
   const { id } = useParams();
-  const navigate = useNavigate();
+  const nav = useNavigate();
 
-  const [club, setClub] = useState(() => {
-    const cached = sessionStorage.getItem(`club_${id}`);
-    return cached ? JSON.parse(cached) : null;
-  });
-
-  const [loading, setLoading] = useState(!sessionStorage.getItem(`club_${id}`));
+  const [club, setClub] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState(null);
-  const [requestingRole, setRequestingRole] = useState(false);
-
-  const tabs = [
-    { name: "Overview", href: "/clubs" },
-    { name: "Pending", href: "/pending-clubs" },
-  ];
+  const [activeFilter, setActiveFilter] = useState("Active");
+  const filters = ["Active", "Inactive", "All"];
 
   useEffect(() => {
     if (!token || !id) return;
@@ -57,9 +49,9 @@ export default function ClubDetails() {
         });
 
         if (!res.ok) throw new Error("Failed to fetch club details");
-
         const data = await res.json();
         setClub(data);
+        console.log(club);
         sessionStorage.setItem(`club_${id}`, JSON.stringify(data));
       } catch (err) {
         console.error("Error fetching club details:", err);
@@ -71,7 +63,12 @@ export default function ClubDetails() {
     };
 
     const cached = sessionStorage.getItem(`club_${id}`);
-    if (!cached) fetchClubDetails();
+    if (cached) {
+      setClub(JSON.parse(cached));
+      setLoading(false);
+    } else {
+      fetchClubDetails();
+    }
   }, [token, id]);
 
   useEffect(() => {
@@ -80,52 +77,29 @@ export default function ClubDetails() {
     return () => clearTimeout(timer);
   }, [alert]);
 
-  const handleRequestRole = async () => {
-    try {
-      NProgress.start();
-      setRequestingRole(true);
-
-      const res = await fetch(
-        `${APP_URL}/clubs/${id}/role-change`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ new_role: "officer" }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.message || "Failed to request role change");
-
-      await finishProgress();
-
-      setAlert({
-        type: "success",
-        title: "Request Sent!",
-        description: data.message || "Your officer role request was submitted.",
-      });
-    } catch (err) {
-      await finishProgress();
-      setAlert({
-        type: "error",
-        title: "Request Failed",
-        description: err.message || "Something went wrong.",
-      });
-    } finally {
-      setRequestingRole(false);
-    }
-  };
-
-  const members = useMemo(() => {
-    if (!club?.users) return [];
-    return [...club.users].sort((a, b) =>
-      a.id === user.id ? -1 : b.id === user.id ? 1 : 0
+  const members = useMemo(() => club?.users || [], [club?.users]);
+  const advisers = useMemo(
+    () => members.filter((m) => m.pivot?.role === "adviser"),
+    [members]
+  );
+  const regularMembers = useMemo(() => {
+    const officers = members.filter(
+      (m) => m.pivot?.role === "officer" || m.pivot?.officer_title
     );
-  }, [club?.users, user?.id]);
+
+    const regulars = members.filter((m) => m.pivot?.role === "member");
+
+    return [...officers, ...regulars];
+  }, [members]);
+
+  const tabs = [
+    { name: "Overview", href: "/clubs" },
+    { name: "Pending", href: "/pending-clubs" },
+  ];
+
+  useEffect(() => {
+    console.log(JSON.stringify(club));
+  }, []);
 
   return (
     <Layout>
@@ -152,119 +126,160 @@ export default function ClubDetails() {
           <div className="loader"></div>
         </div>
       ) : error ? (
-        <div className="min-h-screenp-6 text-red-400 text-center">
-          {error}
-        </div>
-      ) : !club ? (
-        <div className="min-h-screen p-6 text-gray-400 text-center">
-          Club not found.
-        </div>
+        <div className="p-6 text-red-400 text-center">{error}</div>
       ) : (
-        <div className="min-h-screen p-6 text-white">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-10 border-b border-gray-800 pb-6">
-            {club.logo && (
+        <div className="min-h-screen p-6 text-white grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center md:items-start gap-6">
               <img
-                src={club.logo}
+                src={
+                  club.logo_url ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    club.name
+                  )}&background=111&color=fff`
+                }
                 alt={club.name}
-                className="w-32 h-32 rounded-xl object-cover border border-gray-700"
+                className="w-28 h-28 rounded-full object-cover border border-gray-800"
               />
-            )}
-            <div className="text-center md:text-left flex-1">
-              <div className="flex items-center justify-between md:justify-start gap-4">
-                <h1 className="text-3xl font-bold mb-2">{club.name}</h1>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => navigate(`/club/${id}/pending-requests`)}
-                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-black font-semibold text-sm"
-                  >
-                    Applicants
-                  </button>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold">{club.name}</h1>
+                <p className="text-gray-400 text-sm mt-2">
+                  {club.description || "No description available."}
+                </p>
 
+                {advisers.length > 0 && (
+                  <div className="mt-10">
+                    <h3 className="text-base text-white font-semibold mb-2">
+                      Adviser{advisers.length > 1 ? "s" : ""}
+                    </h3>
+                    <div className="flex flex-wrap gap-4">
+                      {advisers.map((adviser) => (
+                        <div
+                          key={adviser.id}
+                          className="flex items-center gap-6 justify-between p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
+                          onClick={() =>
+                            nav(`/club/${id}/members/${adviser.id}`)
+                          }
+                        >
+                          <img
+                            src={
+                              adviser.profile_image ||
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                adviser.name
+                              )}&background=111&color=fff`
+                            }
+                            alt={adviser.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {`Mr. ${adviser.name}`}
+                            </p>
+                            <p className="text-xs text-gray-400 capitalize">
+                              {adviser.pivot?.role || "Adviser"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-row gap-5">
+                  <h2 className="text-xl font-semibold">Members</h2>
                   <button
-                    onClick={() => navigate(`/club/${id}/role-change-requests`)}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold text-sm"
+                    onClick={() => nav(`/club/${id}/pending-requests`)}
+                    className="text-sm text-blue-400 hover:underline"
                   >
-                    Role Requests
+                    View Applicants
                   </button>
                 </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-2 bg-black p-1 rounded-lg">
+                    {filters.map((filter) => (
+                      <button
+                        key={filter}
+                        onClick={() => setActiveFilter(filter)}
+                        className={`px-3 py-1.5 text-[0.5rem] font-medium rounded-md transition-all duration-200 ${
+                          activeFilter === filter
+                            ? "bg-blue-600 text-white"
+                            : "bg-transparent text-gray-300 hover:text-white"
+                        }`}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <p className="text-gray-400 max-w-2xl">{club.description}</p>
+
+              <div>
+                {regularMembers.length > 0 ? (
+                  regularMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
+                      onClick={() => nav(`/club/${id}/members/${member.id}`)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={
+                            member.profile_image ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                              member.name
+                            )}&background=111&color=fff`
+                          }
+                          alt={member.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <div>
+                          <p className="font-medium text-sm">{member.name}</p>
+                          <p className="text-xs text-gray-400 capitalize">
+                            {member.pivot?.officer_title ||
+                              member.pivot?.role ||
+                              "Member"}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-green-400 text-xs">Active</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-center">No members yet.</p>
+                )}
+              </div>
             </div>
           </div>
 
-          <h2 className="text-2xl font-semibold mb-4">Members</h2>
-          <div className="max-w-4xl mx-auto space-y-4">
-            {members.length > 0 ? (
-              members.map((member) => {
-                const isCurrentUser = member.id === user.id;
-                const isMember = member.pivot?.role === "member";
+          <div className="space-y-6">
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-64">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-semibold">Achievements</h3>
+                <button className="text-sm text-blue-400 hover:underline">
+                  View all
+                </button>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Coming soon... (Achievements section)
+              </p>
+            </div>
 
-                return (
-                  <div
-                    key={member.id}
-                    className={`flex flex-col md:flex-row items-center gap-4 transition-colors p-4 rounded-xl border border-gray-800 cursor-pointer ${
-                      isCurrentUser
-                        ? "bg-blue-900 hover:bg-blue-800"
-                        : "bg-gray-900 hover:bg-gray-800"
-                    }`}
-                  >
-                    <div
-                      className="flex items-center gap-4 flex-1"
-                      onClick={() =>
-                        navigate(`/club/${id}/members/${member.id}`)
-                      }
-                    >
-                      <img
-                        src={
-                          member.profile_image ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            member.name
-                          )}&background=111&color=fff`
-                        }
-                        alt={member.name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="font-medium text-lg">
-                          {member.name}{" "}
-                          {isCurrentUser && (
-                            <span className="text-sm text-yellow-400 ml-1">
-                              (You)
-                            </span>
-                          )}
-                        </p>
-                        {member.pivot && (
-                          <p className="text-gray-400 text-sm capitalize">
-                            {member.pivot.role || "Member"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {isCurrentUser && isMember && (
-                      <button
-                        onClick={handleRequestRole}
-                        disabled={requestingRole}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-black font-semibold rounded mt-2 md:mt-0"
-                      >
-                        {requestingRole ? "Requesting..." : "Apply Officer"}
-                      </button>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-gray-400 text-center">No members yet.</p>
-            )}
-          </div>
-
-          <div className="mt-10">
-            <button
-              onClick={() => navigate(-1)}
-              className="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white transition"
-            >
-              Go Back
-            </button>
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-64">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-semibold">Events & Photos</h3>
+                <button className="text-sm text-blue-400 hover:underline">
+                  View all
+                </button>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Coming soon... (Events and Photos section)
+              </p>
+            </div>
           </div>
         </div>
       )}

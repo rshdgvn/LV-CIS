@@ -84,14 +84,14 @@ export default function PendingRequests() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to update status");
 
+      sessionStorage.removeItem(`club_${id}`);
+
       await fetchPendingRequests();
       await finishProgress();
 
       setAlert({
         type: "success",
-        title: status === "approved"
-            ? "Approved!"
-            : "Rejected!",
+        title: status === "approved" ? "Approved!" : "Rejected!",
         description:
           status === "approved"
             ? "Membership approved successfully!"

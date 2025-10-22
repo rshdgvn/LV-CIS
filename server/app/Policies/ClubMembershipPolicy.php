@@ -87,4 +87,75 @@ class ClubMembershipPolicy
 
         return Response::deny('You do not have permission to approve role changes.');
     }
+
+     /**
+     * Determine if the user can add a member.
+     */
+    public function addMember(User $user, $clubId)
+    {
+        $authMembership = DB::table('club_memberships')
+            ->where('club_id', $clubId)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$authMembership) {
+            return Response::deny('You are not part of this club.');
+        }
+
+        // Only admin or officer can add members
+        if ($user->role === 'admin' || $authMembership->role === 'officer') {
+            return Response::allow();
+        }
+
+        return Response::deny('Only admins and officers can add members.');
+    }
+
+    /**
+     * Determine if the user can remove a member.
+     */
+    public function removeMember(User $user, ClubMembership $membership)
+    {
+        $authMembership = DB::table('club_memberships')
+            ->where('club_id', $membership->club_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$authMembership) {
+            return Response::deny('You are not part of this club.');
+        }
+
+        // Only admin or officer can remove members
+        if ($user->role === 'admin' || $authMembership->role === 'officer') {
+            return Response::allow();
+        }
+
+        return Response::deny('Only admins and officers can remove members.');
+    }
+
+    /**
+     * Determine if the user can edit a member's pivot info.
+     */
+    public function editMemberPivot(User $user, ClubMembership $membership)
+    {
+        $authMembership = DB::table('club_memberships')
+            ->where('club_id', $membership->club_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$authMembership) {
+            return Response::deny('You are not part of this club.');
+        }
+
+        // Admin and officer can edit anyone in their club
+        if ($user->role === 'admin' || $authMembership->role === 'officer') {
+            return Response::allow();
+        }
+
+        // Member can edit only their own pivot info
+        if ($membership->user_id === $user->id) {
+            return Response::allow();
+        }
+
+        return Response::deny('You do not have permission to edit this member.');
+    }
 }

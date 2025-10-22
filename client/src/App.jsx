@@ -17,33 +17,39 @@ import MemberDetails from "./pages/clubs memberships/MemberDetails";
 import Profile from "./pages/Profile";
 import PendingRequests from "./pages/clubs memberships/PendingRequests";
 import ClubRoleRequests from "./pages/clubs memberships/ClubRoleRequest";
+import { ClubProvider } from "./contexts/ClubContext";
+import OfficersRoute from "./contexts/OfficersRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/google/callback" element={<GoogleCallback />} />
-          <Route path="*" element={<NotFound />} />
+        <ClubProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/google/callback" element={<GoogleCallback />} />
+            <Route path="*" element={<NotFound />} />
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/clubs" element={<Clubs />} />
-            <Route path="/club/:id" element={<ClubDetails />} /> 
-            <Route path="/club/:id/pending-requests" element={<PendingRequests />} />
-            <Route path="/pending-clubs" element={<PendingClubs />} />
-            <Route path="/club/:clubId/members/:userId" element={<MemberDetails />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/club/:clubId/role-change-requests"element={<ClubRoleRequests />}/>
-            <Route element={<AdminRoute />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/clubs" element={<Clubs />} />
+              <Route path="/club/:id" element={<ClubDetails />} /> 
+              <Route path="/pending-clubs" element={<PendingClubs />} />
+              <Route path="/club/:clubId/members/:userId" element={<MemberDetails />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/club/:clubId/role-change-requests"element={<ClubRoleRequests />}/>
+              <Route element={<OfficersRoute />}>
+                <Route path="/club/:id/pending-requests" element={<PendingRequests />} />
+              </Route>
+              <Route element={<AdminRoute />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
+          </Routes>
+        </ClubProvider>
       </AuthProvider>
     </BrowserRouter>
   );

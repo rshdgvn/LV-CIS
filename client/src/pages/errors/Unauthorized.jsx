@@ -16,7 +16,7 @@ const Unauthorized = () => {
 
       {/* Message */}
       <p className="text-gray-400 mt-3 max-w-md">
-        Only the admin have permission to view this page.  
+        You don't have have permission to view this page.  
         Please go back and try again.
       </p>
 

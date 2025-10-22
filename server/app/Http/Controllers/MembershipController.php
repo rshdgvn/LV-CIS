@@ -250,8 +250,14 @@ class MembershipController extends Controller
             ->withPivot('role', 'status', 'joined_at')
             ->get();
 
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'approved') 
+            ->withPivot('role', 'status', 'joined_at')
+            ->get();
+
         return response()->json($clubs);
     }
+
 
 
     /**

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Layout from "@/components/app/layout";
 import { useAuth } from "@/contexts/AuthContext";
 import NavTabs from "@/components/NavTabs";
@@ -9,6 +10,8 @@ import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
 import { APP_URL } from "@/lib/config";
+import MembersSection from "@/components/MembersSection";
+import { AlertTemplate } from "@/components/AlertTemplate";
 import MembersSection from "@/components/MembersSection";
 import { AlertTemplate } from "@/components/AlertTemplate";
 
@@ -47,7 +50,30 @@ export default function ClubDetails() {
           Authorization: `Bearer ${token}`,
         },
       });
+  const fetchClubDetails = async () => {
+    try {
+      setLoading(true);
+      NProgress.start();
+      const res = await fetch(`${APP_URL}/clubs/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
+      if (!res.ok) throw new Error("Failed to fetch club details");
+      const data = await res.json();
+      setClub(data);
+      sessionStorage.setItem(`club_${id}`, JSON.stringify(data));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load club details.");
+    } finally {
+      setLoading(false);
+      await finishProgress();
+    }
+  };
       if (!res.ok) throw new Error("Failed to fetch club details");
       const data = await res.json();
       setClub(data);
@@ -67,6 +93,7 @@ export default function ClubDetails() {
       setClub(JSON.parse(cached));
       setLoading(false);
     } else if (token && id) {
+    } else if (token && id) {
       fetchClubDetails();
     }
   }, [token, id]);
@@ -79,9 +106,8 @@ export default function ClubDetails() {
 
   const members = useMemo(() => club?.users || [], [club?.users]);
 
-
   const handleAddMember = async () => {
-    const userId = prompt("Enter User ID to add:"); 
+    const userId = prompt("Enter User ID to add:");
     const role = prompt("Enter role (member/officer):", "member");
 
     if (!userId || !role) return;
@@ -96,12 +122,24 @@ export default function ClubDetails() {
         body: JSON.stringify({ user_id: userId, role }),
       });
 
-      if (!res.ok) throw new Error("Failed to add member");
+      if (!res.ok) {
+        if (res.status === 409) {
+          showAlert(
+            "warning",
+            "Duplicate Member",
+            "This user is already a member of the club."
+          );
+        } else {
+          throw new Error("Failed to add member");
+        }
+        return; 
+      }
+
       showAlert("success", "Member Added", "Member added successfully!");
       fetchClubDetails();
-    } catch (err) {
-      console.error(err);
-      showAlert("error", "Error", err.message || "Failed to add member");
+    } catch (error) {
+      console.error(error);
+      showAlert("error", "Error", error.message || "Something went wrong.");
     }
   };
 
@@ -115,14 +153,17 @@ export default function ClubDetails() {
     if (!role) return;
 
     try {
-      const res = await fetch(`${APP_URL}/clubs/${id}/members/${member.id}/edit`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role, officer_title: officerTitle }),
-      });
+      const res = await fetch(
+        `${APP_URL}/clubs/${id}/members/${member.id}/edit`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ role, officer_title: officerTitle }),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to update member");
       showAlert("success", "Member Updated", "Member info updated!");
@@ -140,12 +181,15 @@ export default function ClubDetails() {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`${APP_URL}/clubs/${id}/members/${member.id}/remove`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${APP_URL}/clubs/${id}/members/${member.id}/remove`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to remove member");
       showAlert("success", "Member Removed", "Member removed successfully!");
@@ -168,6 +212,22 @@ export default function ClubDetails() {
   return (
     <Layout>
       <NavTabs tabs={tabs} />
+
+      {alert && (
+        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <AlertTemplate
+            icon={
+              alert.type === "success" ? (
+                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
+              ) : (
+                <AlertCircleIcon className="h-6 w-6 text-red-500" />
+              )
+            }
+            title={alert.title}
+            description={alert.description}
+          />
+        </div>
+      )}
 
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
@@ -229,6 +289,18 @@ export default function ClubDetails() {
               </div>
             </div>
 
+            <MembersSection
+              members={members}
+              clubId={id}
+              filters={filters}
+              activeFilter={activeFilter}
+              setActiveFilter={setActiveFilter}
+              manageMode={manageMode}
+              onAddMember={handleAddMember}
+              onEditMember={handleEditMember}
+              onRemoveMember={handleRemoveMember}
+              onViewApplicants={handleViewApplicants}
+            />
             <MembersSection
               members={members}
               clubId={id}

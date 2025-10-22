@@ -17,6 +17,7 @@ import MemberDetails from "./pages/clubs memberships/MemberDetails";
 import Profile from "./pages/Profile";
 import PendingRequests from "./pages/clubs memberships/PendingRequests";
 import ClubRoleRequests from "./pages/clubs memberships/ClubRoleRequest";
+import AllClubs from "./pages/AllClubs";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/allclubs" element={<AllClubs />} />
           <Route path="/login" element={<Login />} />
           <Route path="/google/callback" element={<GoogleCallback />} />
           <Route path="*" element={<NotFound />} />

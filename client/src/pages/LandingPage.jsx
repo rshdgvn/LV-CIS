@@ -4,9 +4,9 @@ import { useNavigate } from "react-router";
 import logo from "../assets/lvcc-logo.png";
 import LVCIS from "../assets/LVCIS.png";
 import aim from "../assets/aim.png";
-import culture from "../assets/culture.png";
-import performingarts from "../assets/performing-arts.png";
-import sociopolitics from "../assets/socio-politics.png";
+import lvdt from "../assets/lvdt.png";
+import lvprod from "../assets/lvprod.png";
+import lvdrrt from "../assets/lvdrrt.png";
 import jpia from "../assets/jpia.png";
 import swsap from "../assets/swsap.png";
 import broadsoc from "../assets/broadsoc.png";
@@ -120,7 +120,7 @@ function LandingPage() {
               <div className="relative rounded-2xl p-[10px] bg-gradient-to-br from-blue-600 to-purple-800 shadow-lg hover:scale-105 transition-transform">
                 <div className="rounded-xl overflow-hidden bg-[#0f172a]">
                   <img
-                    src={culture}
+                    src={lvdt}
                     alt="Culture"
                     className="w-72 h-44 object-cover"
                   />
@@ -132,7 +132,7 @@ function LandingPage() {
               <div className="relative rounded-2xl p-[10px] bg-gradient-to-br from-blue-600 to-purple-800 shadow-lg hover:scale-105 transition-transform">
                 <div className="rounded-xl overflow-hidden bg-[#0f172a]">
                   <img
-                    src={performingarts}
+                    src={lvprod}
                     alt="Performing Arts"
                     className="w-72 h-44 object-cover"
                   />
@@ -144,7 +144,7 @@ function LandingPage() {
               <div className="relative rounded-2xl p-[10px] bg-gradient-to-br from-blue-600 to-purple-800 shadow-lg hover:scale-105 transition-transform">
                 <div className="rounded-xl overflow-hidden bg-[#0f172a]">
                   <img
-                    src={sociopolitics}
+                    src={lvdrrt}
                     alt="Socio-Politics"
                     className="w-72 h-44 object-cover"
                   />
@@ -207,6 +207,13 @@ function LandingPage() {
             </div>
           </div>
         </div>
+        <Button
+              variant="outline"
+              className="mt-10"
+              onClick={() => nav("/allclubs")}
+            >
+              View All Clubs →
+            </Button>
       </section>
     </div>
   );

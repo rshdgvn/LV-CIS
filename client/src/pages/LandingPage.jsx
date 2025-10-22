@@ -3,6 +3,10 @@ import { isLoggedIn } from "@/lib/auth";
 import { useNavigate } from "react-router";
 import logo from "../assets/lvcc-logo.png";
 import LVCIS from "../assets/LVCIS.png";
+import academics from "../assets/academics.png";
+import culture from "../assets/culture.png";
+import performingarts from "../assets/performing-arts.png";
+import sociopolitics from "../assets/socio-politics.png";
 import dashboard from "../assets/Dashboard.png";
 
 function LandingPage() {
@@ -93,6 +97,59 @@ function LandingPage() {
           user-friendly platform that promotes efficiency, accountability, and
           active student participation across all clubs and organizations.
         </p>
+        
+          {/* CLUB CATEGORIES */}
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 justify-items-center">
+            {/* Card */}
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-2xl p-[10px] bg-gradient-to-br from-blue-600 to-purple-800 shadow-lg hover:scale-105 transition-transform">
+                <div className="rounded-xl overflow-hidden bg-[#0f172a]">
+                  <img
+                    src={academics}
+                    alt="Academics"
+                    className="w-72 h-44 object-cover"
+                  />
+                </div>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-white">Academics</h3>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-2xl p-[10px] bg-gradient-to-br from-blue-600 to-purple-800 shadow-lg hover:scale-105 transition-transform">
+                <div className="rounded-xl overflow-hidden bg-[#0f172a]">
+                  <img
+                    src={culture}
+                    alt="Academics"
+                    className="w-72 h-44 object-cover"
+                  />
+                </div>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-white">Culture</h3>
+            </div>
+                <div className="flex flex-col items-center">
+              <div className="relative rounded-2xl p-[10px] bg-gradient-to-br from-blue-600 to-purple-800 shadow-lg hover:scale-105 transition-transform">
+                <div className="rounded-xl overflow-hidden bg-[#0f172a]">
+                  <img
+                    src={performingarts}
+                    alt="Academics"
+                    className="w-72 h-44 object-cover"
+                  />
+                </div>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-white">Performing Arts</h3>
+            </div>
+                <div className="flex flex-col items-center">
+              <div className="relative rounded-2xl p-[10px] bg-gradient-to-br from-blue-600 to-purple-800 shadow-lg hover:scale-105 transition-transform">
+                <div className="rounded-xl overflow-hidden bg-[#0f172a]">
+                  <img
+                    src={sociopolitics}
+                    alt="Academics"
+                    className="w-72 h-44 object-cover"
+                  />
+                </div>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-white">Socio-Politics</h3>
+            </div>
+        </div>
       </section>
     </div>
   );

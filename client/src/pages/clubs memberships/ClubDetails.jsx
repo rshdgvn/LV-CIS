@@ -13,6 +13,7 @@ import MembersSection from "@/components/MembersSection";
 import { AlertTemplate } from "@/components/AlertTemplate";
 
 NProgress.configure({ showSpinner: false });
+
 const finishProgress = () =>
   new Promise((resolve) => {
     NProgress.done();
@@ -29,8 +30,8 @@ export default function ClubDetails() {
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState(null);
   const [activeFilter, setActiveFilter] = useState("Active");
-  const filters = ["Active", "Inactive", "All"];
   const [manageMode, setManageMode] = useState(false);
+  const filters = ["Active", "Inactive", "All"];
 
   const showAlert = (type, title, description) => {
     setAlert({ type, title, description });
@@ -47,7 +48,9 @@ export default function ClubDetails() {
           Authorization: `Bearer ${token}`,
         },
       });
+
       if (!res.ok) throw new Error("Failed to fetch club details");
+
       const data = await res.json();
       setClub(data);
       sessionStorage.setItem(`club_${id}`, JSON.stringify(data));
@@ -65,8 +68,8 @@ export default function ClubDetails() {
     if (cached) {
       setClub(JSON.parse(cached));
       setLoading(false);
-    } else if (token && id) {
-    } else if (token && id) {
+    }
+    if (token && id) {
       fetchClubDetails();
     }
   }, [token, id]);
@@ -105,7 +108,7 @@ export default function ClubDetails() {
         } else {
           throw new Error("Failed to add member");
         }
-        return; 
+        return;
       }
 
       showAlert("success", "Member Added", "Member added successfully!");
@@ -202,38 +205,6 @@ export default function ClubDetails() {
         </div>
       )}
 
-      {alert && (
-        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
-          <AlertTemplate
-            icon={
-              alert.type === "success" ? (
-                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
-              ) : (
-                <AlertCircleIcon className="h-6 w-6 text-red-500" />
-              )
-            }
-            title={alert.title}
-            description={alert.description}
-          />
-        </div>
-      )}
-
-      {alert && (
-        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
-          <AlertTemplate
-            icon={
-              alert.type === "success" ? (
-                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
-              ) : (
-                <AlertCircleIcon className="h-6 w-6 text-red-500" />
-              )
-            }
-            title={alert.title}
-            description={alert.description}
-          />
-        </div>
-      )}
-
       {loading ? (
         <div className="min-h-screen flex items-center justify-center text-white">
           <div className="loader"></div>
@@ -262,18 +233,6 @@ export default function ClubDetails() {
               </div>
             </div>
 
-            <MembersSection
-              members={members}
-              clubId={id}
-              filters={filters}
-              activeFilter={activeFilter}
-              setActiveFilter={setActiveFilter}
-              manageMode={manageMode}
-              onAddMember={handleAddMember}
-              onEditMember={handleEditMember}
-              onRemoveMember={handleRemoveMember}
-              onViewApplicants={handleViewApplicants}
-            />
             <MembersSection
               members={members}
               clubId={id}

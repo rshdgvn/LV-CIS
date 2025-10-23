@@ -19,6 +19,7 @@ import PendingRequests from "./pages/clubs memberships/PendingRequests";
 import ClubRoleRequests from "./pages/clubs memberships/ClubRoleRequest";
 import { ClubProvider } from "./contexts/ClubContext";
 import OfficersRoute from "./contexts/OfficersRoute";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/google/callback" element={<GoogleCallback />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />

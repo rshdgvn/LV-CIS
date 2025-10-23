@@ -11,7 +11,10 @@ class GoogleController extends Controller
 {
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')->stateless()->redirect();
+        return Socialite::driver('google')
+            ->with(['prompt' => 'select_account'])
+            ->stateless()
+            ->redirect();
     }
 
     public function handleGoogleCallback()
@@ -20,7 +23,8 @@ class GoogleController extends Controller
             $googleUser = Socialite::driver('google')->stateless()->user();
 
             if (!str_ends_with($googleUser->getEmail(), '@student.laverdad.edu.ph')) {
-                return response()->json(['error' => 'Only LV student emails allowed'], 403);
+                $msg = urlencode('Only LV student emails allowed');
+                return redirect()->away("http://localhost:5173/google/error?message={$msg}");
             }
 
             $user = User::firstOrCreate(
@@ -37,14 +41,10 @@ class GoogleController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            return redirect("http://localhost:5173/google/callback?token={$token}");
-
-
+            return redirect()->away("http://localhost:5173/google/callback?token={$token}");
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Google login failed',
-                'details' => $e->getMessage()
-            ], 500);
+            $msg = urlencode('Google login failed');
+            return redirect()->away("http://localhost:5173/google/error?message={$msg}");
         }
     }
 }

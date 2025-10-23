@@ -42,4 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/clubs/{clubId}/role-change/{userId}/approve', [MembershipController::class, 'approveRoleChange']);
     Route::get('/clubs/{clubId}/role-change-requests', [MembershipController::class, 'getRoleChangeRequests']);
     Route::post('/clubs/{clubId}/role-change/{userId}/reject', [MembershipController::class, 'rejectRoleChange']);
+
+    Route::post('/clubs/{clubId}/members/add', [MembershipController::class, 'addMember']);
+    Route::patch('/clubs/{clubId}/members/{userId}/edit', [MembershipController::class, 'editMemberPivot']);
+    Route::delete('/clubs/{clubId}/members/{userId}/remove', [MembershipController::class, 'removeMember']);
 });

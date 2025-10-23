@@ -1,13 +1,16 @@
 import React from "react";
 import { useAuth } from "./AuthContext";
 import { Outlet } from "react-router-dom";
+import Forbidden from "@/pages/errors/Forbidden";
 
 const ProtectedRoute = () => {
-  const { user } = useAuth();
+  const { token } = useAuth();
 
-  if (user) {
+  if (token) {
     return <Outlet />;
   }
+
+  return <Forbidden />;
 };
 
 export default ProtectedRoute;

@@ -21,18 +21,30 @@ class MembershipController extends Controller
         $club = Club::findOrFail($clubId);
         $user = $request->user();
 
-        // Already requested or a member?
+        $validated = $request->validate([
+            'role' => 'required|in:member,officer',
+            'officerTitle' => 'nullable|string|max:255',
+        ]);
+
         if ($club->users()->where('user_id', $user->id)->exists()) {
-            return response()->json(['message' => 'Already a member or pending approval'], 409);
+            return response()->json([
+                'message' => 'Already a member or pending approval'
+            ], 409);
         }
 
         $club->users()->attach($user->id, [
-            'role' => 'member',
+            'role' => $validated['role'],
             'status' => 'pending',
+            'officer_title' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
         ]);
 
-        return response()->json(['message' => 'Membership request sent successfully']);
+        return response()->json([
+            'message' => 'Membership request sent successfully',
+            'role' => $validated['role'],
+            'officerTitle' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
+        ]);
     }
+
 
     /**
      * Cancel a pending membership request
@@ -232,10 +244,21 @@ class MembershipController extends Controller
     public function getUserClubs(Request $request)
     {
         $user = $request->user();
-        $clubs = $user->clubs()->withPivot('role', 'status', 'joined_at')->get();
+
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'approved') 
+            ->withPivot('role', 'status', 'joined_at')
+            ->get();
+
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'approved') 
+            ->withPivot('role', 'status', 'joined_at')
+            ->get();
 
         return response()->json($clubs);
     }
+
+
 
     /**
      * Get the current user’s member info
@@ -327,5 +350,73 @@ class MembershipController extends Controller
             'message' => 'Profile setup successfully',
             'member' => $member,
         ], 201);
+    }
+
+    /**
+     * Add a user as a member to a club (directly, bypassing join request)
+     */
+    public function addMember(Request $request, $clubId)
+    {
+        $club = Club::findOrFail($clubId);
+
+        $this->authorize('addMember', [ClubMembership::class, $clubId]);
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role' => 'required|in:member,officer',
+            'officerTitle' => 'nullable|string|max:255',
+        ]);
+
+        if ($club->users()->where('user_id', $validated['user_id'])->exists()) {
+            return response()->json([
+                'message' => 'User is already a member of this club'
+            ], 409);
+        }
+
+        $club->users()->attach($validated['user_id'], [
+            'role' => $validated['role'],
+            'status' => 'approved',
+            'officer_title' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
+        ]);
+
+        return response()->json(['message' => 'Member added successfully']);
+    }
+
+    /**
+     * Edit a member's info in the pivot table (role, status, officer title)
+     */
+    public function editMember(Request $request, $clubId, $userId)
+    {
+        $membership = ClubMembership::where('club_id', $clubId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $this->authorize('editMemberPivot', $membership);
+
+        $validated = $request->validate([
+            'role' => 'sometimes|in:member,officer',
+            'status' => 'sometimes|in:pending,approved,rejected',
+            'officer_title' => 'nullable|string|max:255',
+        ]);
+
+        $membership->update($validated);
+
+        return response()->json(['message' => 'Member info updated successfully']);
+    }
+
+    /**
+     * Remove a member from a club
+     */
+    public function removeMember(Request $request, $clubId, $userId)
+    {
+        $membership = ClubMembership::where('club_id', $clubId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $this->authorize('removeMember', $membership);
+
+        $membership->delete();
+
+        return response()->json(['message' => 'Member removed successfully']);
     }
 }

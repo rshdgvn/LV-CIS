@@ -5,7 +5,7 @@ const Unauthorized = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-white text-center px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white text-center px-6">
       {/* Code */}
       <h1 className="text-7xl font-bold text-white mb-4">401</h1>
 
@@ -16,7 +16,7 @@ const Unauthorized = () => {
 
       {/* Message */}
       <p className="text-gray-400 mt-3 max-w-md">
-        Only the admin have permission to view this page.  
+        You don't have have permission to view this page.  
         Please go back and try again.
       </p>
 

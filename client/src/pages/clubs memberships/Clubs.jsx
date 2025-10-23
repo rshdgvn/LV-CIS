@@ -50,7 +50,7 @@ function Clubs() {
     try {
       if (showLoading) {
         setLoading(true);
-        NProgress.start(); 
+        NProgress.start();
       }
 
       setError(null);
@@ -117,7 +117,11 @@ function Clubs() {
     return () => clearTimeout(timer);
   }, [alert]);
 
-  const handleJoinClub = async (clubId) => {
+  const handleJoinClub = async (
+    clubId,
+    role = "member",
+    officerTitle = null
+  ) => {
     if (!token) {
       setAlert({
         type: "error",
@@ -130,17 +134,15 @@ function Clubs() {
     try {
       NProgress.start();
 
-      const res = await fetch(
-        `${APP_URL}/clubs/${clubId}/join`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${APP_URL}/clubs/${clubId}/join`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role, officerTitle }), 
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to join club.");
@@ -155,7 +157,11 @@ function Clubs() {
       setAlert({
         type: "success",
         title: "Join Request Sent!",
-        description: data.message || "Your join request has been submitted.",
+        description:
+          data.message ||
+          `Your join request as ${role}${
+            officerTitle ? ` (${officerTitle})` : ""
+          } has been submitted.`,
       });
     } catch (err) {
       await finishProgress();

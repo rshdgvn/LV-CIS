@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
             ], [
                 'description' => fake()->sentence(10),
                 'adviser' => fake()->name(),
-                'logo' => null,
+                'logo' => 'club_logos/blue_harmony_logo.png',
             ]);
         }
 

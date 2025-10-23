@@ -8,16 +8,21 @@ class Club extends Model
 {
     protected $fillable = ['name', 'description', 'adviser', 'logo'];
 
-    public function members()
-    {
-        return $this->belongsToMany(Member::class, 'club_memberships')
-            ->withPivot('role', 'status', 'joined_at')
-            ->withTimestamps();
-    }
+    protected $appends = ['logo_url'];
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'club_memberships')
-            ->withPivot('role', 'status', 'joined_at')
+            ->withPivot('role', 'officer_title', 'status', 'joined_at')
             ->withTimestamps();
+    }
+
+    public function getLogoUrlAttribute()
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        return asset('storage/' . $this->logo);
     }
 }

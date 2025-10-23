@@ -1,6 +1,8 @@
+"use client";
+
+import React from "react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -10,23 +12,40 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export function AlertDialogTemplate({ button, title, description, onConfirm }) {
+export function AlertDialogTemplate({
+  button,
+  title,
+  description,
+  onConfirm,
+  onOpenChange,
+}) {
   return (
-    <AlertDialog>
+    <AlertDialog onOpenChange={onOpenChange}>
       <AlertDialogTrigger asChild>{button}</AlertDialogTrigger>
-      <AlertDialogContent>
+
+      <AlertDialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription asChild>
+            <div>{description}</div>
+          </AlertDialogDescription>
         </AlertDialogHeader>
+
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault(); 
+              onConfirm?.();
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors"
           >
             Continue
-          </AlertDialogAction>
+          </button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

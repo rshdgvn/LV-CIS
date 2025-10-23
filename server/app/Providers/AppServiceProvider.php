@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,5 +28,7 @@ class AppServiceProvider extends ServiceProvider
         Validator::replacer('laverdad_email', function ($message, $attribute, $rule, $parameters) {
             return "Only La Verdad emails are allowed.";
         });
+
+        JsonResource::withoutWrapping();
     }
 }

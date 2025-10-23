@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import React, { useEffect, useState, useMemo } from "react";
 import Layout from "@/components/app/layout";
 import { useAuth } from "@/contexts/AuthContext";
 import NavTabs from "@/components/NavTabs";
@@ -10,8 +9,6 @@ import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
 import { APP_URL } from "@/lib/config";
-import MembersSection from "@/components/MembersSection";
-import { AlertTemplate } from "@/components/AlertTemplate";
 import MembersSection from "@/components/MembersSection";
 import { AlertTemplate } from "@/components/AlertTemplate";
 
@@ -50,30 +47,6 @@ export default function ClubDetails() {
           Authorization: `Bearer ${token}`,
         },
       });
-  const fetchClubDetails = async () => {
-    try {
-      setLoading(true);
-      NProgress.start();
-      const res = await fetch(`${APP_URL}/clubs/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch club details");
-      const data = await res.json();
-      setClub(data);
-      sessionStorage.setItem(`club_${id}`, JSON.stringify(data));
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load club details.");
-    } finally {
-      setLoading(false);
-      await finishProgress();
-    }
-  };
       if (!res.ok) throw new Error("Failed to fetch club details");
       const data = await res.json();
       setClub(data);

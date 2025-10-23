@@ -4,9 +4,9 @@ import { Outlet } from "react-router-dom";
 import Forbidden from "@/pages/errors/Forbidden";
 
 const ProtectedRoute = () => {
-  const { user } = useAuth();
+  const { token } = useAuth();
 
-  if (user.id != null && user.email != "") {
+  if (token) {
     return <Outlet />;
   }
 

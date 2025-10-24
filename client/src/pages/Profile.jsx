@@ -71,7 +71,7 @@ function Profile() {
 
   useEffect(() => {
     if (token) fetchMemberInfo(!sessionStorage.getItem("memberProfile"));
-    console.log('APP_URL', APP_URL)
+    console.log("APP_URL", APP_URL);
   }, [token]);
 
   const handleChange = (e) => {
@@ -162,133 +162,131 @@ function Profile() {
   };
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-black p-6 text-white max-w-md mx-auto relative">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Profile</h1>
-          {!showSetupModal && (
-            <button
-              onClick={() => {
-                if (editMode) handleSave();
-                else setEditMode(true);
+    <div className="min-h-screen bg-black p-6 text-white max-w-md mx-auto relative">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Profile</h1>
+        {!showSetupModal && (
+          <button
+            onClick={() => {
+              if (editMode) handleSave();
+              else setEditMode(true);
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-semibold"
+          >
+            {editMode ? "Save" : "Edit Profile"}
+          </button>
+        )}
+      </div>
+
+      {loading && <p className="text-gray-400">Loading profile...</p>}
+      {error && <p className="text-red-400">{error}</p>}
+
+      {!loading && (
+        <form className="space-y-4">
+          <div>
+            <label className="block text-gray-300 text-sm mb-1">
+              Student ID
+            </label>
+            <input
+              type="text"
+              name="student_id"
+              value={member.student_id}
+              onChange={handleChange}
+              readOnly={!editMode}
+              className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
+                editMode ? "border-blue-500" : ""
+              }`}
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-300 text-sm mb-1">Course</label>
+            <input
+              type="text"
+              name="course"
+              value={member.course}
+              onChange={handleChange}
+              readOnly={!editMode}
+              className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
+                editMode ? "border-blue-500" : ""
+              }`}
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-300 text-sm mb-1">
+              Year Level
+            </label>
+            <input
+              type="text"
+              name="year_level"
+              value={member.year_level}
+              onChange={handleChange}
+              readOnly={!editMode}
+              className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
+                editMode ? "border-blue-500" : ""
+              }`}
+            />
+          </div>
+        </form>
+      )}
+
+      {showSetupModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
+          <div className="bg-neutral-900 p-6 rounded-xl w-80 text-center border border-gray-700">
+            <h2 className="text-lg font-semibold text-white mb-2">
+              Setup Your Profile
+            </h2>
+            <p className="text-gray-400 mb-4 text-sm">
+              Please complete your profile to continue using the app.
+            </p>
+
+            <form
+              className="space-y-3 mb-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSetupProfile();
               }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-semibold"
             >
-              {editMode ? "Save" : "Edit Profile"}
-            </button>
-          )}
-        </div>
-
-        {loading && <p className="text-gray-400">Loading profile...</p>}
-        {error && <p className="text-red-400">{error}</p>}
-
-        {!loading && (
-          <form className="space-y-4">
-            <div>
-              <label className="block text-gray-300 text-sm mb-1">
-                Student ID
-              </label>
               <input
                 type="text"
                 name="student_id"
+                placeholder="Student ID"
                 value={member.student_id}
                 onChange={handleChange}
-                readOnly={!editMode}
-                className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
-                  editMode ? "border-blue-500" : ""
-                }`}
+                required
+                className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
               />
-            </div>
-
-            <div>
-              <label className="block text-gray-300 text-sm mb-1">Course</label>
               <input
                 type="text"
                 name="course"
+                placeholder="Course"
                 value={member.course}
                 onChange={handleChange}
-                readOnly={!editMode}
-                className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
-                  editMode ? "border-blue-500" : ""
-                }`}
+                required
+                className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
               />
-            </div>
-
-            <div>
-              <label className="block text-gray-300 text-sm mb-1">
-                Year Level
-              </label>
               <input
                 type="text"
                 name="year_level"
+                placeholder="Year Level"
                 value={member.year_level}
                 onChange={handleChange}
-                readOnly={!editMode}
-                className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
-                  editMode ? "border-blue-500" : ""
-                }`}
+                required
+                className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
               />
-            </div>
-          </form>
-        )}
 
-        {showSetupModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-            <div className="bg-neutral-900 p-6 rounded-xl w-80 text-center border border-gray-700">
-              <h2 className="text-lg font-semibold text-white mb-2">
-                Setup Your Profile
-              </h2>
-              <p className="text-gray-400 mb-4 text-sm">
-                Please complete your profile to continue using the app.
-              </p>
-
-              <form
-                className="space-y-3 mb-4"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSetupProfile();
-                }}
+              <button
+                type="submit"
+                className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium text-sm"
               >
-                <input
-                  type="text"
-                  name="student_id"
-                  placeholder="Student ID"
-                  value={member.student_id}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
-                />
-                <input
-                  type="text"
-                  name="course"
-                  placeholder="Course"
-                  value={member.course}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
-                />
-                <input
-                  type="text"
-                  name="year_level"
-                  placeholder="Year Level"
-                  value={member.year_level}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
-                />
-
-                <button
-                  type="submit"
-                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium text-sm"
-                >
-                  {loading ? "Saving..." : "Save Profile"}
-                </button>
-              </form>
-            </div>
+                {loading ? "Saving..." : "Save Profile"}
+              </button>
+            </form>
           </div>
-        )}
-      </div>
-    </Layout>
+        </div>
+      )}
+    </div>
   );
 }
 

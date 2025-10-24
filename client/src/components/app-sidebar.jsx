@@ -1,6 +1,11 @@
 "use client";
 import * as React from "react";
-import { BookOpen, Bot, Settings2, SquareTerminal } from "lucide-react";
+import {
+  UserRoundCheck,
+  GraduationCap,
+  CalendarCheck,
+  House,
+} from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "./nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -15,29 +20,30 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export function AppSidebar({ ...props }) {
   const { user } = useAuth();
-  const admin = user.role == "admin";
+  const admin = user?.role == "admin";
   const data = {
     navMain: [
       {
         title: admin ? "Admin" : "Dashboard",
-        url: admin? "/admin/dashboard" : "/dashboard",
-        icon: SquareTerminal,
+        url: admin ? "/admin/dashboard" : "/dashboard",
+        icon: House,
         isActive: true,
-      },
-      {
-        title: "Attendance",
-        url: "/attendance",
-        icon: Bot,
       },
       {
         title: "Clubs",
         url: "/clubs",
-        icon: BookOpen,
+        icon: GraduationCap,
       },
+      {
+        title: "Attendance",
+        url: "/attendance",
+        icon: UserRoundCheck,
+      },
+
       {
         title: "Events",
         url: "/events",
-        icon: Settings2,
+        icon: CalendarCheck,
       },
     ],
   };

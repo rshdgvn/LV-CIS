@@ -117,11 +117,7 @@ function Clubs() {
     return () => clearTimeout(timer);
   }, [alert]);
 
-  const handleJoinClub = async (
-    clubId,
-    role = "member",
-    officerTitle = null
-  ) => {
+  const handleJoinClub = async (clubId, role = "member") => {
     if (!token) {
       setAlert({
         type: "error",
@@ -141,7 +137,7 @@ function Clubs() {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ role, officerTitle }), 
+        body: JSON.stringify({ role }),
       });
 
       const data = await res.json();
@@ -157,11 +153,7 @@ function Clubs() {
       setAlert({
         type: "success",
         title: "Join Request Sent!",
-        description:
-          data.message ||
-          `Your join request as ${role}${
-            officerTitle ? ` (${officerTitle})` : ""
-          } has been submitted.`,
+        description: data.message,
       });
     } catch (err) {
       await finishProgress();
@@ -187,9 +179,7 @@ function Clubs() {
   };
 
   return (
-    <Layout>
-      <NavTabs tabs={tabs} />
-
+    <>
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate
@@ -239,7 +229,7 @@ function Clubs() {
           </section>
         </div>
       )}
-    </Layout>
+    </>
   );
 }
 

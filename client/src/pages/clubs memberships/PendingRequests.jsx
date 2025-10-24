@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Layout from "@/components/app/layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import NavTabs from "@/components/NavTabs";
 import { AlertTemplate } from "@/components/AlertTemplate";
 import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
 import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
@@ -114,9 +112,7 @@ export default function PendingRequests() {
   }, [alert]);
 
   return (
-    <Layout>
-      <NavTabs tabs={tabs} />
-
+    <>
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate
@@ -204,6 +200,6 @@ export default function PendingRequests() {
           </button>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

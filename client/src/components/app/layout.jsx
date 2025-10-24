@@ -11,7 +11,7 @@ export default function Layout({ children }) {
     >
       <AppSidebar />
       <main className="flex-1 p-0 m-0">
-        <SidebarTrigger className="mt-4 ml-4 visible md:invisible" />
+        <SidebarTrigger className="mt-4 ml-4 visible" />
         {children}
       </main>
     </SidebarProvider>

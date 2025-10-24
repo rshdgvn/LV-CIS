@@ -385,9 +385,9 @@ class MembershipController extends Controller
     /**
      * Edit a member's info in the pivot table (role, status, officer title)
      */
-    public function editMember(Request $request, $clubId, $userId)
+    public function editMemberPivot(Request $request, $clubId, $userId)
     {
-        $membership = ClubMembership::where('club_id', $clubId)
+        $membership = ClubMembership::where('club_id', $clubId) 
             ->where('user_id', $userId)
             ->firstOrFail();
 

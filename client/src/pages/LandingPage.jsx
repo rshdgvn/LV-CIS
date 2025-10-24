@@ -9,14 +9,14 @@ import dashboard from "../assets/Dashboard.png";
 function LandingPage() {
   const nav = useNavigate();
   const { user } = useAuth();
-  const admin = user.role == 'admin'
+  const admin = user.role == "admin";
 
   return (
     <div className="w-full bg-black text-white">
       <section
-        id="home"
-        className="relative flex flex-col h-screen px-6 
-             bg-[radial-gradient(ellipse_at_top,theme(colors.blue.800)_0%,theme(colors.blue.900)_20%,theme(colors.black)_60%)] bg-[length:100%_50%] bg-no-repeat"
+        id="home" 
+        className="relative flex flex-col h-screen md:px-6
+             bg-[radial-gradient(ellipse_at_top,theme(colors.blue.800)_0%,theme(colors.blue.900)_0%,theme(colors.black)_100%)] bg-[length:100%_30%] bg-no-repeat"
       >
         <div className="flex flex-row items-center justify-between px-20 py-5">
           <a href="/dashboard" className="flex items-center font-medium gap-3">
@@ -35,7 +35,10 @@ function LandingPage() {
 
           <div>
             {isLoggedIn() ? (
-              <Button variant="outline" onClick={() => nav(admin? '/admin/dashboard' : "/dashboard")}>
+              <Button
+                variant="outline"
+                onClick={() => nav(admin ? "/admin/dashboard" : "/dashboard")}
+              >
                 Dashboard
               </Button>
             ) : (
@@ -48,22 +51,28 @@ function LandingPage() {
 
         {/* HERO */}
         <div className="flex flex-col items-center justify-center mb-20 text-center flex-1">
-          <h1 className="text-6xl font-bold py-5 px-3 rounded-3xl">
-            La Verdad{" "}
-            <span className="block text-5xl bg-gradient-to-r from-blue-300 via-blue-500 to-blue-700 bg-clip-text text-transparent py-2">
-              Club Integrated System
+          <span className="block bg-blue-700 text-white px-3 py-1 rounded-xl text-xs md:text-sm font-medium mb-5 opacity-90">
+            Manage Clubs Digitally
+          </span>
+          <h1 className="md:text-6xl text-4xl font-bold py-5 px-3 rounded-3xl">
+            <span className="block text-gray-300">Level Up Your Club</span>
+            <span className="text-gray-300">Experience With </span>
+            <span className="bg-gradient-to-r from-blue-400 via-blue-600 to-blue-500 bg-clip-text text-transparent py-2">
+              LVCIS
             </span>
           </h1>
 
-          <p className="mt-6 max-w-6xl text-gray-400 text-lg">
-            Welcome to the La Verdad Club Integrated System. A digital platform
-            for LVCC students and organizations. LVCIS makes it easy to manage
-            memberships, track attendance, schedule events, and stay updated —
-            all in one place.
+          <p className="mt-6 max-w-3xl text-gray-400 md:text-lg text-sm">
+            Discover a smarter way to manage student organizations — from
+            keeping track of members and attendance to organizing events and
+            generating reports, all through one easy-to-use system.
           </p>
 
           <div className="flex gap-3">
-            <Button className="mt-6 bg-blue-700 text-white" onClick={() => nav("/login")}>
+            <Button
+              className="mt-6 bg-blue-700 text-white hover:bg-blue-600"
+              onClick={() => nav("/login")}
+            >
               Get Started
             </Button>
             <Button

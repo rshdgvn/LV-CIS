@@ -94,17 +94,14 @@ export default function PendingClubs() {
     try {
       NProgress.start();
 
-      const res = await fetch(
-        `${APP_URL}/clubs/${clubId}/cancel`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${APP_URL}/clubs/${clubId}/cancel`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
       if (!res.ok)
@@ -141,9 +138,7 @@ export default function PendingClubs() {
   }, [alert]);
 
   return (
-    <Layout>
-      <NavTabs tabs={tabs} />
-
+    <>
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate
@@ -179,6 +174,6 @@ export default function PendingClubs() {
           )}
         </div>
       )}
-    </Layout>
+    </>
   );
 }

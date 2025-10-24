@@ -184,15 +184,8 @@ export default function ClubDetails() {
     nav("pending-requests");
   };
 
-  const tabs = [
-    { name: "Overview", href: "/clubs" },
-    { name: "Pending", href: "/pending-clubs" },
-  ];
-
   return (
-    <Layout>
-      <NavTabs tabs={tabs} />
-
+    <>
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate
@@ -278,6 +271,6 @@ export default function ClubDetails() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

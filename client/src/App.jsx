@@ -6,7 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Attendance from "./pages/Attendance";
 import Events from "./pages/Events";
 import Clubs from "./pages/clubs memberships/Clubs";
-import ClubDetails from "./pages/clubs memberships/ClubDetails"; 
+import ClubDetails from "./pages/clubs memberships/ClubDetails";
 import GoogleCallback from "./GoogleCallback";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./contexts/ProtectedRoute";
@@ -16,10 +16,10 @@ import AdminRoute from "./contexts/AdminRoute";
 import MemberDetails from "./pages/clubs memberships/MemberDetails";
 import Profile from "./pages/Profile";
 import PendingRequests from "./pages/clubs memberships/PendingRequests";
-import ClubRoleRequests from "./pages/clubs memberships/ClubRoleRequest";
 import { ClubProvider } from "./contexts/ClubContext";
 import OfficersRoute from "./contexts/OfficersRoute";
 import ResetPassword from "./pages/ResetPassword";
+import Layout from "./components/app/layout";
 
 function App() {
   return (
@@ -33,18 +33,30 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route element={<ProtectedRoute />}>
+            <Route
+              element={
+                <Layout>
+                  <ProtectedRoute />
+                </Layout>
+              }
+            >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/events" element={<Events />} />
               <Route path="/clubs" element={<Clubs />} />
-              <Route path="/club/:id" element={<ClubDetails />} /> 
+              <Route path="/club/:id" element={<ClubDetails />} />
               <Route path="/pending-clubs" element={<PendingClubs />} />
-              <Route path="/club/:clubId/members/:userId" element={<MemberDetails />} />
+              <Route
+                path="/club/:clubId/members/:userId"
+                element={<MemberDetails />}
+              />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/club/:clubId/role-change-requests"element={<ClubRoleRequests />}/>
+
               <Route element={<OfficersRoute />}>
-                <Route path="/club/:id/pending-requests" element={<PendingRequests />} />
+                <Route
+                  path="/club/:id/pending-requests"
+                  element={<PendingRequests />}
+                />
               </Route>
               <Route element={<AdminRoute />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />

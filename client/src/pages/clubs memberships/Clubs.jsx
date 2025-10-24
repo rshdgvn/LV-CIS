@@ -179,9 +179,7 @@ function Clubs() {
   };
 
   return (
-    <Layout>
-      <NavTabs tabs={tabs} />
-
+    <>
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate
@@ -231,7 +229,7 @@ function Clubs() {
           </section>
         </div>
       )}
-    </Layout>
+    </>
   );
 }
 

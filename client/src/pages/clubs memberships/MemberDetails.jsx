@@ -71,29 +71,22 @@ export default function MemberDetails() {
 
   if (error) {
     return (
-      <Layout>
-        <NavTabs tabs={tabs} />
-        <div className="min-h-screen text-red-400 flex items-center justify-center">
-          <p>{error}</p>
-        </div>
-      </Layout>
+      <div className="min-h-screen text-red-400 flex items-center justify-center">
+        <p>{error}</p>
+      </div>
     );
   }
 
   if (loading || !member) {
     return (
-      <Layout>
-        <NavTabs tabs={tabs} />
-        <div className="min-h-screen flex items-center justify-center text-white">
-          <div className="loader"></div>
-        </div>
-      </Layout>
+      <div className="min-h-screen flex items-center justify-center text-white">
+        <div className="loader"></div>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <NavTabs tabs={tabs} />
+    <>
       <div className="min-h-screen text-white p-6">
         <div className="flex flex-col items-center mb-8">
           <img
@@ -128,7 +121,7 @@ export default function MemberDetails() {
           </button>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 

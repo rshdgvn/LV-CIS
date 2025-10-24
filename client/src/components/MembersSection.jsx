@@ -15,6 +15,18 @@ import { APP_URL } from "@/lib/config";
 import { AlertTemplate } from "@/components/AlertTemplate";
 import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
 export default function MembersSection({
   members,
   clubId,
@@ -62,7 +74,6 @@ export default function MembersSection({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData)
     if (modalMode === "add") await onAddMember(formData);
     else await onEditMember(formData);
     setIsModalOpen(false);
@@ -139,6 +150,7 @@ export default function MembersSection({
 
   return (
     <div className="bg-sidebar border border-gray-800 rounded-xl p-6 relative">
+      {/* Alert */}
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate
@@ -231,7 +243,7 @@ export default function MembersSection({
             applicants.map((user) => (
               <div
                 key={user.user_id}
-                className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
+                className="flex items-center justify-between p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
               >
                 <div className="flex items-center gap-3">
                   <img
@@ -280,7 +292,7 @@ export default function MembersSection({
           regularMembers.map((member) => (
             <div
               key={member.id}
-              className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
+              className="flex items-center justify-between p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
             >
               <div
                 className="flex items-center gap-3 cursor-pointer"
@@ -327,98 +339,84 @@ export default function MembersSection({
         )}
       </div>
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-sidebar border border-gray-700 rounded-2xl shadow-xl p-6 w-full max-w-md mx-3"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">
-                  {modalMode === "add" ? "Add Member" : "Edit Member"}
-                </h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-400 hover:text-white"
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-neutral-900 border border-neutral-800">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>
+                {modalMode === "add" ? "Add Member" : "Edit Member"}
+              </DialogTitle>
+              <DialogDescription>
+                {modalMode === "add"
+                  ? "Fill out the details below to add a new member."
+                  : "Update the member details below and click save to apply changes."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              {modalMode === "add" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="userId">User ID</Label>
+                  <Input
+                    id="userId"
+                    value={formData.userId || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, userId: e.target.value })
+                    }
+                    placeholder="Enter user ID"
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="role">Role</Label>
+                <select
+                  id="role"
+                  value={formData.role}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value })
+                  }
+                  className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <XIcon className="w-5 h-5" />
-                </button>
+                  <option value="member">Member</option>
+                  <option value="officer">Officer</option>
+                </select>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {modalMode === "add" && (
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      User ID
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.userId || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, userId: e.target.value })
-                      }
-                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter user ID"
-                      required
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm text-gray-300 mb-1">
-                    Role
-                  </label>
-                  <select
-                    value={formData.role}
+              {formData.role === "officer" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="officer_title">Officer Title</Label>
+                  <Input
+                    id="officer_title"
+                    value={formData.officer_title}
                     onChange={(e) =>
-                      setFormData({ ...formData, role: e.target.value })
+                      setFormData({
+                        ...formData,
+                        officer_title: e.target.value,
+                      })
                     }
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="member">Member</option>
-                    <option value="officer">Officer</option>
-                  </select>
+                    placeholder="Enter officer title"
+                  />
                 </div>
+              )}
+            </div>
 
-                {formData.role === "officer" && (
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Officer Title
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.officer_title}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          officer_title: e.target.value,
-                        })
-                      }
-                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter officer title"
-                    />
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-medium py-2 rounded-lg"
-                >
-                  {modalMode === "add" ? "Add Member" : "Save Changes"}
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>  
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                {modalMode === "add" ? "Add Member" : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

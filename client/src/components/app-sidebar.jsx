@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export function AppSidebar({ ...props }) {
   const { user } = useAuth();
-  const admin = user.role == "admin";
+  const admin = user?.role == "admin";
   const data = {
     navMain: [
       {

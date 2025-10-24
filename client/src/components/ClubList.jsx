@@ -34,11 +34,7 @@ export default function ClubList({
           logo={club.logo_url}
           status={status}
           onEnter={onEnter ? () => onEnter(club.id) : undefined}
-          onJoin={
-            onJoin
-              ? (role, officerTitle) => onJoin(club.id, role, officerTitle)
-              : undefined
-          }
+          onJoin={onJoin ? () => onJoin(club.id) : undefined}
           onCancel={onCancel ? () => onCancel(club.id) : undefined}
         />
       ))}

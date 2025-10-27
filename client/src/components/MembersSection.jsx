@@ -6,6 +6,10 @@ import {
   CheckIcon,
   CheckCircle2Icon,
   AlertCircleIcon,
+  MoreHorizontal,
+  UserPlus,
+  Users,
+  ArrowLeft,
 } from "lucide-react";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +35,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -188,47 +200,21 @@ export default function MembersSection({
             {applicantMode ? "Applicants" : "Members"}
           </h2>
 
-          {manageMode && !applicantMode && (
-            <div className="flex flex-wrap gap-5">
-              <button
-                onClick={openAddModal}
-                className="flex items-center sm:gap-1 text-xs sm:text-sm text-green-400 hover:underline"
-              >
-                <PlusIcon className="w-4 h-4" />
-                Add
-              </button>
-              <button
-                onClick={() => setApplicantMode(true)}
-                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-orange-400 hover:underline"
-              >
-                Applicants
-              </button>
-            </div>
-          )}
-
           {applicantMode && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setApplicantMode(false)}
-              className="text-xs sm:text-sm text-blue-400 hover:underline"
+              className="text-blue-400 hover:text-blue-500"
+              aria-label="Back to Members"
             >
-              ← Back to Members
-            </button>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           )}
         </div>
 
         {!applicantMode && (
-          <div className="flex flex-wrap justify-end gap-2 sm:gap-3">
-            <button
-              onClick={() => setManageMode(!manageMode)}
-              className={`text-xs sm:text-sm hover:underline transition-colors ${
-                manageMode
-                  ? "text-red-400 hover:text-red-300"
-                  : "text-blue-400 hover:text-blue-300"
-              }`}
-            >
-              {manageMode ? "Exit" : "Manage"}
-            </button>
-
+          <div className="flex flex-wrap justify-end gap-2 sm:gap-3 items-center">
             <div className="flex flex-wrap justify-end gap-1 bg-black p-1 rounded-lg">
               {filters.map((filter) => (
                 <button
@@ -244,11 +230,47 @@ export default function MembersSection({
                 </button>
               ))}
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-center h-9 w-9 p-0 hover:bg-muted"
+                >
+                  <MoreHorizontal className="h-5 w-5 text-gray-300" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => openAddModal()}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <UserPlus className="h-4 w-4 text-green-500" />
+                  <span>Add Member</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setApplicantMode(true)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Users className="h-4 w-4 text-orange-400" />
+                  <span>View Applicants</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setManageMode((prev) => !prev)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <PencilIcon className="h-4 w-4 text-blue-400" />
+                  <span>
+                    {manageMode ? "Exit Manage Mode" : "Manage Members"}
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </div>
 
-      {/* Members List */}
       <div className="h-96">
         {applicantMode ? (
           loading ? (

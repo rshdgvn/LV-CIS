@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 
 NProgress.configure({ showSpinner: false });
-
 const finishProgress = () =>
   new Promise((resolve) => {
     NProgress.done();
@@ -28,15 +27,15 @@ export default function Clubs() {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const [clubs, setClubs] = useState([]);
   const [yourClubs, setYourClubs] = useState([]);
   const [pendingClubs, setPendingClubs] = useState([]);
+  const [otherClubs, setOtherClubs] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState(null);
 
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("your"); // default = Your Clubs
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
 
@@ -50,57 +49,55 @@ export default function Clubs() {
     { label: "Socio-Politics", value: "socio_politics" },
   ];
 
-  const fetchClubs = async (showLoading = true) => {
+  const filterOptions = [
+    { label: "Your Clubs", value: "your" },
+    { label: "Pending", value: "pending" },
+    { label: "Other Clubs", value: "other" },
+  ];
+
+  const fetchClubs = async () => {
     if (!token) return;
+    setLoading(true);
+    NProgress.start();
+
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    };
 
     try {
-      if (showLoading) {
-        setLoading(true);
-        NProgress.start();
-      }
-
-      const headers = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      };
-
-      const categoryParam =
-        categoryFilter !== "all" ? `?category=${categoryFilter}` : "";
-
-      const [allRes, yourRes, pendingRes] = await Promise.all([
-        fetch(`${APP_URL}/clubs${categoryParam}`, { headers }),
+      const [yourRes, pendingRes, otherRes] = await Promise.all([
         fetch(`${APP_URL}/your/clubs`, { headers }),
         fetch(`${APP_URL}/your/pending-clubs`, { headers }),
+        fetch(`${APP_URL}/other/clubs`, { headers }),
       ]);
 
-      if (!allRes.ok || !yourRes.ok || !pendingRes.ok)
+      if (!yourRes.ok || !pendingRes.ok || !otherRes.ok)
         throw new Error("Failed to fetch clubs.");
 
-      const [allData, yourData, pendingData] = await Promise.all([
-        allRes.json(),
+      const [yourData, pendingData, otherData] = await Promise.all([
         yourRes.json(),
         pendingRes.json(),
+        otherRes.json(),
       ]);
 
-      setClubs(allData);
       setYourClubs(yourData);
       setPendingClubs(pendingData);
+      setOtherClubs(otherData);
     } catch (err) {
-      console.error("Error fetching clubs:", err);
+      console.error(err);
       setError("Failed to load clubs.");
     } finally {
-      if (showLoading) {
-        setLoading(false);
-        await finishProgress();
-      }
+      setLoading(false);
+      await finishProgress();
     }
   };
 
   useEffect(() => {
     if (!token) return;
     fetchClubs();
-  }, [token, categoryFilter]); 
+  }, [token]);
 
   useEffect(() => {
     if (!alert) return;
@@ -133,7 +130,7 @@ export default function Clubs() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to join club.");
 
-      await fetchClubs(false);
+      await fetchClubs();
       await finishProgress();
 
       setAlert({
@@ -169,14 +166,37 @@ export default function Clubs() {
     setShowCategoryMenu(false);
   };
 
-  // Determine which dataset to display
+  const filterByCategory = (data) => {
+    if (categoryFilter === "all") return data;
+    return data.filter((c) => c.category === categoryFilter);
+  };
+
   const getDisplayedClubs = () => {
-    if (activeFilter === "your") return yourClubs;
-    if (activeFilter === "pending") return pendingClubs;
-    return clubs;
+    switch (activeFilter) {
+      case "your":
+        return filterByCategory(yourClubs);
+      case "pending":
+        return filterByCategory(pendingClubs);
+      case "other":
+        return filterByCategory(otherClubs);
+      default:
+        return [];
+    }
+  };
+
+  const getStatus = () => {
+    switch (activeFilter) {
+      case "your":
+        return "approved";
+      case "pending":
+        return "pending";
+      default:
+        return "none";
+    }
   };
 
   const displayedClubs = getDisplayedClubs();
+  const status = getStatus();
 
   return (
     <>
@@ -186,26 +206,22 @@ export default function Clubs() {
           <h1 className="text-4xl font-semibold">Explore Clubs</h1>
         </div>
         <p className="text-gray-400 my-2">
-          Discover all student organizations and find the right one for you.
+          Discover student organizations and find the right one for you.
         </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
-        {["all", "your", "pending"].map((filter) => (
+        {filterOptions.map((filter) => (
           <button
-            key={filter}
-            onClick={() => handleFilterChange(filter)}
+            key={filter.value}
+            onClick={() => handleFilterChange(filter.value)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              activeFilter === filter
+              activeFilter === filter.value
                 ? "bg-blue-950 text-white shadow-lg"
                 : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
             }`}
           >
-            {filter === "all"
-              ? "All Clubs"
-              : filter === "your"
-              ? "Your Clubs"
-              : "Pending"}
+            {filter.label}
           </button>
         ))}
 
@@ -265,6 +281,7 @@ export default function Clubs() {
               clubs={displayedClubs}
               onEnter={handleEnterClub}
               onJoin={handleJoinClub}
+              status={status}
             />
           )}
         </div>

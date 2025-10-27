@@ -21,20 +21,16 @@ function ClubCard({
             <span>Pending</span>
           </button>
 
-          {onCancel && (
-            <div className="mt-3">
-              <AlertDialogTemplate
-                title="Cancel Application?"
-                description="Are you sure you want to cancel your club application?"
-                onConfirm={onCancel}
-                button={
-                  <button className="w-full bg-red-700 hover:bg-red-800 text-white text-sm font-semibold py-3 rounded-xl transition-colors shadow-md">
-                    Cancel Application
-                  </button>
-                }
-              />
-            </div>
-          )}
+          <AlertDialogTemplate
+            title="Cancel Application?"
+            description="Are you sure you want to cancel your club application?"
+            onConfirm={onCancel}
+            button={
+              <button className="flex items-center justify-start gap-2 text-red-400 text-sm font-semibold transition-colors">
+                Cancel
+              </button>
+            }
+          />
         </div>
       );
     }

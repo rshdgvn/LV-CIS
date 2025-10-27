@@ -117,6 +117,7 @@ export default function Clubs() {
 
     try {
       NProgress.start();
+
       const res = await fetch(`${APP_URL}/clubs/${clubId}/join`, {
         method: "POST",
         headers: {
@@ -130,7 +131,11 @@ export default function Clubs() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to join club.");
 
-      await fetchClubs();
+      sessionStorage.removeItem("yourClubs");
+      sessionStorage.removeItem("otherClubs");
+      await fetchClubs(false);
+      window.dispatchEvent(new Event("pendingClubsUpdated"));
+
       await finishProgress();
 
       setAlert({
@@ -140,10 +145,54 @@ export default function Clubs() {
       });
     } catch (err) {
       await finishProgress();
+
       setAlert({
         type: "error",
         title: "Failed to Join",
         description: err.message || "An error occurred while joining the club.",
+      });
+    }
+  };
+
+  const handleCancel = async (clubId) => {
+    if (!token) return;
+
+    try {
+      NProgress.start();
+
+      const res = await fetch(`${APP_URL}/clubs/${clubId}/cancel`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.message || "Failed to cancel application.");
+
+      sessionStorage.removeItem("pendingClubs");
+      sessionStorage.removeItem("yourClubs");
+      sessionStorage.removeItem("otherClubs");
+
+      await fetchClubs(false);
+      window.dispatchEvent(new Event("clubsUpdated"));
+      await finishProgress();
+
+      setAlert({
+        type: "success",
+        title: "Application Cancelled",
+        description:
+          data.message || "Your club application has been cancelled.",
+      });
+    } catch (err) {
+      await finishProgress();
+      setAlert({
+        type: "error",
+        title: "Failed to Cancel",
+        description: err.message || "An error occurred while cancelling.",
       });
     }
   };
@@ -282,6 +331,7 @@ export default function Clubs() {
               onEnter={handleEnterClub}
               onJoin={handleJoinClub}
               status={status}
+              onCancel={handleCancel}
             />
           )}
         </div>

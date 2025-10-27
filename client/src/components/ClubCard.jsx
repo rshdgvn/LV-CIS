@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
+import { Handshake, DoorOpen } from "lucide-react";
 
 function ClubCard({
   name,
@@ -14,8 +15,8 @@ function ClubCard({
   const renderButton = () => {
     if (status === "pending") {
       return (
-        <div className="w-full">
-          <button className="w-full bg-yellow-500/20 text-yellow-400 text-sm font-semibold py-3 rounded-xl cursor-not-allowed border border-yellow-500/40 shadow-inner">
+        <div className="w-6">
+          <button className="bg-yellow-500/20 text-yellow-400 text-sm font-semibold py-3 rounded-xl cursor-not-allowed border border-yellow-500/40 shadow-inner">
             PENDING
           </button>
 
@@ -41,9 +42,10 @@ function ClubCard({
       return (
         <button
           onClick={onEnter}
-          className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors shadow-md"
+          className="flex items-center justify-start gap-2 text-green-600 text-sm font-semibold transition-colors hover:text-green-500"
         >
-          ENTER NOW
+          <DoorOpen className="w-4 h-4" />
+          Access Club
         </button>
       );
     }
@@ -54,18 +56,20 @@ function ClubCard({
         description="Are you sure you want to join this club?"
         onConfirm={() => onJoin && onJoin("member", null)}
         button={
-          <button className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors shadow-md">
-            ENTER NOW
-          </button>
+          <div className="flex items-center justify-start gap-2 text-blue-500 hover:text-blue-400 text-sm font-semibold cursor-pointer transition-colors">
+            <Handshake className="w-4 h-4" />
+            <span>Join Us</span>
+          </div>
         }
       />
     );
   };
 
   return (
-    <div className="w-72 h-96 bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-700 text-white hover:scale-[1.02] transition-transform duration-300 flex flex-col">
+    <div className="w-72 rounded-2xl overflow-hidden shadow-xl border border-gray-800 text-white hover:scale-[1.02] transition-transform duration-300 flex flex-col">
+      <samp></samp>{" "}
       <div
-        className="relative h-[150px] bg-cover bg-center flex items-center justify-center"
+        className="relative h-28 bg-cover bg-center flex items-center justify-center"
         style={{
           backgroundImage: background
             ? `url(${background})`
@@ -77,15 +81,14 @@ function ClubCard({
           <img
             src={logo}
             alt={`${name} Logo`}
-            className="relative z-10 w-20 h-20 object-contain rounded-full border-4 border-white/30 shadow-lg"
+            className="relative z-10 w-16 h-16 object-contain rounded-full shadow-lg"
           />
         )}
       </div>
-
-      <div className="flex flex-col justify-between flex-1 p-8 text-center">
+      <div className="flex flex-col justify-between flex-1 p-4">
         <div>
-          <h3 className="text-lg font-bold">{name}</h3>
-          <p className="text-gray-400 text-sm mt-2 line-clamp-3">
+          <h3 className="text-base font-bold">{name}</h3>
+          <p className="text-gray-400 text-xs mt-1 line-clamp-2">
             {description || "No description available."}
           </p>
         </div>

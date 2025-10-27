@@ -25,7 +25,7 @@ export function NavMain({ items }) {
                 ${
                   isActive
                     ? "bg-blue-700 text-white font-medium hover:bg-blue-700/90"
-                    : "text-gray-300 hover:text-white hover:bg-blue-800/20"
+                    : "text-gray-300 hover:text-white"
                 }`}
             >
               {Icon && (

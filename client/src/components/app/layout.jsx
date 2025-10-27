@@ -33,7 +33,7 @@ export default function Layout({ children }) {
         <SidebarTrigger className="mx-3 relative z-[70]" />
       </div>
 
-      <main className="flex-1 m-5 pt-16 md:pt-0">{children}</main>
+      <main className="flex-1 m-4 pt-16 md:pt-0">{children}</main>
     </SidebarProvider>
   );
 }

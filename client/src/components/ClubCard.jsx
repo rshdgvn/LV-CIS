@@ -66,8 +66,18 @@ function ClubCard({
   };
 
   return (
-    <div className="w-72 rounded-2xl overflow-hidden shadow-xl border border-gray-800 text-white hover:scale-[1.02] transition-transform duration-300 flex flex-col">
-      <samp></samp>{" "}
+    <div
+      className="
+      w-72 rounded-xl overflow-hidden 
+      border border-gray-800 
+      bg-neutral-900/80 backdrop-blur-sm
+      shadow-[0_4px_20px_rgba(0,0,0,0.3)]
+      hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)]
+      hover:scale-[1.03]
+      transition-all duration-300 ease-out 
+      flex flex-col
+    "
+    >
       <div
         className="relative h-28 bg-cover bg-center flex items-center justify-center"
         style={{
@@ -76,15 +86,16 @@ function ClubCard({
             : "linear-gradient(to bottom, #1e1e1e, #111)",
         }}
       >
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/50" />
         {logo && (
           <img
             src={logo}
             alt={`${name} Logo`}
-            className="relative z-10 w-16 h-16 object-contain rounded-full shadow-lg"
+            className="relative z-10 w-16 h-16 object-contain rounded-full shadow-lg bg-white"
           />
         )}
       </div>
+
       <div className="flex flex-col justify-between flex-1 p-4">
         <div>
           <h3 className="text-base font-bold">{name}</h3>
@@ -93,7 +104,7 @@ function ClubCard({
           </p>
         </div>
 
-        <div className="mt-6">{renderButton()}</div>
+        <div className="mt-8">{renderButton()}</div>
       </div>
     </div>
   );

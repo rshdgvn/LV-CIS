@@ -51,7 +51,7 @@ function LandingPage() {
 
         {/* HERO */}
         <div className="flex flex-col items-center justify-center mb-20 text-center flex-1">
-          <span className="block bg-blue-700 text-white px-3 py-1 rounded-xl text-xs md:text-sm font-medium mb-5 opacity-90">
+          <span className="block bg-blue-900 text-white px-3 py-1 rounded-xl text-xs md:text-sm font-medium mb-5 opacity-90">
             Manage Clubs Digitally
           </span>
           <h1 className="md:text-6xl text-4xl font-bold py-5 px-3 rounded-3xl">
@@ -70,7 +70,7 @@ function LandingPage() {
 
           <div className="flex gap-3">
             <Button
-              className="mt-6 bg-blue-700 text-white hover:bg-blue-600"
+              className="mt-6 bg-blue-900 text-white hover:bg-blue-950"
               onClick={() => nav("/login")}
             >
               Get Started

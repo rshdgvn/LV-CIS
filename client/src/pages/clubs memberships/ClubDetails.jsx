@@ -83,8 +83,7 @@ export default function ClubDetails() {
   const members = useMemo(() => club?.users || [], [club?.users]);
 
   const handleAddMember = async (formData) => {
-    const { userId, role, officer_title } = formData;
-    console.log("form", formData);
+    const { addBy, userId, email, role, officer_title } = formData;
 
     if (!id || !role) return;
 
@@ -96,7 +95,9 @@ export default function ClubDetails() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: userId,
+          add_by: addBy,
+          user_id: addBy === "userId" ? userId : null,
+          email: addBy === "email" ? email : null,
           role,
           officerTitle: role === "officer" ? officer_title : null,
         }),
@@ -108,6 +109,12 @@ export default function ClubDetails() {
             "warning",
             "Duplicate Member",
             "This user is already a member of the club."
+          );
+        } else if (res.status === 404) {
+          showAlert(
+            "error",
+            "User Not Found",
+            "No user found with this email."
           );
         } else {
           throw new Error("Failed to add member");

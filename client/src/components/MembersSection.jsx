@@ -205,7 +205,7 @@ export default function MembersSection({
               variant="ghost"
               size="icon"
               onClick={() => setApplicantMode(false)}
-              className="text-blue-400 hover:text-blue-500"
+              className="text-blue-900 hover:text-blue-950"
               aria-label="Back to Members"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -222,7 +222,7 @@ export default function MembersSection({
                   onClick={() => setActiveFilter(filter)}
                   className={`px-2 sm:px-3 py-1 text-[0.6rem] sm:text-xs font-medium rounded-md transition-all duration-200 ${
                     activeFilter === filter
-                      ? "bg-blue-600 text-white"
+                      ? "bg-blue-900 text-white"
                       : "bg-transparent text-gray-300 hover:text-white"
                   }`}
                 >
@@ -260,7 +260,7 @@ export default function MembersSection({
                   onClick={() => setManageMode((prev) => !prev)}
                   className="flex items-center gap-2 cursor-pointer"
                 >
-                  <PencilIcon className="h-4 w-4 text-blue-400" />
+                  <PencilIcon className="h-4 w-4 text-blue-700" />
                   <span>
                     {manageMode ? "Exit Manage Mode" : "Manage Members"}
                   </span>
@@ -362,7 +362,7 @@ export default function MembersSection({
                 {manageMode ? (
                   <div className="flex gap-3">
                     <button onClick={() => openEditModal(member)}>
-                      <PencilIcon className="w-4 h-4 text-blue-400 hover:text-blue-200" />
+                      <PencilIcon className="w-4 h-4 text-blue-700 hover:text-blue-600" />
                     </button>
                     <button onClick={() => onRemoveMember(member)}>
                       <Trash2Icon className="w-4 h-4 text-red-500 hover:text-red-400" />
@@ -452,20 +452,60 @@ export default function MembersSection({
 
             <div className="grid gap-4 py-4">
               {modalMode === "add" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="userId">User ID</Label>
-                  <Input
-                    id="userId"
-                    value={formData.userId || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, userId: e.target.value })
-                    }
-                    placeholder="Enter user ID"
-                    required
-                  />
-                </div>
+                <>
+                  {/* Add By Selection */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="addBy">Add Member By</Label>
+                    <select
+                      id="addBy"
+                      value={formData.addBy || "userId"}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          addBy: e.target.value,
+                          userId: "",
+                          email: "",
+                        })
+                      }
+                      className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-900"
+                    >
+                      <option value="userId">User ID</option>
+                      <option value="email">Email</option>
+                    </select>
+                  </div>
+
+                  {/* Input Field for Either User ID or Email */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="userInput">
+                      {formData.addBy === "email" ? "Email" : "User ID"}
+                    </Label>
+                    <Input
+                      id="userInput"
+                      type={formData.addBy === "email" ? "email" : "text"}
+                      value={
+                        formData.addBy === "email"
+                          ? formData.email || ""
+                          : formData.userId || ""
+                      }
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [formData.addBy === "email" ? "email" : "userId"]:
+                            e.target.value,
+                        })
+                      }
+                      placeholder={
+                        formData.addBy === "email"
+                          ? "Enter user email"
+                          : "Enter user ID"
+                      }
+                      required
+                    />
+                  </div>
+                </>
               )}
 
+              {/* Role Selector */}
               <div className="grid gap-2">
                 <Label htmlFor="role">Role</Label>
                 <select
@@ -474,13 +514,14 @@ export default function MembersSection({
                   onChange={(e) =>
                     setFormData({ ...formData, role: e.target.value })
                   }
-                  className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-900"
                 >
                   <option value="member">Member</option>
                   <option value="officer">Officer</option>
                 </select>
               </div>
 
+              {/* Officer Title */}
               {formData.role === "officer" && (
                 <div className="grid gap-2">
                   <Label htmlFor="officer_title">Officer Title</Label>
@@ -507,7 +548,10 @@ export default function MembersSection({
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                type="submit"
+                className="bg-blue-900 hover:bg-blue-950 text-white"
+              >
                 {modalMode === "add" ? "Add Member" : "Save Changes"}
               </Button>
             </DialogFooter>

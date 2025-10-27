@@ -150,7 +150,6 @@ export default function MembersSection({
 
   return (
     <div className="bg-sidebar border border-gray-800 rounded-xl p-6 relative">
-      {/* Alert */}
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate

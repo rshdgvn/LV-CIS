@@ -37,7 +37,7 @@ export function NavMain({ items }) {
                   }`}
                 />
               )}
-              <span className="font-normal text-lg">{title}</span>
+              <span className="font-normal text-base">{title}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         );

@@ -222,11 +222,32 @@ export default function ClubDetails() {
                 alt={club.name}
                 className="w-28 h-28 rounded-full object-cover border border-gray-800"
               />
+
               <div className="flex-1">
                 <h1 className="text-2xl font-bold">{club.name}</h1>
                 <p className="text-gray-400 text-sm mt-2">
                   {club.description || "No description available."}
                 </p>
+
+                {club.adviser && (
+                  <div className="mt-5">
+                    <h3 className="font-semibold text-white text-lg mt-10">Adviser</h3>
+                    <div className="flex items-center mt-3 bg-neutral-900 p-3 w-fit">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-white text-sm font-medium">
+                        {club.adviser.initialss ||
+                          club.adviser
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
+                      </div>
+                      <div className="ml-3">
+                        <p className="font-medium">Mr. {club.adviser}</p>
+                        <p className="text-xs text-gray-400">Adviser</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

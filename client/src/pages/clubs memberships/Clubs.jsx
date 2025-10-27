@@ -24,7 +24,7 @@ const finishProgress = () =>
   });
 
 export default function Clubs() {
-  const { token } = useAuth();
+  const { token, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const [yourClubs, setYourClubs] = useState([]);
@@ -260,19 +260,20 @@ export default function Clubs() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
-        {filterOptions.map((filter) => (
-          <button
-            key={filter.value}
-            onClick={() => handleFilterChange(filter.value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              activeFilter === filter.value
-                ? "bg-blue-950 text-white shadow-lg"
-                : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
+        {!isAdmin &&
+          filterOptions.map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => handleFilterChange(filter.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                activeFilter === filter.value
+                  ? "bg-blue-950 text-white shadow-lg"
+                  : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
 
         <div className="relative">
           <button

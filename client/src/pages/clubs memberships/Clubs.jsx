@@ -4,13 +4,10 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-
-import Layout from "@/components/app/layout";
-import NavTabs from "@/components/NavTabs";
 import ClubList from "@/components/ClubList";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTemplate } from "@/components/AlertTemplate";
-import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { CheckCircle2Icon, AlertCircleIcon, GraduationCap } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 
 NProgress.configure({ showSpinner: false });
@@ -180,6 +177,17 @@ function Clubs() {
 
   return (
     <>
+      <div className="flex flex-col gap-2 my-8 mx-4">
+        <div className="flex flex-row items-center gap-5">
+          <GraduationCap className="h-9 w-9 bg-blue-400 text-blue-900 border-blue-300 p-1 rounded-lg" />
+          <h1 className="text-4xl font-semibold">Explore Clubs</h1>
+        </div>
+        <p className="text-gray-400 my-2">
+          Get an overview of your clubs and discover other student organizations
+          that match your interests.
+        </p>
+      </div>
+
       {alert && (
         <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <AlertTemplate
@@ -195,7 +203,6 @@ function Clubs() {
           />
         </div>
       )}
-
       {loading ? (
         <div className="min-h-screen flex items-center justify-center text-white">
           <div className="loader"></div>
@@ -203,7 +210,6 @@ function Clubs() {
       ) : (
         <div className="min-h-screen p-6 text-white">
           <section>
-            <h1 className="text-2xl font-semibold mb-6">Your Clubs</h1>
             {error ? (
               <p className="text-red-400 text-center">{error}</p>
             ) : (
@@ -216,7 +222,6 @@ function Clubs() {
           </section>
 
           <section className="mt-12">
-            <h1 className="text-2xl font-semibold mb-6">Other Clubs</h1>
             {error ? (
               <p className="text-red-400 text-center">{error}</p>
             ) : (

@@ -10,16 +10,6 @@ export default function ClubList({
   onJoin,
   onCancel,
 }) {
-  if (clubs.length === 0) {
-    return (
-      <p className="text-gray400 text-center">
-        {status === "approved"
-          ? "You have no approved clubs."
-          : "No clubs available."}
-      </p>
-    );
-  }
-
   useEffect(() => {
     console.log(clubs);
   }, []);
@@ -32,6 +22,7 @@ export default function ClubList({
           name={club.name}
           description={club.description}
           logo={club.logo_url}
+          background="/Lv-Background.jpg"
           status={status}
           onEnter={onEnter ? () => onEnter(club.id) : undefined}
           onJoin={onJoin ? () => onJoin(club.id) : undefined}

@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import logo from "../../assets/lvcc-logo.png";
 
 export default function Layout({ children }) {
   return (
@@ -10,10 +11,29 @@ export default function Layout({ children }) {
       }}
     >
       <AppSidebar />
-      <main className="flex-1 p-0 m-0">
-        <SidebarTrigger className="mt-4 ml-4 visible" />
-        {children}
-      </main>
+
+      <div
+        className="fixed flex top-0 left-0 right-0 h-20 bg-neutral-900 border-b border-neutral-800 
+             items-center justify-between z-[60] md:invisible"
+      >
+        <a
+          href="/"
+          className="flex items-center font-medium justify-center mx-6 gap-4"
+        >
+          <img
+            src={logo}
+            alt="La Verdad Club"
+            className="object-contain h-12 w-12 ml-14"
+          />
+          <span className="truncate text-lg font-semibold tracking-wide text-white">
+            LVCIS
+          </span>
+        </a>
+
+        <SidebarTrigger className="mx-3 relative z-[70]" />
+      </div>
+
+      <main className="flex-1 p-5 m-0 pt-20 md:pt-0">{children}</main>
     </SidebarProvider>
   );
 }

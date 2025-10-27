@@ -1,47 +1,43 @@
 "use client";
+
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export function NavMain({ items }) {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const location = useLocation();
 
   return (
-    <SidebarMenu
-      className={`flex flex-col gap-3 mt-5 items-center pl-2`}
-    >
-      {items.map((item) => {
-        const isActive = location.pathname === item.url;
+    <SidebarMenu className="flex flex-col gap-3 mt-5 pl-2">
+      {items.map(({ title, url, icon: Icon }) => {
+        const isActive = location.pathname === url;
 
         return (
-          <SidebarMenuItem key={item.title} className="w-full pr-2">
+          <SidebarMenuItem key={title} className="w-full pr-2">
             <SidebarMenuButton
-              tooltip={item.title}
-              onClick={() => nav(item.url)}
-              className={`gap-4 px-4 py-5 w-full rounded-sm transition-all duration-200
+              tooltip={title}
+              onClick={() => navigate(url)}
+              className={`group flex items-center gap-4 w-full rounded-md px-4 py-7 cursor-pointer transition-all duration-200
                 ${
                   isActive
-                    ? "bg-blue-700 text-white font-medium"
-                    : "text-gray-300"
+                    ? "bg-blue-700 text-white font-medium hover:bg-blue-700/90"
+                    : "text-gray-300 hover:text-white hover:bg-blue-800/20"
                 }`}
             >
-              {item.icon && (
-                <item.icon
-                  className={`w-5 h-5 ${
-                    isActive ? "text-white" : "text-gray-300"
+              {Icon && (
+                <Icon
+                  className={`w-10 h-10 transition-colors flex-shrink-0 ${
+                    isActive
+                      ? "text-white"
+                      : "text-gray-300 group-hover:text-white"
                   }`}
                 />
               )}
-              {!isCollapsed && (
-                <span className="text-base font-normal">{item.title}</span>
-              )}
+              <span className="font-normal text-lg">{title}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         );

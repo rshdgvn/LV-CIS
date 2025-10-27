@@ -5,6 +5,7 @@ function ClubCard({
   name,
   description,
   logo,
+  background,
   status,
   onJoin,
   onEnter,
@@ -13,22 +14,24 @@ function ClubCard({
   const renderButton = () => {
     if (status === "pending") {
       return (
-        <div className="flex flex-col gap-2">
-          <button className="mt-4 w-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold py-2 rounded-lg cursor-not-allowed">
+        <div className="w-full">
+          <button className="w-full bg-yellow-500/20 text-yellow-400 text-sm font-semibold py-3 rounded-xl cursor-not-allowed border border-yellow-500/40 shadow-inner">
             PENDING
           </button>
 
           {onCancel && (
-            <AlertDialogTemplate
-              title="Cancel Application?"
-              description="Are you sure you want to cancel your club application?"
-              onConfirm={onCancel}
-              button={
-                <button className="w-full bg-red-700 hover:bg-red-800 text-gray-200 text-xs font-semibold py-2 rounded-lg transition-colors">
-                  Cancel Application
-                </button>
-              }
-            />
+            <div className="mt-3">
+              <AlertDialogTemplate
+                title="Cancel Application?"
+                description="Are you sure you want to cancel your club application?"
+                onConfirm={onCancel}
+                button={
+                  <button className="w-full bg-red-700 hover:bg-red-800 text-white text-sm font-semibold py-3 rounded-xl transition-colors shadow-md">
+                    Cancel Application
+                  </button>
+                }
+              />
+            </div>
           )}
         </div>
       );
@@ -38,7 +41,7 @@ function ClubCard({
       return (
         <button
           onClick={onEnter}
-          className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+          className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors shadow-md"
         >
           ENTER NOW
         </button>
@@ -49,10 +52,10 @@ function ClubCard({
       <AlertDialogTemplate
         title="Join this club?"
         description="Are you sure you want to join this club?"
-        onConfirm={() => onJoin && onJoin("member", null)} 
+        onConfirm={() => onJoin && onJoin("member", null)}
         button={
-          <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
-            JOIN NOW
+          <button className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors shadow-md">
+            ENTER NOW
           </button>
         }
       />
@@ -60,26 +63,34 @@ function ClubCard({
   };
 
   return (
-    <div className="w-[200px] bg-neutral-900 rounded-2xl overflow-hidden shadow-lg text-white">
-      <div className="bg-white h-[100px] flex items-center justify-center">
-        {logo ? (
+    <div className="w-72 h-96 bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-700 text-white hover:scale-[1.02] transition-transform duration-300 flex flex-col">
+      <div
+        className="relative h-[150px] bg-cover bg-center flex items-center justify-center"
+        style={{
+          backgroundImage: background
+            ? `url(${background})`
+            : "linear-gradient(to bottom, #1e1e1e, #111)",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/40"></div>
+        {logo && (
           <img
             src={logo}
             alt={`${name} Logo`}
-            className="h-16 w-16 object-contain"
+            className="relative z-10 w-20 h-20 object-contain rounded-full border-4 border-white/30 shadow-lg"
           />
-        ) : (
-          <div className="text-gray-400 text-xs">Logo</div>
         )}
       </div>
 
-      <div className="p-4">
-        <h3 className="text-sm font-semibold text-center">{name}</h3>
-        <p className="text-gray-400 text-xs mt-1 line-clamp-2">
-          {description || "No description available."}
-        </p>
+      <div className="flex flex-col justify-between flex-1 p-8 text-center">
+        <div>
+          <h3 className="text-lg font-bold">{name}</h3>
+          <p className="text-gray-400 text-sm mt-2 line-clamp-3">
+            {description || "No description available."}
+          </p>
+        </div>
 
-        {renderButton()}
+        <div className="mt-6">{renderButton()}</div>
       </div>
     </div>
   );

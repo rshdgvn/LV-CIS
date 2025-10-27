@@ -12,11 +12,11 @@ function LandingPage() {
   const admin = user.role == "admin";
 
   return (
-    <div className="w-full bg-black text-white">
+    <div className="w-full bg-neutral-900 text-white">
       <section
         id="home" 
         className="relative flex flex-col h-screen md:px-6
-             bg-[radial-gradient(ellipse_at_top,theme(colors.blue.800)_0%,theme(colors.blue.900)_0%,theme(colors.black)_100%)] bg-[length:100%_30%] bg-no-repeat"
+             bg-[radial-gradient(ellipse_at_top,theme(colors.blue.800)_0%,theme(colors.blue.900)_0%,theme(colors.neutral.900)_70%)] bg-[length:100%_30%] bg-no-repeat"
       >
         <div className="flex flex-row items-center justify-between px-20 py-5">
           <a href="/dashboard" className="flex items-center font-medium gap-3">

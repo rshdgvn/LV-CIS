@@ -1,6 +1,6 @@
 import React from "react";
 import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
-import { Handshake, DoorOpen } from "lucide-react";
+import { Handshake, DoorOpen, HourglassIcon } from "lucide-react";
 
 function ClubCard({
   name,
@@ -15,9 +15,10 @@ function ClubCard({
   const renderButton = () => {
     if (status === "pending") {
       return (
-        <div className="w-6">
-          <button className="bg-yellow-500/20 text-yellow-400 text-sm font-semibold py-3 rounded-xl cursor-not-allowed border border-yellow-500/40 shadow-inner">
-            PENDING
+        <div className="flex justify-between">
+          <button className="flex items-center justify-start gap-2 text-yellow-400/50 text-sm font-semibold transition-colors">
+            <HourglassIcon className="w-4 h-4" />
+            <span>Pending</span>
           </button>
 
           {onCancel && (

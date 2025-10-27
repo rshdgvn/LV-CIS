@@ -8,110 +8,19 @@ use Illuminate\Http\Request;
 
 class ClubController extends Controller
 {
+    // List all clubs
     public function index(Request $request)
     {
-        $user = $request->user();
-
         $query = Club::query();
 
         if ($request->has('category') && !empty($request->category)) {
             $query->where('category', $request->category);
         }
 
-        $clubs = $query->get()->map(function ($club) use ($user) {
-            $membership = $club->users()
-                ->where('user_id', $user->id)
-                ->first();
-
-            return [
-                'id' => $club->id,
-                'name' => $club->name,
-                'category' => $club->category,
-                'description' => $club->description,
-                'adviser' => $club->adviser,
-                'logo' => $club->logo,
-                'status' => $membership?->pivot->status ?? null,
-            ];
-        });
+        $clubs = $query->get();
 
         return response()->json($clubs);
     }
-
-    public function yourClubs(Request $request)
-    {
-        $user = $request->user();
-
-        $clubs = $user->clubs()
-            ->withPivot('status')
-            ->wherePivot('status', 'approved')
-            ->get()
-            ->map(function ($club) {
-                return [
-                    'id' => $club->id,
-                    'name' => $club->name,
-                    'category' => $club->category,
-                    'description' => $club->description,
-                    'adviser' => $club->adviser,
-                    'logo' => $club->logo,
-                    'status' => $club->pivot->status,
-                ];
-            });
-
-        return response()->json($clubs);
-    }
-
-    public function yourPendingClubs(Request $request)
-    {
-        $user = $request->user();
-
-        $clubs = $user->clubs()
-            ->withPivot('status')
-            ->wherePivot('status', 'pending')
-            ->get()
-            ->map(function ($club) {
-                return [
-                    'id' => $club->id,
-                    'name' => $club->name,
-                    'category' => $club->category,
-                    'description' => $club->description,
-                    'adviser' => $club->adviser,
-                    'logo' => $club->logo,
-                    'status' => $club->pivot->status,
-                ];
-            });
-
-        return response()->json($clubs);
-    }
-
-
-    public function otherClubs(Request $request)
-    {
-        $user = $request->user();
-
-        $joinedClubIds = $user->clubs()->pluck('clubs.id');
-
-        $query = Club::whereNotIn('id', $joinedClubIds);
-
-        if ($request->has('category') && !empty($request->category)) {
-            $query->where('category', $request->category);
-        }
-
-        $clubs = $query->get()->map(function ($club) {
-            return [
-                'id' => $club->id,
-                'name' => $club->name,
-                'category' => $club->category,
-                'description' => $club->description,
-                'adviser' => $club->adviser,
-                'logo' => $club->logo,
-                'status' => null, 
-            ];
-        });
-
-        return response()->json($clubs);
-    }
-
-
 
     // Show a single club
     public function show($id)
@@ -155,5 +64,37 @@ class ClubController extends Controller
         $club = Club::findOrFail($id);
         $club->delete();
         return response()->json(['message' => 'Club deleted successfully']);
+    }
+
+    public function yourClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'approved')
+            ->get();
+
+        return response()->json($clubs);
+    }
+
+    public function otherClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $joinedClubIds = $user->clubs()->pluck('clubs.id');
+        $clubs = Club::whereNotIn('id', $joinedClubIds)->get();
+
+        return response()->json($clubs);
+    }
+
+    public function yourPendingClubs(Request $request)
+    {
+        $user = $request->user();
+
+        $clubs = $user->clubs()
+            ->wherePivot('status', 'pending')
+            ->get();
+
+        return response()->json($clubs);
     }
 }

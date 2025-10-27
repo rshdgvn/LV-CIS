@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
 import { AlertTemplate } from "@/components/AlertTemplate";
@@ -23,6 +22,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -47,6 +55,9 @@ export default function MembersSection({
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const membersPerPage = 5;
 
   const [formData, setFormData] = useState({
     userId: null,
@@ -148,6 +159,11 @@ export default function MembersSection({
     return [...officers, ...regulars];
   }, [members]);
 
+  const indexOfLast = currentPage * membersPerPage;
+  const indexOfFirst = indexOfLast - membersPerPage;
+  const paginatedMembers = regularMembers.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(regularMembers.length / membersPerPage);
+
   return (
     <div className="bg-sidebar border border-gray-800 rounded-xl p-6 relative">
       {alert && (
@@ -232,7 +248,8 @@ export default function MembersSection({
         )}
       </div>
 
-      <div>
+      {/* Members List */}
+      <div className="h-96">
         {applicantMode ? (
           loading ? (
             <div className="flex items-center justify-center text-white">
@@ -287,52 +304,111 @@ export default function MembersSection({
           ) : (
             <p className="text-gray-400 text-center">No applicants yet.</p>
           )
-        ) : regularMembers.length > 0 ? (
-          regularMembers.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
-            >
+        ) : paginatedMembers.length > 0 ? (
+          <>
+            {paginatedMembers.map((member) => (
               <div
-                className="flex items-center gap-3 cursor-pointer"
-                onClick={() =>
-                  !manageMode && nav(`/club/${clubId}/members/${member.id}`)
-                }
+                key={member.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-gray-800 hover:bg-gray-950 transition"
               >
-                <img
-                  src={
-                    member.profile_image ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      member.name
-                    )}&background=111&color=fff`
+                <div
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() =>
+                    !manageMode && nav(`/club/${clubId}/members/${member.id}`)
                   }
-                  alt={member.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <p className="font-medium text-sm">{member.name}</p>
-                  <p className="text-xs text-gray-400 capitalize">
-                    {member.pivot?.officer_title ||
-                      member.pivot?.role ||
-                      "Member"}
-                  </p>
+                >
+                  <img
+                    src={
+                      member.profile_image ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        member.name
+                      )}&background=111&color=fff`
+                    }
+                    alt={member.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">{member.name}</p>
+                    <p className="text-xs text-gray-400 capitalize">
+                      {member.pivot?.officer_title ||
+                        member.pivot?.role ||
+                        "Member"}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {manageMode ? (
-                <div className="flex gap-3">
-                  <button onClick={() => openEditModal(member)}>
-                    <PencilIcon className="w-4 h-4 text-blue-400 hover:text-blue-200" />
-                  </button>
-                  <button onClick={() => onRemoveMember(member)}>
-                    <Trash2Icon className="w-4 h-4 text-red-500 hover:text-red-400" />
-                  </button>
-                </div>
-              ) : (
-                <p className="text-green-400 text-xs">Active</p>
-              )}
-            </div>
-          ))
+                {manageMode ? (
+                  <div className="flex gap-3">
+                    <button onClick={() => openEditModal(member)}>
+                      <PencilIcon className="w-4 h-4 text-blue-400 hover:text-blue-200" />
+                    </button>
+                    <button onClick={() => onRemoveMember(member)}>
+                      <Trash2Icon className="w-4 h-4 text-red-500 hover:text-red-400" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-green-400 text-xs">Active</p>
+                )}
+              </div>
+            ))}
+
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage((p) => Math.max(p - 1, 1));
+                        }}
+                        className={
+                          currentPage === 1
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
+
+                    {/* Dynamic Page Links */}
+                    {Array.from({ length: totalPages }).map((_, index) => {
+                      const pageNum = index + 1;
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            href="#"
+                            isActive={currentPage === pageNum}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage(pageNum);
+                            }}
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage((p) => Math.min(p + 1, totalPages));
+                        }}
+                        className={
+                          currentPage === totalPages
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
         ) : (
           <p className="text-gray-400 text-center">No members yet.</p>
         )}

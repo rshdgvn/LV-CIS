@@ -52,7 +52,6 @@ export default function ClubDetails() {
       if (!res.ok) throw new Error("Failed to fetch club details");
 
       const data = await res.json();
-      console.log(data)
       setClub(data);
       sessionStorage.setItem(`club_${id}`, JSON.stringify(data));
     } catch (err) {
@@ -210,8 +209,8 @@ export default function ClubDetails() {
       ) : error ? (
         <div className="p-6 text-red-400 text-center">{error}</div>
       ) : (
-        <div className="min-h-screen p-6 text-white grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="min-h-screen p-6 text-white lg:flex lg:gap-6">
+          <div className="flex-1 space-y-6">
             <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center md:items-start gap-6">
               <img
                 src={
@@ -232,7 +231,9 @@ export default function ClubDetails() {
 
                 {club.adviser && (
                   <div className="mt-5">
-                    <h3 className="font-semibold text-white text-lg mt-10">Adviser</h3>
+                    <h3 className="font-semibold text-white text-lg mt-10">
+                      Adviser
+                    </h3>
                     <div className="flex items-center mt-3 bg-neutral-900 p-3 w-fit">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-white text-sm font-medium">
                         {club.adviser.initialss ||
@@ -266,20 +267,8 @@ export default function ClubDetails() {
             />
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-64">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-semibold">Achievements</h3>
-                <button className="text-sm text-blue-400 hover:underline">
-                  View all
-                </button>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Coming soon... (Achievements section)
-              </p>
-            </div>
-
-            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-64">
+          <div className="w-full lg:w-1/3">
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-full">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-semibold">Events & Photos</h3>
                 <button className="text-sm text-blue-400 hover:underline">

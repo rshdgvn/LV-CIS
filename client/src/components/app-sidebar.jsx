@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import {
   UserRoundCheck,
@@ -14,13 +15,13 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarFooter,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function AppSidebar({ ...props }) {
+export function AppSidebar(props) {
   const { user } = useAuth();
-  const admin = user?.role == "admin";
+  const admin = user?.role === "admin";
+
   const data = {
     navMain: [
       {
@@ -29,40 +30,31 @@ export function AppSidebar({ ...props }) {
         icon: House,
         isActive: true,
       },
-      {
-        title: "Clubs",
-        url: "/clubs",
-        icon: GraduationCap,
-      },
-      {
-        title: "Attendance",
-        url: "/attendance",
-        icon: UserRoundCheck,
-      },
-
-      {
-        title: "Events",
-        url: "/events",
-        icon: CalendarCheck,
-      },
+      { title: "Clubs", url: "/clubs", icon: GraduationCap },
+      { title: "Attendance", url: "/attendance", icon: UserRoundCheck },
+      { title: "Events", url: "/events", icon: CalendarCheck },
     ],
   };
+
   return (
     <Sidebar
-      collapsible="icon"
-      className="w-55 group-data-[state=collapsed]:w-25 transition-all duration-300"
+      className="
+        bg-neutral-950 border-r border-neutral-800 transition-all duration-300
+        w-48 sm:w-56 md:w-64
+      "
       {...props}
     >
-      <SidebarHeader className="flex">
+      <SidebarHeader className="h-20 bg-neutral-900 border-b border-neutral-800 flex items-center justify-center">
         <TeamSwitcher />
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }

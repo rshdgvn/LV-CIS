@@ -19,65 +19,125 @@ class DatabaseSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
             [
-                'name' => env('ADMIN_NAME', 'Administrator'),
+                'name' => env('ADMIN_NAME', 'Dan Teves'),
                 'username' => 'bossDan',
                 'password' => Hash::make(env('ADMIN_PASSWORD', 'password')),
                 'role' => 'admin',
             ]
         );
 
-        $clubNames = [
-            'AIM',
-            'JPIA',
-            'BroadSoc',
-            'Social Sheet',
-            'Cyverdarians',
-            'MaArtees',
-            'DRRT',
-            'LV de corale',
-            'Sports Club',
+        $clubsData = [
+            [
+                'name' => 'Blue Harmony',
+                'category' => 'culture_and_performing_arts',
+                'description' => 'Create a supportive environment that encourages passion, creativity, and discipline through music and performance.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/blue_harmony_logo.png',
+            ],
+            [
+                'name' => 'Blue Harmusika',
+                'category' => 'culture_and_performing_arts',
+                'description' => "Develop and enhance members' musical skills, artistic talents, and appreciation for music.",
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/blue_harmusika_logo.png',
+            ],
+            [
+                'name' => 'La Verdad Dance Troupe',
+                'category' => 'culture_and_performing_arts',
+                'description' => 'Promote institutional integrity and pride by upholding Biblical moral standards and disciplined artistry.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/la_verdad_dance_troupe_logo.png',
+            ],
+            [
+                'name' => 'La Verdad Production Team',
+                'category' => 'culture_and_performing_arts',
+                'description' => 'Enhance students’ skills in production and creative media.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/la_verdad_production_team_logo.png',
+            ],
+            [
+                'name' => 'Coro De La Verdad',
+                'category' => 'culture_and_performing_arts',
+                'description' => 'Reach and sustain the highest levels of vocal performance, choral artistry, and musical education.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/coro_de_la_verdad_logo.png',
+            ],
+            [
+                'name' => "The MaArtee's",
+                'category' => 'culture_and_performing_arts',
+                'description' => 'Empower young artists to discover their voice, foster meaningful connections, and create art that enriches the community.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/the_maartees_logo.png',
+            ],
+            [
+                'name' => 'La Verdad Front Liners',
+                'category' => 'socio_politics',
+                'description' => 'Provide ongoing assistance and support to our school so that it can greet and serve students and guests with care.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/la_verdad_front_liners_logo.png',
+            ],
+            [
+                'name' => 'LVCC DRRT',
+                'category' => 'socio_politics',
+                'description' => 'Promote disaster preparedness, first aid, and rescue skills among students.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/lvcc_drrt_logo.png',
+            ],
+            [
+                'name' => 'AIM',
+                'category' => 'academics',
+                'description' => 'Empower students by fostering a community dedicated to the exploration and advancement of information technology.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/aim_logo.png',
+            ],
+            [
+                'name' => 'JPIA',
+                'category' => 'academics',
+                'description' => 'Establish a strong and harmonious relationship among members with genuine commitment to the organization.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/jpia_logo.png',
+            ],
+            [
+                'name' => 'JSWAP',
+                'category' => 'academics',
+                'description' => 'Cultivate essential skills and knowledge for creating a positive impact on the lives of others.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/jswap_logo.png',
+            ],
+            [
+                'name' => 'Agham-Mazing Pioneer',
+                'category' => 'socio_politics',
+                'description' => 'Foster scientific thinking and innovation for the betterment of society.',
+                'adviser' => 'Dan Teves',
+                'logo' => 'club_logos/agham_mazing_pioneer_logo.png',
+            ],
         ];
 
-        foreach ($clubNames as $name) {
-            Club::firstOrCreate([
-                'name' => $name,
-            ], [
-                'description' => fake()->sentence(10),
-                'adviser' => fake()->name(),
-                'logo' => 'club_logos/blue_harmony_logo.png',
-            ]);
-        }
+        foreach ($clubsData as $clubData) {
+            $club = Club::firstOrCreate(['name' => $clubData['name']], $clubData);
 
-        $clubs = Club::all();
+            $members = User::factory(10)->create(['role' => 'user']);
+            foreach ($members as $user) {
+                Member::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'student_id' => fake()->unique()->numerify('STU###'),
+                        'course' => fake()->randomElement(['BSIS', 'BAB', 'BSSW', 'ACT', 'BSA', 'BSAIS']),
+                        'year_level' => fake()->numberBetween(1, 4),
+                    ]
+                );
 
-        $users = User::factory(10)->create(['role' => 'user']);
-
-        foreach ($users as $user) {
-            Member::firstOrCreate([
-                'user_id' => $user->id,
-            ], [
-                'student_id' => fake()->unique()->numerify('STU###'),
-                'course' => fake()->randomElement(['BSIT', 'BSBA', 'BSHM', 'BSED']),
-                'year_level' => fake()->numberBetween(1, 4),
-            ]);
-        }
-
-        foreach ($users as $user) {
-            $randomClubs = $clubs->random(rand(2, 4));
-            foreach ($randomClubs as $club) {
                 DB::table('club_memberships')->insert([
                     'club_id' => $club->id,
                     'user_id' => $user->id,
-                    'role' => 'member',
+                    'role' => fake()->randomElement(['member', 'officer']),
                     'status' => fake()->randomElement(['approved', 'pending']),
                     'joined_at' => now(),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
-        }
 
-        foreach ($clubs as $club) {
             DB::table('club_memberships')->insertOrIgnore([
                 'club_id' => $club->id,
                 'user_id' => $admin->id,
@@ -88,6 +148,5 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
-
     }
 }

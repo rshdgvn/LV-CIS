@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('clubs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('category')->nullable();
+            $table->enum('category', ['academics', 'culture_and_performing_arts', 'socio_politics'])->default('academics');
             $table->text('description')->nullable();
             $table->string('adviser')->nullable();
-            $table->string('logo')->nullable(); 
+            $table->string('logo')->nullable();
             $table->timestamps();
         });
     }

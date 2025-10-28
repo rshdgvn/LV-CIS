@@ -9,9 +9,17 @@ use Illuminate\Http\Request;
 class ClubController extends Controller
 {
     // List all clubs
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Club::all());
+        $query = Club::query();
+
+        if ($request->has('category') && !empty($request->category)) {
+            $query->where('category', $request->category);
+        }
+
+        $clubs = $query->get();
+
+        return response()->json($clubs);
     }
 
     // Show a single club
@@ -32,6 +40,7 @@ class ClubController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'category' => 'required|in:academics,culture_and_performing_arts,socio_politics',
             'description' => 'nullable|string',
             'adviser' => 'nullable|string',
             'logo' => 'nullable|string',
@@ -75,7 +84,7 @@ class ClubController extends Controller
         $joinedClubIds = $user->clubs()->pluck('clubs.id');
         $clubs = Club::whereNotIn('id', $joinedClubIds)->get();
 
-        return ClubResource::collection($clubs);
+        return response()->json($clubs);
     }
 
     public function yourPendingClubs(Request $request)
@@ -86,6 +95,6 @@ class ClubController extends Controller
             ->wherePivot('status', 'pending')
             ->get();
 
-        return ClubResource::collection($clubs);
+        return response()->json($clubs);
     }
 }

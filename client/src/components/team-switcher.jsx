@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import {
@@ -6,11 +7,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import logo from "../assets/lvcc-logo.png";
 
 export function TeamSwitcher() {
-  const { isMobile, state } = useSidebar(); 
+  const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   return (
@@ -19,7 +21,7 @@ export function TeamSwitcher() {
         <DropdownMenu>
           <SidebarMenuButton
             size="xl"
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground my-4 flex flex-col items-center justify-center"
+            className="relative data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground my-4 flex flex-col items-center justify-center"
           >
             <a
               href="/"
@@ -30,13 +32,11 @@ export function TeamSwitcher() {
               <img
                 src={logo}
                 alt="La Verdad Club"
-                className={`object-contain ${
-                  isCollapsed ? "h-13 w-13" : "h-13 w-13"
-                }`}
+                className="h-13 w-13 object-contain"
               />
-              {!isCollapsed && (
-                <span className="truncate text-lg font-medium">LVCIS</span>
-              )}
+              <span className="truncate text-lg font-medium text-white">
+                LVCIS
+              </span>
             </a>
           </SidebarMenuButton>
         </DropdownMenu>

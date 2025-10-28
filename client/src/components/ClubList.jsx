@@ -10,28 +10,19 @@ export default function ClubList({
   onJoin,
   onCancel,
 }) {
-  if (clubs.length === 0) {
-    return (
-      <p className="text-gray400 text-center">
-        {status === "approved"
-          ? "You have no approved clubs."
-          : "No clubs available."}
-      </p>
-    );
-  }
-
   useEffect(() => {
     console.log(clubs);
   }, []);
 
   return (
-    <div className="flex flex-wrap gap-6">
+    <div className="flex flex-wrap gap-x-4 gap-y-10">
       {clubs.map((club) => (
         <ClubCard
           key={club.id}
           name={club.name}
           description={club.description}
           logo={club.logo_url}
+          background="/Lv-Background.jpg"
           status={status}
           onEnter={onEnter ? () => onEnter(club.id) : undefined}
           onJoin={onJoin ? () => onJoin(club.id) : undefined}

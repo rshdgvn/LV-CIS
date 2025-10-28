@@ -18,7 +18,6 @@ import Profile from "./pages/Profile";
 import PendingRequests from "./pages/clubs memberships/PendingRequests";
 import { ClubProvider } from "./contexts/ClubContext";
 import OfficersRoute from "./contexts/OfficersRoute";
-import ResetPassword from "./pages/ResetPassword";
 import Layout from "./components/app/layout";
 
 function App() {
@@ -31,7 +30,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/google/callback" element={<GoogleCallback />} />
             <Route path="*" element={<NotFound />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route
               element={

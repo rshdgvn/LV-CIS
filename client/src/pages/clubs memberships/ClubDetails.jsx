@@ -83,23 +83,39 @@ export default function ClubDetails() {
   const members = useMemo(() => club?.users || [], [club?.users]);
 
   const handleAddMember = async (formData) => {
-    const { userId, role, officer_title } = formData;
-    console.log("form", formData);
+    const { userId, email, role, officer_title } = formData;
+    console.log(formData, id)
 
-    if (!id || !role) return;
+    if (!id || !role || (!userId && !email)) {
+      showAlert(
+        "error",
+        "Missing Fields",
+        "Please fill out all required fields."
+      );
+      return;
+    }
 
     try {
+      const body = {
+        role,
+        officerTitle: role === "officer" ? officer_title : null,
+      };
+
+      if (email) {
+        body.add_by = "email";
+        body.email = email;
+      } else {
+        body.add_by = "userId";
+        body.user_id = userId;
+      }
+
       const res = await fetch(`${APP_URL}/clubs/${id}/members/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          user_id: userId,
-          role,
-          officerTitle: role === "officer" ? officer_title : null,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -110,7 +126,8 @@ export default function ClubDetails() {
             "This user is already a member of the club."
           );
         } else {
-          throw new Error("Failed to add member");
+          const err = await res.json();
+          throw new Error(err.message || "Failed to add member");
         }
         return;
       }
@@ -209,8 +226,8 @@ export default function ClubDetails() {
       ) : error ? (
         <div className="p-6 text-red-400 text-center">{error}</div>
       ) : (
-        <div className="min-h-screen p-6 text-white grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="min-h-screen p-6 text-white lg:flex lg:gap-6">
+          <div className="flex-1 space-y-6">
             <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center md:items-start gap-6">
               <img
                 src={
@@ -222,11 +239,34 @@ export default function ClubDetails() {
                 alt={club.name}
                 className="w-28 h-28 rounded-full object-cover border border-gray-800"
               />
+
               <div className="flex-1">
                 <h1 className="text-2xl font-bold">{club.name}</h1>
                 <p className="text-gray-400 text-sm mt-2">
                   {club.description || "No description available."}
                 </p>
+
+                {club.adviser && (
+                  <div className="mt-5">
+                    <h3 className="font-semibold text-white text-lg mt-10">
+                      Adviser
+                    </h3>
+                    <div className="flex items-center mt-3 bg-neutral-900 p-3 w-fit">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-white text-sm font-medium">
+                        {club.adviser.initialss ||
+                          club.adviser
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
+                      </div>
+                      <div className="ml-3">
+                        <p className="font-medium">Mr. {club.adviser}</p>
+                        <p className="text-xs text-gray-400">Adviser</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -244,20 +284,8 @@ export default function ClubDetails() {
             />
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-64">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-semibold">Achievements</h3>
-                <button className="text-sm text-blue-400 hover:underline">
-                  View all
-                </button>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Coming soon... (Achievements section)
-              </p>
-            </div>
-
-            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-64">
+          <div className="w-full lg:w-1/3">
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-full">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-semibold">Events & Photos</h3>
                 <button className="text-sm text-blue-400 hover:underline">

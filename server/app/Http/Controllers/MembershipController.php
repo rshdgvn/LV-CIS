@@ -246,12 +246,12 @@ class MembershipController extends Controller
         $user = $request->user();
 
         $clubs = $user->clubs()
-            ->wherePivot('status', 'approved') 
+            ->wherePivot('status', 'approved')
             ->withPivot('role', 'status', 'joined_at')
             ->get();
 
         $clubs = $user->clubs()
-            ->wherePivot('status', 'approved') 
+            ->wherePivot('status', 'approved')
             ->withPivot('role', 'status', 'joined_at')
             ->get();
 
@@ -358,22 +358,35 @@ class MembershipController extends Controller
     public function addMember(Request $request, $clubId)
     {
         $club = Club::findOrFail($clubId);
-
         $this->authorize('addMember', [ClubMembership::class, $clubId]);
 
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'add_by' => 'nullable|in:userId,email',
+            'user_id' => 'nullable|exists:users,id',
+            'email' => 'nullable|email|exists:users,email',
             'role' => 'required|in:member,officer',
             'officerTitle' => 'nullable|string|max:255',
         ]);
 
-        if ($club->users()->where('user_id', $validated['user_id'])->exists()) {
+        if (isset($validated['add_by']) && $validated['add_by'] === 'email') {
+            $user = \App\Models\User::where('email', $validated['email'])->first();
+            if (!$user) {
+                return response()->json(['message' => 'User not found with this email'], 404);
+            }
+        } else {
+            if (empty($validated['user_id'])) {
+                return response()->json(['message' => 'User ID is required'], 422);
+            }
+            $user = \App\Models\User::find($validated['user_id']);
+        }
+
+        if ($club->users()->where('user_id', $user->id)->exists()) {
             return response()->json([
                 'message' => 'User is already a member of this club'
             ], 409);
         }
 
-        $club->users()->attach($validated['user_id'], [
+        $club->users()->attach($user->id, [
             'role' => $validated['role'],
             'status' => 'approved',
             'officer_title' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
@@ -382,12 +395,13 @@ class MembershipController extends Controller
         return response()->json(['message' => 'Member added successfully']);
     }
 
+
     /**
      * Edit a member's info in the pivot table (role, status, officer title)
      */
     public function editMemberPivot(Request $request, $clubId, $userId)
     {
-        $membership = ClubMembership::where('club_id', $clubId) 
+        $membership = ClubMembership::where('club_id', $clubId)
             ->where('user_id', $userId)
             ->firstOrFail();
 

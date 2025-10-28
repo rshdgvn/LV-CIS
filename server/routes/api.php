@@ -3,7 +3,6 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
-use App\Http\Controllers\GoogleForgotController;
 use App\Http\Controllers\MembershipController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -12,10 +11,6 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
-
-Route::get('/forgot-password/google', [GoogleForgotController::class, 'redirectToGoogle']);
-Route::get('/forgot-password/google/callback', [GoogleForgotController::class, 'handleGoogleCallback']);
-Route::post('/forgot-password/reset', [GoogleForgotController::class, 'resetPassword'])->middleware('auth:sanctum');
 
 
 Route::middleware('auth:sanctum')->group(function () {

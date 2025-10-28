@@ -83,24 +83,39 @@ export default function ClubDetails() {
   const members = useMemo(() => club?.users || [], [club?.users]);
 
   const handleAddMember = async (formData) => {
-    const { addBy, userId, email, role, officer_title } = formData;
+    const { userId, email, role, officer_title } = formData;
+    console.log(formData, id)
 
-    if (!id || !role) return;
+    if (!id || !role || (!userId && !email)) {
+      showAlert(
+        "error",
+        "Missing Fields",
+        "Please fill out all required fields."
+      );
+      return;
+    }
 
     try {
+      const body = {
+        role,
+        officerTitle: role === "officer" ? officer_title : null,
+      };
+
+      if (email) {
+        body.add_by = "email";
+        body.email = email;
+      } else {
+        body.add_by = "userId";
+        body.user_id = userId;
+      }
+
       const res = await fetch(`${APP_URL}/clubs/${id}/members/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          add_by: addBy,
-          user_id: addBy === "userId" ? userId : null,
-          email: addBy === "email" ? email : null,
-          role,
-          officerTitle: role === "officer" ? officer_title : null,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -110,14 +125,9 @@ export default function ClubDetails() {
             "Duplicate Member",
             "This user is already a member of the club."
           );
-        } else if (res.status === 404) {
-          showAlert(
-            "error",
-            "User Not Found",
-            "No user found with this email."
-          );
         } else {
-          throw new Error("Failed to add member");
+          const err = await res.json();
+          throw new Error(err.message || "Failed to add member");
         }
         return;
       }

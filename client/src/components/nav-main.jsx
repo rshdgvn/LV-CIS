@@ -21,7 +21,7 @@ export function NavMain({ items }) {
             <SidebarMenuButton
               tooltip={title}
               onClick={() => navigate(url)}
-              className={`group flex items-center gap-4 w-full rounded-md px-4 py-7 cursor-pointer transition-all duration-200
+              className={`group flex items-center gap-4 w-full rounded-md px-4 py-5 cursor-pointer transition-all duration-200
                 ${
                   isActive
                     ? "bg-blue-900 text-white font-medium hover:bg-blue-900/90"

@@ -358,7 +358,6 @@ class MembershipController extends Controller
     public function addMember(Request $request, $clubId)
     {
         $club = Club::findOrFail($clubId);
-        // Authorization (you already have this)
         $this->authorize('addMember', [ClubMembership::class, $clubId]);
 
         $validated = $request->validate([

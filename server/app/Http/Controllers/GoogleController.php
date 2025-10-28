@@ -24,7 +24,7 @@ class GoogleController extends Controller
 
             if (!str_ends_with($googleUser->getEmail(), '@student.laverdad.edu.ph')) {
                 $msg = urlencode('Only LV student emails allowed');
-                return redirect()->away("http://localhost:5173/google/error?message={$msg}");
+                return redirect()->away(config('app.frontend_url') . "/google/error?message={$msg}");
             }
 
             $user = User::firstOrCreate(
@@ -41,10 +41,10 @@ class GoogleController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            return redirect()->away("http://localhost:5173/google/callback?token={$token}");
+            return redirect()->away(config('app.frontend_url') . "/google/callback?token={$token}");
         } catch (\Exception $e) {
             $msg = urlencode('Google login failed');
-            return redirect()->away("http://localhost:5173/google/error?message={$msg}");
+            return redirect()->away(config('app.frontend_url') . "/google/error?message={$msg}");
         }
     }
 }

@@ -65,4 +65,11 @@ class User extends Authenticatable
             ->withPivot('status', 'role', 'joined_at')
             ->withTimestamps();
     }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $url = config('app.frontend_url') . "/reset-password?token=$token&email=" . urlencode($this->email);
+
+        $this->notify(new ResetPassword($url));
+    }
 }

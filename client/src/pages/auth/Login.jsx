@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { LoginForm } from "@/components/login-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import logo from "../assets/lvcc-logo.png";
+import logo from "../../assets/lvcc-logo.png";
 import { APP_URL } from "@/lib/config";
 
 function Login() {

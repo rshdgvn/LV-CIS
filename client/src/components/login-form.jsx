@@ -99,7 +99,7 @@ export function LoginForm({
                   )}
                 </div>
 
-                <Button type="submit" className="w-full bg-blue-700 text-white">
+                <Button type="submit" className="w-full bg-blue-900 text-white">
                   Login
                 </Button>
               </div>

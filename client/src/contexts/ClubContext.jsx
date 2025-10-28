@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+} from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
 
@@ -9,45 +15,55 @@ export function ClubProvider({ children }) {
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserClubs = async () => {
+  const fetchUserClubs = async (controller) => {
     try {
       const res = await fetch(`${APP_URL}/my/clubs`, {
+        signal: controller?.signal,
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       if (!res.ok) throw new Error("Failed to fetch user clubs");
       const data = await res.json();
-      console.log(data)
       setClubs(data);
     } catch (err) {
-      console.error(err);
+      if (err.name !== "AbortError") console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { 
-    if (!token) return;
-    fetchUserClubs();
+  useEffect(() => {
+    if (!token) {
+      setClubs([]);
+      setLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoading(true);
+    fetchUserClubs(controller);
+    return () => controller.abort();
   }, [token]);
 
-  const getUserRole = (clubId) => {
-    const club = clubs.find((c) => c.id === clubId);
-    return club?.pivot?.role || null;
-  };
-
+  const getUserRole = (clubId) =>
+    clubs.find((c) => c.id === clubId)?.pivot?.role || null;
   const isOfficer = (clubId) => getUserRole(clubId) === "officer";
-  const isMember = (clubId) =>
-    ["member", "officer"].includes(getUserRole(clubId));
+  const isMember = (clubId) => getUserRole(clubId) === "member";
 
-  return (
-    <ClubContext.Provider
-      value={{ clubs, loading, getUserRole, isOfficer, isMember }}
-    >
-      {children}
-    </ClubContext.Provider>
+  const value = useMemo(
+    () => ({
+      clubs,
+      loading,
+      getUserRole,
+      isOfficer,
+      isMember,
+      fetchUserClubs,
+    }),
+    [clubs, loading]
   );
+
+  return <ClubContext.Provider value={value}>{children}</ClubContext.Provider>;
 }
 
 export const useClub = () => useContext(ClubContext);

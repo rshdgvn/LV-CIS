@@ -1,7 +1,6 @@
 import {
   PencilIcon,
   Trash2Icon,
-  PlusIcon,
   XIcon,
   CheckIcon,
   CheckCircle2Icon,
@@ -46,6 +45,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useClub } from "@/contexts/ClubContext";
 
 export default function MembersSection({
   members,
@@ -176,6 +176,8 @@ export default function MembersSection({
   const paginatedMembers = regularMembers.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(regularMembers.length / membersPerPage);
 
+  const { isOfficer } = useClub();
+
   return (
     <div className="bg-sidebar border border-gray-800 rounded-xl p-6 relative">
       {alert && (
@@ -230,43 +232,45 @@ export default function MembersSection({
                 </button>
               ))}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center justify-center h-9 w-9 p-0 hover:bg-muted"
-                >
-                  <MoreHorizontal className="h-5 w-5 text-gray-300" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => openAddModal()}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <UserPlus className="h-4 w-4 text-green-500" />
-                  <span>Add Member</span>
-                </DropdownMenuItem>
+            {isOfficer(clubId) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center justify-center h-9 w-9 p-0 hover:bg-muted"
+                  >
+                    <MoreHorizontal className="h-5 w-5 text-gray-300" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => openAddModal()}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <UserPlus className="h-4 w-4 text-green-500" />
+                    <span>Add Member</span>
+                  </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={() => setApplicantMode(true)}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Users className="h-4 w-4 text-orange-400" />
-                  <span>View Applicants</span>
-                </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setApplicantMode(true)}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Users className="h-4 w-4 text-orange-400" />
+                    <span>View Applicants</span>
+                  </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={() => setManageMode((prev) => !prev)}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <PencilIcon className="h-4 w-4 text-blue-700" />
-                  <span>
-                    {manageMode ? "Exit Manage Mode" : "Manage Members"}
-                  </span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    onClick={() => setManageMode((prev) => !prev)}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <PencilIcon className="h-4 w-4 text-blue-700" />
+                    <span>
+                      {manageMode ? "Exit Manage Mode" : "Manage Members"}
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         )}
       </div>

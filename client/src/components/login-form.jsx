@@ -77,9 +77,9 @@ export function LoginForm({
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
                     <a
-                      // onClick={() =>
-                      //   (window.location.href = `${APP_URL}/forgot-password/google`)
-                      // }
+                      onClick={() =>
+                        (window.location.href = "/forgot-password")
+                      }
                       className="ml-auto cursor-pointer text-sm underline-offset-4 hover:underline"
                     >
                       Forgot your password?
@@ -99,7 +99,7 @@ export function LoginForm({
                   )}
                 </div>
 
-                <Button type="submit" className="w-full bg-blue-700 text-white">
+                <Button type="submit" className="w-full bg-blue-900 text-white">
                   Login
                 </Button>
               </div>

@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\PasswordResetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,7 +12,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
-
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetToken']);
+Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
@@ -23,6 +25,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::put('/clubs/{id}', [ClubController::class, 'update']);
     Route::delete('/clubs/{id}', [ClubController::class, 'destroy']);
+    Route::get('/your/clubs', [ClubController::class, 'yourClubs']);
+    Route::get('/other/clubs', [ClubController::class, 'otherClubs']);
+    Route::get('/your/pending-clubs', [ClubController::class, 'yourPendingClubs']);
 
     Route::post('/clubs/{clubId}/join', [MembershipController::class, 'joinClub']);
     Route::delete('/clubs/{clubId}/cancel', [MembershipController::class, 'cancelMembershipRequest']);
@@ -31,18 +36,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/clubs/{clubId}/members/{userId}', [MembershipController::class, 'getClubMember']);
     Route::get('/clubs/{club}/pending-requests', [MembershipController::class, 'getPendingRequests']);
 
-    Route::get('/your/clubs', [ClubController::class, 'yourClubs']);
-    Route::get('/other/clubs', [ClubController::class, 'otherClubs']);
-    Route::get('/your/pending-clubs', [ClubController::class, 'yourPendingClubs']);
     Route::get('/my/clubs', [MembershipController::class, 'getUserClubs']);
     Route::get('/user/member-info', [MembershipController::class, 'getCurrentUserMemberInfo']);
     Route::post('/user/setup-profile', [MembershipController::class, 'setupMemberProfile']);
     Route::patch('/user/member-info', [MembershipController::class, 'editMemberInfo']);
-
-    Route::post('/clubs/{clubId}/role-change', [MembershipController::class, 'requestRoleChange']);
-    Route::post('/clubs/{clubId}/role-change/{userId}/approve', [MembershipController::class, 'approveRoleChange']);
-    Route::get('/clubs/{clubId}/role-change-requests', [MembershipController::class, 'getRoleChangeRequests']);
-    Route::post('/clubs/{clubId}/role-change/{userId}/reject', [MembershipController::class, 'rejectRoleChange']);
 
     Route::post('/clubs/{clubId}/members/add', [MembershipController::class, 'addMember']);
     Route::patch('/clubs/{clubId}/members/{userId}/edit', [MembershipController::class, 'editMemberPivot']);

@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
-import Login from "./pages/Login";
+import Login from "./pages/auth/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Dashboard from "./pages/Dashboard";
 import Attendance from "./pages/Attendance";
@@ -19,6 +19,8 @@ import PendingRequests from "./pages/clubs memberships/PendingRequests";
 import { ClubProvider } from "./contexts/ClubContext";
 import OfficersRoute from "./contexts/OfficersRoute";
 import Layout from "./components/app/layout";
+import { ForgotPassword } from "./pages/auth/ForgotPassword";
+import { ResetPassword } from "./pages/auth/ResetPassword";
 
 function App() {
   return (
@@ -29,7 +31,9 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/google/callback" element={<GoogleCallback />} />
-            <Route path="*" element={<NotFound />} />
+
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route
               element={
@@ -56,10 +60,13 @@ function App() {
                   element={<PendingRequests />}
                 />
               </Route>
+
               <Route element={<AdminRoute />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
               </Route>
             </Route>
+
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </ClubProvider>
       </AuthProvider>

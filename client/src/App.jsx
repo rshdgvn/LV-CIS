@@ -21,6 +21,8 @@ import OfficersRoute from "./contexts/OfficersRoute";
 import Layout from "./components/app/layout";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
+import Unauthorized from "./pages/errors/Unauthorized";
+import Forbidden from "./pages/errors/Forbidden";
 
 function App() {
   return (
@@ -67,6 +69,8 @@ function App() {
             </Route>
 
             <Route path="*" element={<NotFound />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/forbidden" element={<Forbidden />} />
           </Routes>
         </ClubProvider>
       </AuthProvider>

@@ -8,6 +8,8 @@ import { APP_URL } from "@/lib/config";
 import ClubList from "@/components/ClubList";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTemplate } from "@/components/AlertTemplate";
+import { SkeletonClubPage } from "@/components/skeletons/SkeletonClubPage";
+
 import {
   CheckCircle2Icon,
   AlertCircleIcon,
@@ -35,7 +37,7 @@ export default function Clubs() {
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState(null);
 
-  const [activeFilter, setActiveFilter] = useState("your"); // default = Your Clubs
+  const [activeFilter, setActiveFilter] = useState("your");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
 
@@ -248,95 +250,95 @@ export default function Clubs() {
   const status = getStatus();
 
   return (
-    <>
-      <div className="flex flex-col gap-2 my-8 mx-4">
-        <div className="flex flex-row items-center gap-5">
-          <GraduationCap className="h-9 w-9 bg-blue-400 text-blue-900 border-blue-300 p-1 rounded-lg" />
-          <h1 className="text-4xl font-semibold">Explore Clubs</h1>
-        </div>
-        <p className="text-gray-400 my-2">
-          Discover student organizations and find the right one for you.
-        </p>
-      </div>
+    <div>
+      {loading ? (
+        <SkeletonClubPage filtersCount={filterOptions.length} cardsCount={8} />
+      ) : (
+        <>
+          <div className="flex flex-col gap-2 my-8 mx-4">
+            <div className="flex flex-row items-center gap-5">
+              <GraduationCap className="h-9 w-9 bg-blue-400 text-blue-900 border-blue-300 p-1 rounded-lg" />
+              <h1 className="text-4xl font-semibold">Explore Clubs</h1>
+            </div>
+            <p className="text-gray-400 my-2">
+              Discover student organizations and find the right one for you.
+            </p>
+          </div>
 
-      <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
-        {!isAdmin &&
-          filterOptions.map((filter) => (
-            <button
-              key={filter.value}
-              onClick={() => handleFilterChange(filter.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                activeFilter === filter.value
-                  ? "bg-blue-950 text-white shadow-lg"
-                  : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-
-        <div className="relative">
-          <button
-            onClick={() => setShowCategoryMenu((prev) => !prev)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition"
-          >
-            <FilterIcon className="w-4 h-4" />
-            {categoryOptions.find((opt) => opt.value === categoryFilter)
-              ?.label || "All"}
-            <ChevronDown className="w-4 h-4" />
-          </button>
-
-          {showCategoryMenu && (
-            <div className="absolute mt-2 w-56 bg-neutral-800 text-sm text-white rounded-xl shadow-lg border border-neutral-700 z-50">
-              {categoryOptions.map((cat) => (
+          <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
+            {!isAdmin &&
+              filterOptions.map((filter) => (
                 <button
-                  key={cat.value}
-                  onClick={() => handleCategorySelect(cat.value)}
-                  className="block w-full text-left px-4 py-2 hover:bg-neutral-700 first:rounded-t-xl last:rounded-b-xl"
+                  key={filter.value}
+                  onClick={() => handleFilterChange(filter.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    activeFilter === filter.value
+                      ? "bg-blue-950 text-white shadow-lg"
+                      : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
+                  }`}
                 >
-                  {cat.label}
+                  {filter.label}
                 </button>
               ))}
+
+            <div className="relative">
+              <button
+                onClick={() => setShowCategoryMenu((prev) => !prev)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition"
+              >
+                <FilterIcon className="w-4 h-4" />
+                {categoryOptions.find((opt) => opt.value === categoryFilter)
+                  ?.label || "All"}
+                <ChevronDown className="w-4 h-4" />
+              </button>
+
+              {showCategoryMenu && (
+                <div className="absolute mt-2 w-56 bg-neutral-800 text-sm text-white rounded-xl shadow-lg border border-neutral-700 z-50">
+                  {categoryOptions.map((cat) => (
+                    <button
+                      key={cat.value}
+                      onClick={() => handleCategorySelect(cat.value)}
+                      className="block w-full text-left px-4 py-2 hover:bg-neutral-700 first:rounded-t-xl last:rounded-b-xl"
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {alert && (
+            <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
+              <AlertTemplate
+                icon={
+                  alert.type === "success" ? (
+                    <CheckCircle2Icon className="h-6 w-6 text-green-500" />
+                  ) : (
+                    <AlertCircleIcon className="h-6 w-6 text-red-500" />
+                  )
+                }
+                title={alert.title}
+                description={alert.description}
+              />
             </div>
           )}
-        </div>
-      </div>
 
-      {alert && (
-        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
-          <AlertTemplate
-            icon={
-              alert.type === "success" ? (
-                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
-              ) : (
-                <AlertCircleIcon className="h-6 w-6 text-red-500" />
-              )
-            }
-            title={alert.title}
-            description={alert.description}
-          />
-        </div>
+          <div className="min-h-screen p-6 text-white">
+            {error ? (
+              <p className="text-red-400 text-center">{error}</p>
+            ) : (
+              <ClubList
+                clubs={displayedClubs}
+                onEnter={handleEnterClub}
+                onJoin={handleJoinClub}
+                status={status}
+                onCancel={handleCancel}
+              />
+            )}
+          </div>
+        </>
       )}
-
-      {loading ? (
-        <div className="min-h-screen flex items-center justify-center text-white">
-          <div className="loader"></div>
-        </div>
-      ) : (
-        <div className="min-h-screen p-6 text-white">
-          {error ? (
-            <p className="text-red-400 text-center">{error}</p>
-          ) : (
-            <ClubList
-              clubs={displayedClubs}
-              onEnter={handleEnterClub}
-              onJoin={handleJoinClub}
-              status={status}
-              onCancel={handleCancel}
-            />
-          )}
-        </div>
-      )}
-    </>
+    </div>
   );
 }

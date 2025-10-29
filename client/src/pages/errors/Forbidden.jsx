@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Forbidden = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white text-center px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-900 text-white text-center px-6">
       {/* Code */}
       <h1 className="text-7xl font-bold text-white mb-4">403</h1>
 

@@ -1,32 +1,48 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
+import { SkeletonSidebar } from "./components/skeletons/SkeletonSidebar";
+import { SidebarProvider } from "./components/ui/sidebar";
 
 function GoogleCallback() {
   const navigate = useNavigate();
-  const { setToken, user } = useAuth(); 
+  const { setToken, getUser } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
+    const handleGoogleCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      if (!token) return;
 
-    console.log("Received token:", token);
+      setToken(token);
+      localStorage.setItem("token", token);
 
-    if (token) {
-      setToken(token); 
-      localStorage.setItem("token", token); 
-      navigate('/dashboard');
-    }
-  }, [navigate, setToken]);
+      // Wait for user data
+      const userData = await getUser(token);
 
-  useEffect(() => {
-    if(user.role == 'admin'){
-      navigate('/admin/dashboard');
-    } else {
-      navigate('/dashboard')
-    }
-  },[user])
-  return;
+      // Navigate after user is ready
+      if (userData?.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+
+      setLoading(false);
+    };
+
+    handleGoogleCallback();
+  }, [setToken, getUser, navigate]);
+
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <SkeletonSidebar />
+      </SidebarProvider>
+    );
+  }
+
+  return null;
 }
 
 export default GoogleCallback;

@@ -12,41 +12,47 @@ export const AuthProvider = ({ children }) => {
     email: "",
     role: "",
     created_at: "",
-    updated_at: "", 
+    updated_at: "",
     email_verified_at: null,
   });
+  const [loading, setLoading] = useState(true);
 
-  const getUser = async () => {
+  const getUser = async (authToken = token) => {
+    if (!authToken) return null;
+
     try {
       const res = await fetch(`${APP_URL}/user`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch user");
-      }
+      if (!res.ok) throw new Error("Failed to fetch user");
 
       const data = await res.json();
-      setUser(data);
-      console.log("User:", data);
+      setUser((prev) => ({ ...prev, ...data }));
       return data;
     } catch (error) {
       console.error("Error fetching user:", error);
+      setToken(null);
+      localStorage.removeItem("token");
+      return null;
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      getUser();
-    }
+    getUser();
   }, [token]);
 
-  const isAdmin = user.role == 'admin'
+  const isAdmin = user.role === "admin" && !!token && !!user.id;
+  const isValidUser = !!token && !!user.id;
 
   return (
-    <AuthContext.Provider value={{ token, setToken, user, isAdmin }}>
+    <AuthContext.Provider
+      value={{ token, setToken, user, isAdmin, isValidUser, loading, getUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

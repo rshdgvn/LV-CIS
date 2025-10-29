@@ -1,15 +1,16 @@
 import React from "react";
 import { useAuth } from "./AuthContext";
-import { Outlet } from "react-router-dom";
-import Unauthorized from "@/pages/errors/Unauthorized";
+import { Outlet, Navigate } from "react-router-dom";
 
 const AdminRoute = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
 
   if (user?.role === "admin") {
     return <Outlet />;
   } else {
-    return <Unauthorized />;
+    return <Navigate to="/unauthorized" replace />;
   }
 };
 

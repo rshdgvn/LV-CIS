@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "../../assets/lvcc-logo.png";
 import { APP_URL } from "@/lib/config";
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
 
 function Login() {
   const [formData, setFormData] = useState({ login: "", password: "" });
   const [errors, setErrors] = useState({});
-  const { setToken, user } = useAuth();
+  const { setToken, getUser, user } = useAuth();
   const nav = useNavigate();
 
   const handleChange = (e) => {
@@ -35,14 +37,18 @@ function Login() {
       if (!res.ok) {
         setErrors(data.errors || { general: data.message });
         return;
-      } 
+      }
 
       await setToken(data.token);
       localStorage.setItem("token", data.token);
-      if (user.role == 'admin'){  
-        nav('/admin/dashboard')
+
+      const userData = await getUser(data.token);
+      console.log("user", userData);
+
+      if (userData?.role === "admin") {
+        nav("/admin/dashboard");
       } else {
-        nav('/dashboard')
+        nav("/dashboard");
       }
     } catch (error) {
       console.error("Login error:", error);

@@ -14,7 +14,7 @@ function LandingPage() {
   return (
     <div className="w-full bg-neutral-900 text-white">
       <section
-        id="home" 
+        id="home"
         className="relative flex flex-col h-screen md:px-6
              bg-[radial-gradient(ellipse_at_top,theme(colors.blue.800)_0%,theme(colors.blue.900)_0%,theme(colors.neutral.900)_70%)] bg-[length:100%_30%] bg-no-repeat"
       >
@@ -55,8 +55,12 @@ function LandingPage() {
             Manage Clubs Digitally
           </span>
           <h1 className="md:text-6xl text-4xl font-bold py-5 px-3 rounded-3xl">
-            <span className="block text-gray-300">Level Up Your Club</span>
-            <span className="text-gray-300">Experience With </span>
+            <span className="block bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-400 bg-clip-text text-transparent py-2">
+              Level Up Your Club
+            </span>
+            <span className="bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-400 bg-clip-text text-transparent">
+              Experience With{" "}
+            </span>
             <span className="bg-gradient-to-r from-blue-400 via-blue-600 to-blue-500 bg-clip-text text-transparent py-2">
               LVCIS
             </span>

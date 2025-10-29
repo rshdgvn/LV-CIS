@@ -1,4 +1,5 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SkeletonSidebar } from "../skeletons/SkeletonSidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import logo from "../../assets/lvcc-logo.png";
 

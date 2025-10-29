@@ -42,7 +42,7 @@ class ClubMembershipSeeder extends Seeder
             DB::table('club_memberships')->insertOrIgnore([
                 'club_id' => $club->id,
                 'user_id' => $admin->id,
-                'role' => 'officer',
+                'role' => 'adviser',
                 'status' => 'approved',
                 'joined_at' => now(),
                 'created_at' => now(),

@@ -1,16 +1,14 @@
 import React from "react";
 import { useAuth } from "./AuthContext";
-import { Outlet } from "react-router-dom";
-import Forbidden from "@/pages/errors/Forbidden";
+import { Outlet, Navigate } from "react-router-dom";
+import { SkeletonSidebar } from "@/components/skeletons/SkeletonSidebar";
 
 const ProtectedRoute = () => {
-  const { token } = useAuth();
+  const { isValidUser, loading } = useAuth();
 
-  if (token) {
-    return <Outlet />;
-  }
+  if (loading) return <SkeletonSidebar />;
 
-  return <Forbidden />;
+  return isValidUser ? <Outlet /> : <Navigate to="/forbidden" replace />;
 };
 
 export default ProtectedRoute;

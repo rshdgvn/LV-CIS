@@ -5,7 +5,7 @@ import { APP_URL } from "@/lib/config";
 const ClubContext = createContext();
 
 export function ClubProvider({ children }) {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +32,7 @@ export function ClubProvider({ children }) {
     return club?.pivot?.role || null;
   };
 
-  const isOfficer = (clubId) => getUserRole(clubId) === "officer";
+  const isOfficer = (clubId) => getUserRole(clubId) === "officer" || getUserRole(clubId) === "adviser"; 
   const isMember = (clubId) =>
     ["member", "officer"].includes(getUserRole(clubId));
 

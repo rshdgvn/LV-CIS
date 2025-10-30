@@ -158,7 +158,7 @@ function EventDetails() {
                     <span
                       className={`${getTaskStatusColor(
                         task.status
-                      )} text-white text-xs px-3 py-1 rounded-full`}
+                      )} text-white text-[13px] px-4 py-[3px] rounded-full font-medium shadow-sm`}
                     >
                       {formatTaskStatus(task.status)}
                     </span>
@@ -171,7 +171,6 @@ function EventDetails() {
           </div>
         </div>
 
-        {/* Event details, organizer, photos/videos remain unchanged */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
             <h2 className="text-3xl font-semibold mb-5">Event Details</h2>
@@ -209,6 +208,39 @@ function EventDetails() {
               {detail.contact_email || "N/A"}
             </p>
           </div>
+        </div>
+        <div className="bg-neutral-900/90 backdrop-blur-md mt-6 p-6 rounded-2xl shadow-lg border border-neutral-800">
+          <h2 className="text-3xl font-semibold mb-5">
+            Event Photos and Videos
+          </h2>
+
+          {event.photos?.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {event.photos.map((photo, i) => (
+                <img
+                  key={i}
+                  src={photo}
+                  alt={`Photo ${i + 1}`}
+                  className="rounded-xl object-cover w-full h-40"
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No photos available.</p>
+          )}
+
+          {event.videos?.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {event.videos.map((video, i) => (
+                <video
+                  key={i}
+                  src={video}
+                  controls
+                  className="rounded-xl w-full h-64 object-cover"
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

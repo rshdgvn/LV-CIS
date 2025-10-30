@@ -4,7 +4,7 @@ import Login from "./pages/auth/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Dashboard from "./pages/Dashboard";
 import Attendance from "./pages/Attendance";
-import Events from "./pages/Events";
+import Events from "./pages/events/Events";
 import Clubs from "./pages/clubs memberships/Clubs";
 import ClubDetails from "./pages/clubs memberships/ClubDetails";
 import GoogleCallback from "./GoogleCallback";
@@ -23,6 +23,7 @@ import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import Unauthorized from "./pages/errors/Unauthorized";
 import Forbidden from "./pages/errors/Forbidden";
+import EventDetails from "./pages/events/EventDetails";
 
 function App() {
   return (
@@ -71,6 +72,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/forbidden" element={<Forbidden />} />
+            <Route path="/events/:id" element={<EventDetails />} />
           </Routes>
         </ClubProvider>
       </AuthProvider>

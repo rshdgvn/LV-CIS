@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CalendarCheck, FilterIcon, ChevronDown } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import { SkeletonEventPage } from "@/components/skeletons/SkeletonEventPage";
+import { useNavigate } from "react-router-dom";
 
 function Events() {
   const { token, user } = useAuth();
@@ -14,6 +15,8 @@ function Events() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+
+  const nav = useNavigate();
 
   const filterOptions = [
     { label: "All Events", value: "all" },
@@ -71,15 +74,11 @@ function Events() {
 
   const filteredEvents = events.filter((event) => {
     if (categoryFilter === "yourclub") {
-      if (
-        !event.club?.users?.some((m) => Number(m.id) === Number(user?.id))
-      ) {
+      if (!event.club?.users?.some((m) => Number(m.id) === Number(user?.id))) {
         return false;
       }
     } else if (categoryFilter === "otherclub") {
-      if (
-        event.club?.users?.some((m) => Number(m.id) === Number(user?.id))
-      ) {
+      if (event.club?.users?.some((m) => Number(m.id) === Number(user?.id))) {
         return false;
       }
     }
@@ -104,7 +103,6 @@ function Events() {
           See all upcoming and past events organized by student clubs.
         </p>
       </div>
-
       <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
         {filterOptions.map((filter) => (
           <button
@@ -149,7 +147,13 @@ function Events() {
 
       <div className="p-4 grid gap-4">
         {filteredEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
+          <div
+            key={event.id}
+            onClick={() => nav(`/events/${event.id}`)}
+            className="cursor-pointer hover:scale-[1.01] transition-transform"
+          >
+            <EventCard event={event} />
+          </div>
         ))}
       </div>
     </>

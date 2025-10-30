@@ -12,16 +12,18 @@ class Event extends Model
 
     protected $fillable = [
         'club_id',
-        'name',
-        'start_date',
-        'end_date',
-        'location',
+        'title',
+        'purpose',
+        'description',
+        'cover_image',
+        'photos',
+        'videos',
         'status',
     ];
 
     protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
+        'photos' => 'array',
+        'videos' => 'array',
     ];
 
     public function club()
@@ -29,9 +31,9 @@ class Event extends Model
         return $this->belongsTo(Club::class);
     }
 
-    public function description()
+    public function detail()
     {
-        return $this->hasOne(EventDescription::class);
+        return $this->hasOne(EventDetail::class);
     }
 
     public function tasks()

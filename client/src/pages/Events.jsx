@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 import NProgress from "nprogress";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, FilterIcon, ChevronDown } from "lucide-react";
+import EventCard from "@/components/EventCard";
+import { SkeletonEventPage } from "@/components/skeletons/SkeletonEventPage";
 
 function Events() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
 
   const filterOptions = [
     { label: "All Events", value: "all" },
@@ -17,7 +21,17 @@ function Events() {
     { label: "Recent Events", value: "completed" },
   ];
 
+  const categoryOptions = [
+    { label: "All Clubs", value: "all" },
+    { label: "Your Clubs", value: "yourclub" },
+    { label: "Other Clubs", value: "otherclub" },
+  ];
+
   const handleFilterChange = (filter) => setActiveFilter(filter);
+  const handleCategorySelect = (value) => {
+    setCategoryFilter(value);
+    setShowCategoryMenu(false);
+  };
 
   const fetchEvents = async () => {
     try {
@@ -52,8 +66,32 @@ function Events() {
     fetchEvents();
   }, []);
 
-  if (loading) return <p>Loading events...</p>;
+  if (loading) return <SkeletonEventPage />;
   if (error) return <p>{error}</p>;
+
+  const filteredEvents = events.filter((event) => {
+    if (categoryFilter === "yourclub") {
+      if (
+        !event.club?.users?.some((m) => Number(m.id) === Number(user?.id))
+      ) {
+        return false;
+      }
+    } else if (categoryFilter === "otherclub") {
+      if (
+        event.club?.users?.some((m) => Number(m.id) === Number(user?.id))
+      ) {
+        return false;
+      }
+    }
+
+    if (activeFilter === "upcoming") {
+      return event.status === "upcoming" || event.status === "ongoing";
+    } else if (activeFilter === "completed") {
+      return event.status === "completed";
+    }
+
+    return true;
+  });
 
   return (
     <>
@@ -66,6 +104,7 @@ function Events() {
           See all upcoming and past events organized by student clubs.
         </p>
       </div>
+
       <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
         {filterOptions.map((filter) => (
           <button
@@ -80,34 +119,38 @@ function Events() {
             {filter.label}
           </button>
         ))}
+
+        <div className="relative">
+          <button
+            onClick={() => setShowCategoryMenu((prev) => !prev)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition"
+          >
+            <FilterIcon className="w-4 h-4" />
+            {categoryOptions.find((opt) => opt.value === categoryFilter)
+              ?.label || "All Clubs"}
+            <ChevronDown className="w-4 h-4" />
+          </button>
+
+          {showCategoryMenu && (
+            <div className="absolute mt-2 w-56 bg-neutral-800 text-sm text-white rounded-xl shadow-lg border border-neutral-700 z-50">
+              {categoryOptions.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => handleCategorySelect(cat.value)}
+                  className="block w-full text-left px-4 py-2 hover:bg-neutral-700 first:rounded-t-xl last:rounded-b-xl"
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      <div className="p-4">
-        {events.length === 0 ? (
-          <p>No events found.</p>
-        ) : (
-          <ul className="space-y-3">
-            {events.map((event) => (
-              <li
-                key={event.id}
-                className="border rounded-lg p-3 hover:bg-gray-50 transition"
-              >
-                <h2 className="font-semibold text-lg">{event.title}</h2>
-                <p className="text-sm text-gray-600">
-                  📍 {event.location} — {event.status}
-                </p>
-                <p className="text-sm">
-                  {new Date(event.start_date).toLocaleDateString()} →{" "}
-                  {new Date(event.end_date).toLocaleDateString()}
-                </p>
-                {event.description && (
-                  <p className="mt-1 text-gray-700 text-sm">
-                    {event.description.overview}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+
+      <div className="p-4 grid gap-4">
+        {filteredEvents.map((event) => (
+          <EventCard key={event.id} event={event} />
+        ))}
       </div>
     </>
   );

@@ -11,6 +11,7 @@ import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import MembersSection from "@/components/MembersSection";
 import { AlertTemplate } from "@/components/AlertTemplate";
+import { SkeletonClubDetails } from "@/components/skeletons/SkeletonClubDetails";
 
 NProgress.configure({ showSpinner: false });
 
@@ -84,7 +85,7 @@ export default function ClubDetails() {
 
   const handleAddMember = async (formData) => {
     const { userId, email, role, officer_title } = formData;
-    console.log(formData, id)
+    console.log(formData, id);
 
     if (!id || !role || (!userId && !email)) {
       showAlert(
@@ -220,9 +221,7 @@ export default function ClubDetails() {
       )}
 
       {loading ? (
-        <div className="min-h-screen flex items-center justify-center text-white">
-          <div className="loader"></div>
-        </div>
+        <SkeletonClubDetails />
       ) : error ? (
         <div className="p-6 text-red-400 text-center">{error}</div>
       ) : (

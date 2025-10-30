@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PasswordResetController;
 use Illuminate\Http\Request;
@@ -44,4 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/clubs/{clubId}/members/add', [MembershipController::class, 'addMember']);
     Route::patch('/clubs/{clubId}/members/{userId}/edit', [MembershipController::class, 'editMemberPivot']);
     Route::delete('/clubs/{clubId}/members/{userId}/remove', [MembershipController::class, 'removeMember']);
+
+    Route::get('/events', [EventController::class, 'getAllEvents']);
+    Route::get('/events/{id}', [EventController::class, 'getEventById']);
+    Route::post('/events', [EventController::class, 'addEvent']);
+    Route::put('/events/{id}', [EventController::class, 'updateEvent']);
+    Route::delete('/events/{id}', [EventController::class, 'deleteEvent']);
 });

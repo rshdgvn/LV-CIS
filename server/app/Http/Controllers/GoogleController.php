@@ -34,8 +34,15 @@ class GoogleController extends Controller
                     'username' => explode('@', $googleUser->getEmail())[0],
                     'password' => bcrypt(str()->random(16)),
                     'role' => 'user',
+                    'google_id' => $googleUser->getId(), 
+                    'avatar' => $googleUser->getAvatar(), 
                 ]
             );
+
+            if ($user->avatar !== $googleUser->getAvatar()) {
+                $user->avatar = $googleUser->getAvatar();
+                $user->save();
+            }
 
             Auth::login($user);
 

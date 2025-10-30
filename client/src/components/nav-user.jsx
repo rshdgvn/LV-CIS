@@ -77,10 +77,9 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar
-                className={`h-12 w-12 rounded-lg ${isCollapsed ? "ml-4" : ""}`}
+                className={`h-10 w-10 rounded-lg ${isCollapsed ? "ml-4" : ""}`}
               >
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>

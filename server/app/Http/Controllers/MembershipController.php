@@ -169,7 +169,8 @@ class MembershipController extends Controller
 
         $pendingMembers = $club->users()
             ->wherePivot('status', 'pending')
-            ->with('member') // Include member info if needed
+            ->with('member')
+            ->latest() 
             ->get()
             ->map(function ($user) {
                 return [

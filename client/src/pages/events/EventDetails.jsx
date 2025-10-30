@@ -12,25 +12,31 @@ import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import { formatTaskStatus } from "@/utils/formatTaskStatus";
+import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 
 function EventDetails() {
   const { id } = useParams();
   const { token } = useAuth();
   const [event, setEvent] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const nav = useNavigate();
 
+  // Fetch event details
   const fetchEvent = async () => {
     try {
       setLoading(true);
       NProgress.start();
+
       const res = await fetch(`${APP_URL}/events/${id}`, {
         headers: {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
+
       if (!res.ok) throw new Error("Failed to fetch event details.");
       const data = await res.json();
       setEvent(data);
@@ -43,8 +49,28 @@ function EventDetails() {
     }
   };
 
+  // Fetch tasks for this event
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch(`${APP_URL}/events/${id}/tasks`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch tasks.");
+      const data = await res.json();
+      setTasks(data);
+      console.log(tasks);
+    } catch (err) {
+      console.error(err);
+      setTasks([]);
+    }
+  };
+
   useEffect(() => {
     fetchEvent();
+    fetchTasks();
   }, [id]);
 
   if (loading) return <p className="p-10 text-gray-400">Loading event...</p>;
@@ -105,10 +131,7 @@ function EventDetails() {
               </div>
             </div>
 
-            <div
-              className="flex items-center gap-3 mt-4 cursor-pointer mx-5 mt-7"
-              // onClick={handleShare}
-            >
+            <div className="flex items-center gap-3 mt-4 cursor-pointer mx-5 mt-7">
               <Share2 className="text-gray-400 w-5 h-5" />
               <span className="text-sm text-gray-400">Share with friends</span>
             </div>
@@ -117,18 +140,27 @@ function EventDetails() {
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
             <div className="flex gap-2 ">
               <UserRound className="h-7 w-7 text-red-400" />
-              <h2 className="text-lg font-semibold mb-4 text-gray-400">Tasks</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-400">
+                Tasks
+              </h2>
             </div>
-            {event.tasks?.length > 0 ? (
+            {tasks?.length > 0 ? (
               <ul className="space-y-3">
-                {event.tasks.map((task, i) => (
+                {tasks.map((task, i) => (
                   <li key={i} className="flex justify-between items-center">
                     <div>
-                      <p className="font-semibold">{task.name}</p>
-                      <p className="text-gray-400 text-sm">{task.role}</p>
+                      <p className="font-semibold">{task.title}</p>
+                      <p className="text-gray-400 text-sm">
+                        Assigned by: {task.assigned_by || "N/A"}
+                      </p>
                     </div>
-                    <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
-                      {task.status || "Ongoing"}
+
+                    <span
+                      className={`${getTaskStatusColor(
+                        task.status
+                      )} text-white text-xs px-3 py-1 rounded-full`}
+                    >
+                      {formatTaskStatus(task.status)}
                     </span>
                   </li>
                 ))}
@@ -139,6 +171,7 @@ function EventDetails() {
           </div>
         </div>
 
+        {/* Event details, organizer, photos/videos remain unchanged */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
             <h2 className="text-3xl font-semibold mb-5">Event Details</h2>
@@ -176,40 +209,6 @@ function EventDetails() {
               {detail.contact_email || "N/A"}
             </p>
           </div>
-        </div>
-
-        <div className="bg-neutral-900/90 backdrop-blur-md mt-6 p-6 rounded-2xl shadow-lg border border-neutral-800">
-          <h2 className="text-3xl font-semibold mb-5">
-            Event Photos and Videos
-          </h2>
-
-          {event.photos?.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {event.photos.map((photo, i) => (
-                <img
-                  key={i}
-                  src={photo}
-                  alt={`Photo ${i + 1}`}
-                  className="rounded-xl object-cover w-full h-40"
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500">No photos available.</p>
-          )}
-
-          {event.videos?.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {event.videos.map((video, i) => (
-                <video
-                  key={i}
-                  src={video}
-                  controls
-                  className="rounded-xl w-full h-64 object-cover"
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

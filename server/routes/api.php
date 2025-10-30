@@ -6,6 +6,7 @@ use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -51,4 +52,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/events', [EventController::class, 'addEvent']);
     Route::put('/events/{id}', [EventController::class, 'updateEvent']);
     Route::delete('/events/{id}', [EventController::class, 'deleteEvent']);
+
+    Route::get('/tasks', [TaskController::class, 'getAllTasks']);
+    Route::get('/task/{id}', [TaskController::class, 'getTaskById']);
+    Route::post('/create/task', [TaskController::class, 'createTaskForEvent']);
+    Route::put('/update/task/{id}', [TaskController::class, 'updateTaskById']);
+    Route::delete('/delete/task/{id}', [TaskController::class, 'deleteTaskById']);
+
+    Route::get('/events/{eventId}/tasks', [TaskController::class, 'getTasksByEvent']);
 });

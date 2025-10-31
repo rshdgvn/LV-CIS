@@ -7,25 +7,26 @@ import {
   House,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
-import { NavUser } from "./nav-user";
+import { NavUser } from "../nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarFooter,
+  SidebarRail
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function AppSidebar(props) {
-  const { user, getUser, loading } = useAuth(); 
+  const { user, getUser, loading } = useAuth();
 
   useEffect(() => {
     if (!user?.id) {
       getUser();
     }
   }, [user?.id, getUser]);
-  
+
   const admin = user?.role === "admin";
 
   const data = {
@@ -44,6 +45,7 @@ export function AppSidebar(props) {
 
   return (
     <Sidebar
+      collapsible="icon"
       className="
         bg-neutral-950 border-r border-neutral-800 transition-all duration-300
         w-48 sm:w-56 md:w-64
@@ -61,6 +63,7 @@ export function AppSidebar(props) {
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }

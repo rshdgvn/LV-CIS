@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             ClubMembershipSeeder::class,
             EventSeeder::class,
             EventTaskSeeder::class,
+            EventTaskAssignmentSeeder::class,
         ]);
     }
 }

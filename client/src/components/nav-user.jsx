@@ -35,7 +35,7 @@ export function NavUser() {
   const { user } = useAuth();
   const nav = useNavigate();
   const { isMobile, state } = useSidebar();
-  const isCollapsed = state === "";
+  const isCollapsed = state === "collapsed";
 
   const handleLogout = async () => {
     try {
@@ -77,16 +77,18 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar
-                className={`h-12 w-12 rounded-lg ${isCollapsed ? "ml-4" : ""}`}
+                className={`h-10 w-10 rounded-lg ${isCollapsed && 'ml-8'}`}
               >
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
-              </div>
-              <MoreVertical className="ml-auto w-5 h-5" />
+              {!isCollapsed && (
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate text-xs">{user.email}</span>
+                </div>
+              )}
+
+              <MoreVertical className={`ml-auto w-5 h-5 ${isCollapsed && "mr-5"}`} />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

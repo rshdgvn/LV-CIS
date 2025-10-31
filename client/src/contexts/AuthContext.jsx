@@ -46,8 +46,8 @@ export const AuthProvider = ({ children }) => {
     getUser();
   }, [token]);
 
-  const isAdmin = user.role === "admin" && !!token && !!user.id;
-  const isValidUser = !!token && !!user.id;
+  const isAdmin = user.role === "admin" && !!user.id;
+  const isValidUser = !!user.id;
 
   return (
     <AuthContext.Provider

@@ -22,6 +22,18 @@ class EventTaskAssignment extends Model
 
     public function clubMembership()
     {
-        return $this->belongsTo(ClubMembership::class, 'club_membership_id');
+        return $this->belongsTo(ClubMembership::class, 'club_membership_id')->with('user');;
+    }
+
+    public function assignedBy()
+    {
+        return $this->hasManyThrough(
+            \App\Models\User::class,
+            \App\Models\ClubMembership::class,
+            'id',             
+            'id',             
+            'id',           
+            'user_id'        
+        )->via('assignments');
     }
 }

@@ -34,9 +34,11 @@ export function TeamSwitcher() {
                 alt="La Verdad Club"
                 className="h-13 w-13 object-contain"
               />
-              <span className="truncate text-lg font-medium text-white">
-                LVCIS
-              </span>
+              {!isCollapsed && (
+                <span className="truncate text-lg font-medium text-white">
+                  LVCIS
+                </span>
+              )}
             </a>
           </SidebarMenuButton>
         </DropdownMenu>

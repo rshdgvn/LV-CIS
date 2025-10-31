@@ -12,9 +12,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('club_id')->constrained('clubs')->onDelete('cascade');
             $table->string('title');
-            $table->dateTime('start_date')->nullable();
-            $table->dateTime('end_date')->nullable();
-            $table->string('location')->nullable();
+            $table->string('purpose')->nullable();
+            $table->text('description')->nullable();
+            $table->string('cover_image')->nullable(); 
+            $table->json('photos')->nullable();
+            $table->json('videos')->nullable(); 
             $table->enum('status', ['upcoming', 'ongoing', 'completed'])->default('upcoming');
             $table->timestamps();
             $table->softDeletes();

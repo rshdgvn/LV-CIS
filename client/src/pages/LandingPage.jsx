@@ -139,7 +139,7 @@ function LandingPage() {
       </section>
 
       <FeaturesSection />
-      
+
       <section
         id="about"
         className="min-h-screen flex flex-col items-center justify-center text-center px-6text-white"
@@ -159,6 +159,86 @@ function LandingPage() {
             className="w-20 h-20 object-contain rounded-lg shadow-md hover:scale-105 transition-transform opacity-15"
           />
         </div>
+      </section>
+      <section
+        id="clubs"
+        className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-gradient-to-b from-neutral-900 via-neutral-900 to-blue-950 text-white"
+      >
+        <h2 className="text-3xl md:text-4xl font-bold mb-10">
+          Explore Our Clubs
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl">
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            className="bg-blue-950/60 rounded-2xl overflow-hidden shadow-lg text-left"
+          >
+            <img
+              src="/Lv-Background.jpg"
+              className="w-full h-40 object-cover"
+            />
+            <div className="p-5">
+              <h3 className="font-semibold text-lg mb-2">
+                Association of ICT Majors
+              </h3>
+              <p className="text-gray-400 text-sm mb-4">
+                This is sample text for the description
+              </p>
+              <span className="block font-bold text-sm">Academics</span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            className="bg-blue-950/60 rounded-2xl overflow-hidden shadow-lg text-left"
+          >
+            <img
+              src="/Lv-Background.jpg"
+              className="w-full h-40 object-cover"
+            />
+            <div className="p-5">
+              <h3 className="font-semibold text-lg mb-2">
+                La Verdad Dance Troupe
+              </h3>
+              <p className="text-gray-400 text-sm mb-4">
+                This is sample text for the description
+              </p>
+              <span className="block font-bold text-sm">
+                Culture and Performing Arts
+              </span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            className="bg-blue-950/60 rounded-2xl overflow-hidden shadow-lg text-left"
+          >
+            <img
+              src="/Lv-Background.jpg"
+              alt="Disaster Response and Rescue Team"
+              className="w-full h-40 object-cover"
+            />
+            <div className="p-5">
+              <h3 className="font-semibold text-lg mb-2">
+                Disaster Response and Rescue Team
+              </h3>
+              <p className="text-gray-400 text-sm mb-4">
+                This is sample text for the description
+              </p>
+              <span className="block font-bold text-sm">Socio-politics</span>
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.div whileHover={{ scale: 1.05 }}>
+          <Button
+            variant="outline"
+            className="mt-10 border-blue-700 text-blue-400 hover:bg-blue-800 hover:text-white"
+            onClick={() => nav("/clubs")}
+          >
+            View All Clubs
+          </Button>
+        </motion.div>
       </section>
     </div>
   );

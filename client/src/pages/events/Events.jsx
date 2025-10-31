@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import NProgress from "nprogress";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
-import { CalendarCheck, FilterIcon, ChevronDown } from "lucide-react";
+import {
+  CalendarCheck,
+  FilterIcon,
+  ChevronDown,
+  SquarePlus,
+} from "lucide-react";
 import EventCard from "@/components/EventCard";
 import { SkeletonEventPage } from "@/components/skeletons/SkeletonEventPage";
 import { useNavigate } from "react-router-dom";
 
 function Events() {
-  const { token, user } = useAuth();
+  const { token, user, isAdmin } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -118,31 +123,38 @@ function Events() {
           </button>
         ))}
 
-        <div className="relative">
-          <button
-            onClick={() => setShowCategoryMenu((prev) => !prev)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition"
-          >
-            <FilterIcon className="w-4 h-4" />
-            {categoryOptions.find((opt) => opt.value === categoryFilter)
-              ?.label || "All Clubs"}
-            <ChevronDown className="w-4 h-4" />
-          </button>
+        {!isAdmin && (
+          <div className="relative">
+            <button
+              onClick={() => setShowCategoryMenu((prev) => !prev)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition"
+            >
+              <FilterIcon className="w-4 h-4" />
+              {categoryOptions.find((opt) => opt.value === categoryFilter)
+                ?.label || "All Clubs"}
+              <ChevronDown className="w-4 h-4" />
+            </button>
 
-          {showCategoryMenu && (
-            <div className="absolute mt-2 w-56 bg-neutral-800 text-sm text-white rounded-xl shadow-lg border border-neutral-700 z-50">
-              {categoryOptions.map((cat) => (
-                <button
-                  key={cat.value}
-                  onClick={() => handleCategorySelect(cat.value)}
-                  className="block w-full text-left px-4 py-2 hover:bg-neutral-700 first:rounded-t-xl last:rounded-b-xl"
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            {showCategoryMenu && (
+              <div className="absolute mt-2 w-56 bg-neutral-800 text-sm text-white rounded-xl shadow-lg border border-neutral-700 z-50">
+                {categoryOptions.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => handleCategorySelect(cat.value)}
+                    className="block w-full text-left px-4 py-2 hover:bg-neutral-700 first:rounded-t-xl last:rounded-b-xl"
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <button className="flex flex-row gap-2 items-center ml-auto px-6 py-2 rounded-lg text-sm font-medium transition bg-blue-950 text-gray-300 hover:bg-neutral-700 mr-8 ">
+          <SquarePlus className="h-4 w-4" />
+          Add
+        </button>
       </div>
 
       <div className="p-4 grid gap-4">

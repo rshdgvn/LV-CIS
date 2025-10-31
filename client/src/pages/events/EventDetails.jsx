@@ -100,7 +100,7 @@ function EventDetails() {
       <div className="relative z-10 pt-72 pb-20 px-6 max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
-            <h1 className="text-3xl font-semibold mb-5 mx-5">{event.title}</h1>
+            <h1 className="text-2xl font-semibold mb-5 mx-5">{event.title}</h1>
 
             <div className="flex flex-col gap-4 text-gray-300 text-sm mx-5">
               <div className="flex flex-row justify-between">
@@ -173,7 +173,7 @@ function EventDetails() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
-            <h2 className="text-3xl font-semibold mb-5">Event Details</h2>
+            <h2 className="text-2xl font-semibold mb-5">Event Details</h2>
             <p className="text-gray-300 leading-relaxed mb-5">
               {event.description}
             </p>
@@ -210,7 +210,7 @@ function EventDetails() {
           </div>
         </div>
         <div className="bg-neutral-900/90 backdrop-blur-md mt-6 p-6 rounded-2xl shadow-lg border border-neutral-800">
-          <h2 className="text-3xl font-semibold mb-5">
+          <h2 className="text-2xl font-semibold mb-5">
             Event Photos and Videos
           </h2>
 

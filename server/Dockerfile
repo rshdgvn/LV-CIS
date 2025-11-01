@@ -1,4 +1,4 @@
-# Stage 1: Base PHP image
+# Use official PHP 8.2 FPM image
 FROM php:8.2-fpm
 
 WORKDIR /var/www/html
@@ -12,32 +12,32 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    nano \
     libzip-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    nano \
+ && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Composer globally
 COPY --from=composer:2.5 /usr/bin/composer /usr/bin/composer
 
-# Copy application code
+# Copy project files
 COPY . .
 
-# Install PHP dependencies (no dev)
+# Install PHP dependencies (production only)
 RUN composer install --no-dev --optimize-autoloader
 
-# Clear and optimize Laravel cache
+# Clear Laravel caches
 RUN php artisan config:clear && php artisan route:clear && php artisan view:clear
 
-# Set proper permissions
+# Fix permissions for Laravel writable directories
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
+ && chmod -R 755 storage bootstrap/cache
 
-# Copy seeded images directly to public directory
-RUN mkdir -p public/club_logos && cp -r storage/app/public/club_logos/* public/club_logos/ || true
+# Ensure all public disk files are available at /public/storage
+RUN mkdir -p public/storage && cp -r storage/app/public/* public/storage/ || true
 
-# Expose port 8000 for Render
+# Expose the Laravel default port
 EXPOSE 8000
 
-# Run migrations and start the Laravel built-in server
-CMD php artisan migrate --force && sleep 2 && php artisan serve --host=0.0.0.0 --port=8000
+# Run migrations and start the Laravel server
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000

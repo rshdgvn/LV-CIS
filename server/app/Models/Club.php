@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+
 
 class Club extends Model
 {
@@ -17,12 +19,13 @@ class Club extends Model
             ->withTimestamps();
     }
 
+
     public function getLogoUrlAttribute()
     {
         if (!$this->logo) {
             return null;
         }
 
-        return asset('storage/' . $this->logo);
+        return Storage::disk('public')->url($this->logo);
     }
 }

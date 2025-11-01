@@ -19,7 +19,7 @@ export default function Layout({ children }) {
       >
         <a
           href="/"
-          className="flex items-center font-medium justify-center mx-6 gap-4"
+          className="flex items-center font-medium justify-center gap-4"
         >
           <img
             src={logo}

@@ -23,6 +23,7 @@ class Club extends Model
             return null;
         }
 
-        return asset('storage/' . $this->logo);
+        $url = asset('storage/' . $this->logo);
+        return str_replace('http://', 'https://', $url);
     }
 }

@@ -1,8 +1,7 @@
 import React from "react";
 import { useAuth } from "./AuthContext";
 import { Outlet, Navigate } from "react-router-dom";
-import { SkeletonSidebar } from "@/components/skeletons/SkeletonSidebar";
-import Loader from "@/components/app/loader";
+import Loader from "@/components/app/Loader";
 
 const ProtectedRoute = () => {
   const { isValidUser, loading } = useAuth();

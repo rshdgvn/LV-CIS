@@ -7,7 +7,7 @@ import Loader from "@/components/app/loader";
 const ProtectedRoute = () => {
   const { isValidUser, loading } = useAuth();
 
-  if (loading && isValidUser) return <Loader />;
+  if (loading) return <Loader />;
 
   return isValidUser ? <Outlet /> : <Navigate to="/forbidden" replace />;
 };

@@ -33,10 +33,8 @@ RUN php artisan config:clear && php artisan route:clear && php artisan view:clea
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Create the storage symlink and ensure public access
-RUN php artisan storage:link || true
-RUN mkdir -p public/storage && cp -r storage/app/public/* public/storage/ || true
-RUN chmod -R 755 public/storage
+# Copy seeded images directly to public directory
+RUN mkdir -p public/club_logos && cp -r storage/app/public/club_logos/* public/club_logos/ || true
 
 # Expose port 8000 for Render
 EXPOSE 8000

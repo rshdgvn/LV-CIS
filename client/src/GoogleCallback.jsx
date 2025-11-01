@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
-import Loader from "./components/app/loader";
+import Loader from "./components/app/Loader";
 
 function GoogleCallback() {
   const navigate = useNavigate();

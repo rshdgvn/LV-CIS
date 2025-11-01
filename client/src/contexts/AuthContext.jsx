@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }) => {
       setUser((prev) => ({ ...prev, ...data }));
       return data;
     } catch (error) {
-      console.error("Error fetching user:", error);
       setToken(null);
       localStorage.removeItem("token");
       return null;

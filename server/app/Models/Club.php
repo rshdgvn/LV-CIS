@@ -26,6 +26,8 @@ class Club extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->logo);
+        return Storage::disk('public')->exists($this->logo)
+            ? Storage::disk('public')->url($this->logo)
+            : asset('images/default.png');
     }
 }

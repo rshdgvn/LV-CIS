@@ -17,10 +17,8 @@ function GoogleCallback() {
       setToken(token);
       localStorage.setItem("token", token);
 
-      // Wait for user data
       const userData = await getUser(token);
 
-      // Navigate after user is ready
       if (userData?.role === "admin") {
         navigate("/admin/dashboard", { replace: true });
       } else {

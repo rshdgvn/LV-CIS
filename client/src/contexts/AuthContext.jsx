@@ -18,7 +18,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const getUser = async (authToken = token) => {
-    if (!authToken) return null;
+    if (!authToken) {
+      setLoading(false)
+      return null;
+    }
 
     try {
       const res = await fetch(`${APP_URL}/user`, {

@@ -19,8 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173', 'https://lv-cis.vercel.app'],
-
+    'allowed_origins' => [
+        'https://lv-cis.vercel.app', 
+        'http://localhost:5173',     
+    ],
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],

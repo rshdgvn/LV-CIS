@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
 import { CalendarPlus } from "lucide-react";
+import { DatePicker } from "../DatePicker";
 
 export default function CreateEventModal({ onSuccess }) {
   const { token, user } = useAuth();
@@ -168,16 +169,16 @@ export default function CreateEventModal({ onSuccess }) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Event Date</Label>
-              <Input
-                type="date"
-                name="event_date"
-                value={form.event_date}
-                onChange={handleChange}
-                required
-              />
-            </div>
+            <DatePicker
+              label="Event Date"
+              value={form.event_date}
+              onChange={(date) =>
+                setForm((prev) => ({
+                  ...prev,
+                  event_date: date?.toISOString().split("T")[0],
+                }))
+              }
+            />
             <div>
               <Label>Event Time</Label>
               <Input

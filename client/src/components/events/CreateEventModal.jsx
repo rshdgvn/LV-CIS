@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus, X } from "lucide-react";
 import { DatePicker } from "../DatePicker";
 import { TimePicker } from "../TimePicker";
 import { APP_URL } from "@/lib/config";
@@ -53,6 +53,10 @@ export default function CreateEventModal({ onSuccess }) {
       [name]:
         name === "photos" || name === "videos" ? Array.from(files) : files[0],
     }));
+  };
+
+  const removeCoverImage = () => {
+    setForm((prev) => ({ ...prev, cover_image: null }));
   };
 
   const handleSubmit = async (e) => {
@@ -159,9 +163,31 @@ export default function CreateEventModal({ onSuccess }) {
             {/* Cover Page */}
             <div>
               <Label>Cover Page</Label>
-              <label className="flex flex-col items-center justify-center h-24 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition mt-2">
-                <span className="text-3xl">+</span>
-                <span className="text-xs mt-1">Add attachment</span>
+              <label className="relative flex flex-col items-center justify-center h-40 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition mt-2 overflow-hidden">
+                {form.cover_image ? (
+                  <>
+                    <img
+                      src={URL.createObjectURL(form.cover_image)}
+                      alt="Cover Preview"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeCoverImage();
+                      }}
+                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full p-1"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-3xl">+</span>
+                    <span className="text-xs mt-1">Add attachment</span>
+                  </>
+                )}
                 <input
                   type="file"
                   name="cover_image"
@@ -171,28 +197,75 @@ export default function CreateEventModal({ onSuccess }) {
                 />
               </label>
             </div>
-
-            {/* Photos and Videos */}
+            
+            {/* Attachments (Photo or Video) */}
             <div>
-              <Label>Photos and Videos</Label>
+              <Label>Attachments</Label>
               <div className="grid grid-cols-3 gap-3 mt-2">
-                {["photos", "videos", "extra"].map((name, idx) => (
-                  <label
-                    key={idx}
-                    className="flex flex-col items-center justify-center h-24 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition"
-                  >
-                    <span className="text-3xl">+</span>
-                    <span className="text-xs mt-1">Add attachment</span>
-                    <input
-                      type="file"
-                      name={name === "extra" ? "photos" : name}
-                      multiple
-                      accept={name === "videos" ? "video/*" : "image/*"}
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                  </label>
-                ))}
+                {Array.from({ length: 3 }).map((_, index) => {
+                  const file = form.attachments?.[index];
+                  const isVideo = file && file.type.startsWith("video/");
+                  const isImage = file && file.type.startsWith("image/");
+
+                  return (
+                    <label
+                      key={index}
+                      className="relative flex flex-col items-center justify-center h-24 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition overflow-hidden"
+                    >
+                      {file ? (
+                        <>
+                          {isImage && (
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt="Attachment Preview"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          )}
+                          {isVideo && (
+                            <video
+                              src={URL.createObjectURL(file)}
+                              className="absolute inset-0 w-full h-full object-cover"
+                              muted
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setForm((prev) => {
+                                const updated = [...(prev.attachments || [])];
+                                updated[index] = null;
+                                return { ...prev, attachments: updated };
+                              });
+                            }}
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full p-1"
+                          >
+                            <X className="w-4 h-4 text-white" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-3xl">+</span>
+                          <span className="text-xs mt-1">Add Attachment</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          setForm((prev) => {
+                            const updated = [...(prev.attachments || [])];
+                            updated[index] = file;
+                            return { ...prev, attachments: updated };
+                          });
+                        }}
+                      />
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>

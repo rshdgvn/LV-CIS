@@ -56,7 +56,6 @@ class EventController extends Controller
                 'duration' => 'required|string|max:255',
             ]);
 
-            // ✅ Convert time to 24-hour format for MySQL
             $formattedTime = date('H:i:s', strtotime($validated['event_time']));
 
             $coverUrl = null;
@@ -92,7 +91,7 @@ class EventController extends Controller
             EventDetail::create([
                 'event_id' => $event->id,
                 'event_date' => $validated['event_date'],
-                'event_time' => $formattedTime, // ✅ Use converted 24-hour format
+                'event_time' => $formattedTime, 
                 'venue' => $validated['venue'],
                 'organizer' => $validated['organizer'],
                 'contact_person' => $validated['contact_person'],

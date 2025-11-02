@@ -66,7 +66,7 @@ function ClubCard({
     <div
       onClick={onEnter}
       className="
-        w-72 rounded-xl overflow-hidden 
+        w-80 rounded-xl overflow-hidden 
         border border-gray-800 
         bg-neutral-900/80 backdrop-blur-sm
         shadow-[0_4px_20px_rgba(0,0,0,0.3)]

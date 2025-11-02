@@ -15,7 +15,7 @@ export default function ClubList({
   }, []);
 
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-10">
+    <div className="flex flex-wrap gap-x-16 gap-y-10">
       {clubs.map((club) => (
         <ClubCard
           key={club.id}

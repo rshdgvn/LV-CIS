@@ -23,7 +23,6 @@ export function TimePicker({ label = "Select Time", value, onChange }) {
   const [minute, setMinute] = React.useState("");
   const [ampm, setAmPm] = React.useState("AM");
 
-  // Convert selected values into time string (HH:MM AM/PM)
   React.useEffect(() => {
     if (hour && minute && ampm) {
       onChange(`${hour}:${minute} ${ampm}`);
@@ -53,7 +52,6 @@ export function TimePicker({ label = "Select Time", value, onChange }) {
 
         <PopoverContent className="w-[280px] p-4" align="start">
           <div className="grid grid-cols-3 gap-2">
-            {/* Hour Select */}
             <Select value={hour} onValueChange={setHour}>
               <SelectTrigger>
                 <SelectValue placeholder="HH" />
@@ -67,7 +65,6 @@ export function TimePicker({ label = "Select Time", value, onChange }) {
               </SelectContent>
             </Select>
 
-            {/* Minute Select */}
             <Select value={minute} onValueChange={setMinute}>
               <SelectTrigger>
                 <SelectValue placeholder="MM" />
@@ -81,7 +78,6 @@ export function TimePicker({ label = "Select Time", value, onChange }) {
               </SelectContent>
             </Select>
 
-            {/* AM/PM Select */}
             <Select value={ampm} onValueChange={setAmPm}>
               <SelectTrigger>
                 <SelectValue placeholder="AM/PM" />

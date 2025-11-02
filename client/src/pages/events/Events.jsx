@@ -11,6 +11,7 @@ import {
 import EventCard from "@/components/EventCard";
 import { SkeletonEventPage } from "@/components/skeletons/SkeletonEventPage";
 import { useNavigate } from "react-router-dom";
+import CreateEventModal from "@/components/events/CreateEventModal";
 
 function Events() {
   const { token, user, isAdmin } = useAuth();
@@ -151,10 +152,11 @@ function Events() {
           </div>
         )}
 
-        <button className="flex flex-row gap-2 items-center ml-auto px-6 py-2 rounded-lg text-sm font-medium transition bg-blue-950 text-gray-300 hover:bg-neutral-700 mr-8 ">
-          <SquarePlus className="h-4 w-4" />
-          Add
-        </button>
+        {isAdmin && (
+          <div className="ml-auto mr-8">
+            <CreateEventModal onSuccess={fetchEvents} />
+          </div>
+        )}
       </div>
 
       <div className="p-4 grid gap-4">

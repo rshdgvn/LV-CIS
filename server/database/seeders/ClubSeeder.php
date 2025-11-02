@@ -5,12 +5,17 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Club;
 use Cloudinary\Cloudinary;
+use Illuminate\Support\Facades\File;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class ClubSeeder extends Seeder
 {
     public function run(): void
     {
         $cloudinary = new Cloudinary(config('cloudinary'));
+
+        $imageManager = new ImageManager(new Driver());
 
         $clubsData = [
             [
@@ -104,19 +109,27 @@ class ClubSeeder extends Seeder
 
             if (file_exists($localPath)) {
                 try {
-                    $upload = $cloudinary->uploadApi()->upload($localPath, [
+                    $compressedPath = storage_path('app/temp_' . basename($localPath));
+
+                    $imageManager->read($localPath)
+                        ->scaleDown(width: 1920)
+                        ->save($compressedPath, quality: 75); 
+
+                    $upload = $cloudinary->uploadApi()->upload($compressedPath, [
                         'folder' => 'lv-cis/clubs',
                         'overwrite' => true,
                         'resource_type' => 'image',
                     ]);
 
                     $clubData['logo'] = $upload['secure_url'] ?? null;
+
+                    File::delete($compressedPath);
                 } catch (\Exception $e) {
-                    $this->command->warn("⚠️ Failed to upload {$clubData['name']} logo: " . $e->getMessage());
+                    $this->command->warn("Failed to upload {$clubData['name']} logo: " . $e->getMessage());
                     $clubData['logo'] = null;
                 }
             } else {
-                $this->command->warn("📁 File not found: {$localPath}");
+                $this->command->warn("File not found: {$localPath}");
                 $clubData['logo'] = null;
             }
 

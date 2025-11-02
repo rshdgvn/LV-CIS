@@ -4,11 +4,14 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Club;
+use Cloudinary\Cloudinary;
 
 class ClubSeeder extends Seeder
 {
     public function run(): void
     {
+        $cloudinary = new Cloudinary(config('cloudinary'));
+
         $clubsData = [
             [
                 'name' => 'Blue Harmony',
@@ -97,7 +100,28 @@ class ClubSeeder extends Seeder
         ];
 
         foreach ($clubsData as $clubData) {
-            Club::firstOrCreate(['name' => $clubData['name']], $clubData);
+            $localPath = public_path($clubData['logo']);
+
+            if (file_exists($localPath)) {
+                try {
+                    $upload = $cloudinary->uploadApi()->upload($localPath, [
+                        'folder' => 'lv-cis/clubs',
+                        'overwrite' => true,
+                        'resource_type' => 'image',
+                    ]);
+
+                    $clubData['logo'] = $upload['secure_url'] ?? null;
+                } catch (\Exception $e) {
+                    $this->command->warn("⚠️ Failed to upload {$clubData['name']} logo: " . $e->getMessage());
+                    $clubData['logo'] = null;
+                }
+            } else {
+                $this->command->warn("📁 File not found: {$localPath}");
+                $clubData['logo'] = null;
+            }
+
+            Club::updateOrCreate(['name' => $clubData['name']], $clubData);
         }
+
     }
 }

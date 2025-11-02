@@ -27,7 +27,7 @@ export default function CreateEventModal({ onSuccess }) {
     title: "",
     purpose: "",
     description: "",
-    cover_image: "",
+    cover_image: null,
     photos: [],
     videos: [],
     status: "upcoming",
@@ -46,19 +46,36 @@ export default function CreateEventModal({ onSuccess }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]:
+        name === "photos" || name === "videos" ? Array.from(files) : files[0],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const formData = new FormData();
+
+      Object.entries(form).forEach(([key, value]) => {
+        if (key === "photos" || key === "videos") {
+          value.forEach((file) => formData.append(`${key}[]`, file));
+        } else if (value !== null && value !== undefined) {
+          formData.append(key, value);
+        }
+      });
+
       const res = await fetch(`${APP_URL}/events`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: formData,
       });
 
       if (!res.ok) throw new Error("Failed to create event");
@@ -71,7 +88,7 @@ export default function CreateEventModal({ onSuccess }) {
         title: "",
         purpose: "",
         description: "",
-        cover_image: "",
+        cover_image: null,
         photos: [],
         videos: [],
         status: "upcoming",
@@ -110,6 +127,7 @@ export default function CreateEventModal({ onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Club ID & Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Club ID</Label>
@@ -136,6 +154,7 @@ export default function CreateEventModal({ onSuccess }) {
             </div>
           </div>
 
+          {/* Title */}
           <div>
             <Label>Title</Label>
             <Input
@@ -147,6 +166,7 @@ export default function CreateEventModal({ onSuccess }) {
             />
           </div>
 
+          {/* Purpose */}
           <div>
             <Label>Purpose</Label>
             <Textarea
@@ -158,6 +178,7 @@ export default function CreateEventModal({ onSuccess }) {
             />
           </div>
 
+          {/* Description */}
           <div>
             <Label>Description</Label>
             <Textarea
@@ -169,30 +190,28 @@ export default function CreateEventModal({ onSuccess }) {
             />
           </div>
 
+          {/* Date & Time */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <DatePicker
-                label="Event Date"
-                value={form.event_date}
-                onChange={(date) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    event_date: date?.toISOString().split("T")[0],
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <TimePicker
-                label="Time"
-                value={form.event_time}
-                onChange={(time) =>
-                  setForm((prev) => ({ ...prev, event_time: time }))
-                }
-              />
-            </div>
+            <DatePicker
+              label="Event Date"
+              value={form.event_date}
+              onChange={(date) =>
+                setForm((prev) => ({
+                  ...prev,
+                  event_date: date?.toISOString().split("T")[0],
+                }))
+              }
+            />
+            <TimePicker
+              label="Event Time"
+              value={form.event_time}
+              onChange={(time) =>
+                setForm((prev) => ({ ...prev, event_time: time }))
+              }
+            />
           </div>
 
+          {/* Venue */}
           <div>
             <Label>Venue</Label>
             <Input
@@ -204,6 +223,7 @@ export default function CreateEventModal({ onSuccess }) {
             />
           </div>
 
+          {/* Organizer & Contact */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Organizer</Label>
@@ -227,6 +247,7 @@ export default function CreateEventModal({ onSuccess }) {
             </div>
           </div>
 
+          {/* Contact Email & Event Mode */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Contact Email</Label>
@@ -254,6 +275,7 @@ export default function CreateEventModal({ onSuccess }) {
             </div>
           </div>
 
+          {/* Duration */}
           <div>
             <Label>Duration</Label>
             <Input
@@ -263,6 +285,39 @@ export default function CreateEventModal({ onSuccess }) {
               placeholder="e.g. 3 hours, 1 day"
               required
             />
+          </div>
+
+          {/* File Uploads */}
+          <div className="space-y-3">
+            <div>
+              <Label>Cover Image</Label>
+              <Input
+                type="file"
+                name="cover_image"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+            <div>
+              <Label>Photos</Label>
+              <Input
+                type="file"
+                name="photos"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+            <div>
+              <Label>Videos</Label>
+              <Input
+                type="file"
+                name="videos"
+                multiple
+                accept="video/*"
+                onChange={handleFileChange}
+              />
+            </div>
           </div>
 
           <DialogFooter>

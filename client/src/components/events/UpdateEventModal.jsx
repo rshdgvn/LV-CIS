@@ -99,6 +99,12 @@ export default function UpdateEventModal({ event, onSuccess }) {
               }
             });
           }
+        } else if (key === "cover_image") {
+          if (value instanceof File) {
+            formData.append("cover_image", value);
+          } else if (typeof value === "string" && value !== "") {
+            formData.append("existing_cover_image", value);
+          }
         } else if (value !== null && value !== undefined) {
           formData.append(key, value);
         }
@@ -235,6 +241,105 @@ export default function UpdateEventModal({ event, onSuccess }) {
                   onChange={handleFileChange}
                 />
               </label>
+            </div>
+            {/* Attachments (Dynamic Photos & Videos) */}
+            <div>
+              <Label>Attachments</Label>
+              <div className="grid grid-cols-3 gap-3 mt-2">
+                {[
+                  ...(form.photos || []).filter(Boolean),
+                  ...(form.videos || []).filter(Boolean),
+                  null, 
+                ].map((file, index, all) => {
+                  const isFromServer = typeof file === "string";
+                  const isVideo =
+                    (isFromServer && file?.endsWith(".mp4")) ||
+                    (file && file.type?.startsWith("video/"));
+                  const isImage =
+                    (isFromServer && !file?.endsWith(".mp4")) ||
+                    (file && file.type?.startsWith("image/"));
+
+                  return (
+                    <label
+                      key={index}
+                      className="relative flex flex-col items-center justify-center h-24 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition overflow-hidden"
+                    >
+                      {file ? (
+                        <>
+                          {isImage && (
+                            <img
+                              src={
+                                isFromServer ? file : URL.createObjectURL(file)
+                              }
+                              alt="Attachment Preview"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          )}
+                          {isVideo && (
+                            <video
+                              src={
+                                isFromServer ? file : URL.createObjectURL(file)
+                              }
+                              className="absolute inset-0 w-full h-full object-cover"
+                              muted
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setForm((prev) => ({
+                                ...prev,
+                                photos: (prev.photos || []).filter(
+                                  (p) =>
+                                    p !== file ||
+                                    (typeof p === "object" &&
+                                      p.name !== file?.name)
+                                ),
+                                videos: (prev.videos || []).filter(
+                                  (v) =>
+                                    v !== file ||
+                                    (typeof v === "object" &&
+                                      v.name !== file?.name)
+                                ),
+                              }));
+                            }}
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full p-1"
+                          >
+                            <X className="w-4 h-4 text-white" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-3xl">+</span>
+                          <span className="text-xs mt-1">Add Attachment</span>
+                        </>
+                      )}
+
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+
+                          const isVideo = file.type.startsWith("video/");
+                          setForm((prev) => ({
+                            ...prev,
+                            photos: isVideo
+                              ? [...(prev.photos || [])]
+                              : [...(prev.photos || []), file],
+                            videos: isVideo
+                              ? [...(prev.videos || []), file]
+                              : [...(prev.videos || [])],
+                          }));
+                        }}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

@@ -197,15 +197,14 @@ export default function CreateEventModal({ onSuccess }) {
                 />
               </label>
             </div>
-            
+
             {/* Attachments (Photo or Video) */}
             <div>
               <Label>Attachments</Label>
               <div className="grid grid-cols-3 gap-3 mt-2">
-                {Array.from({ length: 3 }).map((_, index) => {
-                  const file = form.attachments?.[index];
-                  const isVideo = file && file.type.startsWith("video/");
-                  const isImage = file && file.type.startsWith("image/");
+                {[...(form.attachments || []), null].map((file, index) => {
+                  const isVideo = file && file.type?.startsWith("video/");
+                  const isImage = file && file.type?.startsWith("image/");
 
                   return (
                     <label
@@ -232,11 +231,12 @@ export default function CreateEventModal({ onSuccess }) {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setForm((prev) => {
-                                const updated = [...(prev.attachments || [])];
-                                updated[index] = null;
-                                return { ...prev, attachments: updated };
-                              });
+                              setForm((prev) => ({
+                                ...prev,
+                                attachments: prev.attachments.filter(
+                                  (_, i) => i !== index
+                                ),
+                              }));
                             }}
                             className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full p-1"
                           >
@@ -249,6 +249,7 @@ export default function CreateEventModal({ onSuccess }) {
                           <span className="text-xs mt-1">Add Attachment</span>
                         </>
                       )}
+
                       <input
                         type="file"
                         accept="image/*,video/*"
@@ -256,11 +257,10 @@ export default function CreateEventModal({ onSuccess }) {
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-                          setForm((prev) => {
-                            const updated = [...(prev.attachments || [])];
-                            updated[index] = file;
-                            return { ...prev, attachments: updated };
-                          });
+                          setForm((prev) => ({
+                            ...prev,
+                            attachments: [...(prev.attachments || []), file],
+                          }));
                         }}
                       />
                     </label>

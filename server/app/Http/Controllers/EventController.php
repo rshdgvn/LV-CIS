@@ -125,8 +125,8 @@ class EventController extends Controller
                 'title' => 'required|string|max:255',
                 'purpose' => 'required|string',
                 'description' => 'required|string',
-                'cover_image' => 'nullable|file|image|max:5120',
-                'photos.*' => 'nullable|file|image|max:5120',
+                'cover_image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'photos.*' => 'sometimes|nullable|image|max:5120',
                 'videos.*' => 'nullable|file|mimetypes:video/mp4,video/quicktime|max:20480',
                 'status' => 'required|string|in:upcoming,ongoing,completed',
 
@@ -146,6 +146,8 @@ class EventController extends Controller
             $coverUrl = $event->cover_image;
             if ($request->hasFile('cover_image')) {
                 $coverUrl = $this->cloudinary->upload($request->file('cover_image'), 'events/covers');
+            } elseif ($request->filled('existing_cover_image')) {
+                $coverUrl = $request->input('existing_cover_image');
             }
 
             $photoUrls = $event->photos ?? [];
@@ -154,6 +156,10 @@ class EventController extends Controller
                 foreach ($request->file('photos') as $photo) {
                     $photoUrls[] = $this->cloudinary->upload($photo, 'events/photos');
                 }
+            } elseif ($request->filled('existing_photos')) {
+                $photoUrls = is_array($request->input('existing_photos'))
+                    ? $request->input('existing_photos')
+                    : json_decode($request->input('existing_photos'), true);
             }
 
             $videoUrls = $event->videos ?? [];
@@ -162,7 +168,12 @@ class EventController extends Controller
                 foreach ($request->file('videos') as $video) {
                     $videoUrls[] = $this->cloudinary->upload($video, 'events/videos');
                 }
+            } elseif ($request->filled('existing_videos')) {
+                $videoUrls = is_array($request->input('existing_videos'))
+                    ? $request->input('existing_videos')
+                    : json_decode($request->input('existing_videos'), true);
             }
+
 
             $event->update([
                 'club_id' => $validated['club_id'],

@@ -8,9 +8,12 @@ use Illuminate\Http\Request;
 use App\Services\CloudinaryService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class EventController extends Controller
 {
+    use AuthorizesRequests;
+
     protected $cloudinary;
 
     public function __construct(CloudinaryService $cloudinary)
@@ -35,6 +38,8 @@ class EventController extends Controller
 
     public function addEvent(Request $request)
     {
+        $this->authorize('create', Event::class);
+
         try {
             $validated = $request->validate([
                 'club_id' => 'required|exists:clubs,id',
@@ -141,6 +146,7 @@ class EventController extends Controller
             ]);
 
             $event = Event::findOrFail($id);
+            $this->authorize('update', $event);
             $formattedTime = date('H:i:s', strtotime($validated['event_time']));
 
             $coverUrl = $event->cover_image;
@@ -233,6 +239,7 @@ class EventController extends Controller
     public function deleteEvent($id)
     {
         $event = Event::findOrFail($id);
+        $this->authorize('delete', $event);
         $event->detail()->delete();
         $event->delete();
 

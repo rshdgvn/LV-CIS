@@ -384,12 +384,12 @@ export default function CreateEventModal({ onSuccess }) {
           <div className="flex justify-end gap-3 w-full">
             <Button
               variant="outline"
-              className="bg-green-900 hover:bg-green-800"
+              className="text-green-600 hover:text-green-400 cursor-pointer"
             >
               Add Task
             </Button>
-            <Button type="submit" disabled={loading} onClick={handleSubmit}>
-              {loading ? "Saving..." : "Save"}
+            <Button variant="outline" type="submit" disabled={loading} onClick={handleSubmit} className="text-blue-700 hover:text-blue-500 cursor-pointer">
+              {loading ? "Creating..." : "Create"}
             </Button>
           </div>
         </DialogFooter>

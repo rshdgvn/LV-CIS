@@ -149,7 +149,7 @@ export default function UpdateEventModal({ event, onSuccess }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {isAllow && (
+      {isAllow && ( 
         <DialogTrigger asChild>
           <Button
             variant="outline"
@@ -464,10 +464,11 @@ export default function UpdateEventModal({ event, onSuccess }) {
 
         <DialogFooter className="mt-6">
           <Button
+            variant="outline"
             type="submit"
             disabled={loading}
             onClick={handleSubmit}
-            className="bg-yellow-600 hover:bg-yellow-500 text-white"
+            className="text-blue-700 hover:text-blue-500 cursor-pointer"
           >
             {loading ? "Updating..." : "Update"}
           </Button>

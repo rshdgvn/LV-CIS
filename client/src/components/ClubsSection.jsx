@@ -190,7 +190,7 @@ export default function ClubsThreeColumnRotator({ intervalMs = 5000 }) {
             <Button
               variant="outline"
               className="mt-14 border-blue-700 text-white hover:bg-blue-800"
-              onClick={() => nav("/clubs")}
+              onClick={() => nav("/all-clubs")}
             >
               View All Clubs
             </Button>

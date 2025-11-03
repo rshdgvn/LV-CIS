@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import FeaturesSection from "@/components/FeaturesSection";
 import ClubsSection from "@/components/ClubsSection";
 import { motion } from "framer-motion";
+import Footer from "@/components/FooterSection";
 
 function LandingPage() {
   const nav = useNavigate();
@@ -194,80 +195,8 @@ function LandingPage() {
           />
         </motion.div>
       </section>
-
-      {/* CLUBS SECTION */}
-      {/* <section
-        id="clubs"
-        className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 text-white"
-      >
-        <motion.h2
-          className="text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8 }}
-        >
-          Explore Our Clubs
-        </motion.h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-30 mt-5 max-w-7xl">
-          {[
-            {
-              title: "Association of ICT Majors",
-              description: "This is sample text for the description",
-              category: "Academics",
-            },
-            {
-              title: "La Verdad Dance Troupe",
-              description: "This is sample text for the description",
-              category: "Culture and Performing Arts",
-            },
-            {
-              title: "Disaster Response and Rescue Team",
-              description: "This is sample text for the description",
-              category: "Socio-politics",
-            },
-          ].map((club, idx) => (
-            <motion.div
-              key={idx}
-              whileHover={{ scale: 1.03 }}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ delay: idx * 0.2, duration: 0.6 }}
-              className="bg-blue-950/60 rounded-2xl overflow-hidden shadow-lg text-left"
-            >
-              <img
-                src="/Lv-Background.jpg"
-                alt={club.title}
-                className="w-full h-40 object-cover"
-              />
-              <div className="p-5">
-                <h3 className="font-semibold text-lg mb-2">{club.title}</h3>
-                <p className="text-gray-400 text-sm mb-4">{club.description}</p>
-                <span className="block font-bold text-sm">{club.category}</span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-        >
-          <Button
-            variant="outline"
-            className="mt-10 border-blue-700 text-white hover:bg-blue-800"
-            onClick={() => nav("/clubs")}
-          >
-            View All Clubs
-          </Button>
-        </motion.div>
-      </section> */}
       <ClubsSection />
+      <Footer />
     </div>
   );
 }

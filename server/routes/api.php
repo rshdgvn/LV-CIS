@@ -50,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/events', [EventController::class, 'getAllEvents']);
     Route::get('/events/{id}', [EventController::class, 'getEventById']);
     Route::post('/events', [EventController::class, 'addEvent']);
-    Route::put('/events/{id}', [EventController::class, 'updateEvent']);
+    Route::patch('/events/{id}', [EventController::class, 'updateEvent']);
     Route::delete('/events/{id}', [EventController::class, 'deleteEvent']);
 
     Route::get('/tasks', [TaskController::class, 'getAllTasks']);

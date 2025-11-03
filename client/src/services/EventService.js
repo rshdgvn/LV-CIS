@@ -1,7 +1,7 @@
 import { APP_URL } from "@/lib/config";
 
 let createInProgress = false; // Prevents multiple clicks
-let lastCreateTime = null;   
+let lastCreateTime = null;
 
 const LIMIT_MS = 5000; // 5-second cooldown before another create request
 
@@ -12,7 +12,9 @@ export const EventService = {
     }
 
     if (lastCreateTime && Date.now() - lastCreateTime < LIMIT_MS) {
-      throw new Error("You’re creating events too quickly. Please wait a few seconds.");
+      throw new Error(
+        "You’re creating events too quickly. Please wait a few seconds."
+      );
     }
 
     createInProgress = true;
@@ -46,5 +48,31 @@ export const EventService = {
     } finally {
       createInProgress = false;
     }
+  },
+
+  async updateEvent(id, form, token) {
+    const formData = new FormData();
+    Object.keys(form).forEach((key) => {
+      const value = form[key];
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (Array.isArray(value)) {
+        value.forEach((item, i) => formData.append(`${key}[${i}]`, item));
+      } else if (value !== null && value !== undefined) {
+        formData.append(key, value);
+      }
+    });
+    console.log('formData', formData)
+
+    const res = await fetch(`${APP_URL}/events/${id}`, {
+      method: "PATCH", 
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error("Failed to update event");
+    return await res.json();
   },
 };

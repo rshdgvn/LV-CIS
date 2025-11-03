@@ -91,7 +91,7 @@ class EventController extends Controller
             EventDetail::create([
                 'event_id' => $event->id,
                 'event_date' => $validated['event_date'],
-                'event_time' => $formattedTime, 
+                'event_time' => $formattedTime,
                 'venue' => $validated['venue'],
                 'organizer' => $validated['organizer'],
                 'contact_person' => $validated['contact_person'],
@@ -119,43 +119,105 @@ class EventController extends Controller
 
     public function updateEvent(Request $request, $id)
     {
-        $event = Event::findOrFail($id);
+        try {
+            $validated = $request->validate([
+                'club_id' => 'required|exists:clubs,id',
+                'title' => 'required|string|max:255',
+                'purpose' => 'required|string',
+                'description' => 'required|string',
+                'cover_image' => 'nullable|file|image|max:5120',
+                'photos.*' => 'nullable|file|image|max:5120',
+                'videos.*' => 'nullable|file|mimetypes:video/mp4,video/quicktime|max:20480',
+                'status' => 'required|string|in:upcoming,ongoing,completed',
 
-        $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'purpose' => 'sometimes|string',
-            'description' => 'sometimes|string',
-            'cover_image' => 'nullable|file|image|max:5120',
-            'photos.*' => 'nullable|file|image|max:5120',
-            'videos.*' => 'nullable|file|mimetypes:video/mp4,video/quicktime|max:20480',
-            'status' => 'sometimes|string|in:upcoming,ongoing,completed',
-        ]);
+                'event_date' => 'required|date',
+                'event_time' => 'required|string',
+                'venue' => 'required|string|max:255',
+                'organizer' => 'required|string|max:255',
+                'contact_person' => 'required|string|max:255',
+                'contact_email' => 'required|email',
+                'event_mode' => 'required|string|in:online,face_to_face,hybrid',
+                'duration' => 'required|string|max:255',
+            ]);
 
-        if ($request->hasFile('cover_image')) {
-            $validated['cover_image'] = $this->cloudinary->upload($request->file('cover_image'), 'events/covers');
-        }
+            $event = Event::findOrFail($id);
+            $formattedTime = date('H:i:s', strtotime($validated['event_time']));
 
-        if ($request->hasFile('photos')) {
-            $validated['photos'] = [];
-            foreach ($request->file('photos') as $photo) {
-                $validated['photos'][] = $this->cloudinary->upload($photo, 'events/photos');
+            $coverUrl = $event->cover_image;
+            if ($request->hasFile('cover_image')) {
+                $coverUrl = $this->cloudinary->upload($request->file('cover_image'), 'events/covers');
             }
-        }
 
-        if ($request->hasFile('videos')) {
-            $validated['videos'] = [];
-            foreach ($request->file('videos') as $video) {
-                $validated['videos'][] = $this->cloudinary->upload($video, 'events/videos');
+            $photoUrls = $event->photos ?? [];
+            if ($request->hasFile('photos')) {
+                $photoUrls = [];
+                foreach ($request->file('photos') as $photo) {
+                    $photoUrls[] = $this->cloudinary->upload($photo, 'events/photos');
+                }
             }
+
+            $videoUrls = $event->videos ?? [];
+            if ($request->hasFile('videos')) {
+                $videoUrls = [];
+                foreach ($request->file('videos') as $video) {
+                    $videoUrls[] = $this->cloudinary->upload($video, 'events/videos');
+                }
+            }
+
+            $event->update([
+                'club_id' => $validated['club_id'],
+                'title' => $validated['title'],
+                'purpose' => $validated['purpose'],
+                'description' => $validated['description'],
+                'cover_image' => $coverUrl,
+                'photos' => $photoUrls,
+                'videos' => $videoUrls,
+                'status' => $validated['status'],
+            ]);
+
+            $eventDetail = $event->detail;
+            if ($eventDetail) {
+                $eventDetail->update([
+                    'event_date' => $validated['event_date'],
+                    'event_time' => $formattedTime,
+                    'venue' => $validated['venue'],
+                    'organizer' => $validated['organizer'],
+                    'contact_person' => $validated['contact_person'],
+                    'contact_email' => $validated['contact_email'],
+                    'event_mode' => $validated['event_mode'],
+                    'duration' => $validated['duration'],
+                ]);
+            } else {
+                EventDetail::create([
+                    'event_id' => $event->id,
+                    'event_date' => $validated['event_date'],
+                    'event_time' => $formattedTime,
+                    'venue' => $validated['venue'],
+                    'organizer' => $validated['organizer'],
+                    'contact_person' => $validated['contact_person'],
+                    'contact_email' => $validated['contact_email'],
+                    'event_mode' => $validated['event_mode'],
+                    'duration' => $validated['duration'],
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Event updated successfully.',
+                'event' => $event->load('detail'),
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Throwable $e) {
+            Log::error('Error updating event: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'message' => 'Failed to update event.',
+                'error' => $e->getMessage(), // temporary for debugging
+            ], 500);
         }
-
-        $event->update($validated);
-
-        return response()->json([
-            'message' => 'Event updated successfully.',
-            'event' => $event->load('detail'),
-        ]);
     }
+
 
     public function deleteEvent($id)
     {

@@ -29,7 +29,7 @@ export const EventService = {
           formData.append(key, value);
         }
       });
-
+      
       const res = await fetch(`${APP_URL}/events`, {
         method: "POST",
         headers: {

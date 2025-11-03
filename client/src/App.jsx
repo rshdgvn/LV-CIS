@@ -24,6 +24,7 @@ import { ResetPassword } from "./pages/auth/ResetPassword";
 import Unauthorized from "./pages/errors/Unauthorized";
 import Forbidden from "./pages/errors/Forbidden";
 import EventDetails from "./pages/events/EventDetails";
+import AllClubsPage from "./pages/AllClubsPage";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <ClubProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="all-clubs" element={<AllClubsPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/google/callback" element={<GoogleCallback />} />
 

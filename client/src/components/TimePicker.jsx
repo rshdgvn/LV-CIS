@@ -38,7 +38,7 @@ export function TimePicker({ label = "Select Time", value, onChange }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <Label>{label}</Label>
+      {/* <Label>{label}</Label> */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

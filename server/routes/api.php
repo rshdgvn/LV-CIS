@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\TaskController;
@@ -16,6 +17,8 @@ Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetToken']);
 Route::post('/reset-password', [PasswordResetController::class, 'reset']);
+
+Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
@@ -50,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/events', [EventController::class, 'getAllEvents']);
     Route::get('/events/{id}', [EventController::class, 'getEventById']);
     Route::post('/events', [EventController::class, 'addEvent']);
-    Route::put('/events/{id}', [EventController::class, 'updateEvent']);
+    Route::patch('/events/{id}', [EventController::class, 'updateEvent']);
     Route::delete('/events/{id}', [EventController::class, 'deleteEvent']);
 
     Route::get('/tasks', [TaskController::class, 'getAllTasks']);

@@ -14,6 +14,7 @@ import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { formatTaskStatus } from "@/utils/formatTaskStatus";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
+import UpdateEventModal from "@/components/events/UpdateEventModal";
 
 function EventDetails() {
   const { id } = useParams();
@@ -78,7 +79,7 @@ function EventDetails() {
   if (!event) return null;
 
   const detail = event.detail || {};
-  const banner = "/placeholder.jpg";
+  const banner = event.cover_image;
 
   return (
     <div className="relative min-h-screen bg-neutral-950 text-white">
@@ -100,7 +101,12 @@ function EventDetails() {
       <div className="relative z-10 pt-72 pb-20 px-6 max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
-            <h1 className="text-2xl font-semibold mb-5 mx-5">{event.title}</h1>
+            <div className="flex flex-row justify-between mb-3">
+              <h1 className="text-3xl font-semibold mb-5 mx-5">
+                {event.title}
+              </h1>
+              <UpdateEventModal event={event} onSuccess={fetchEvent} />
+            </div>
 
             <div className="flex flex-col gap-4 text-gray-300 text-sm mx-5">
               <div className="flex flex-row justify-between">
@@ -171,74 +177,109 @@ function EventDetails() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
-            <h2 className="text-2xl font-semibold mb-5">Event Details</h2>
-            <p className="text-gray-300 leading-relaxed mb-5">
-              {event.description}
-            </p>
+        {/* Combined Event Details, Organizer Info, and Media */}
+        <div className="bg-neutral-900/90 backdrop-blur-md p-6 mt-6 rounded-2xl shadow-lg border border-neutral-800">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left: Event Details */}
+            <div className="md:col-span-2">
+              <h2 className="text-3xl font-semibold mb-4">Event Details</h2>
+              <p className="text-gray-300 leading-relaxed mb-5">
+                {event.description}
+              </p>
 
-            {event.purpose && (
-              <>
-                <h2 className="text-xl font-semibold my-3">Event Purpose:</h2>
-                <p className="text-gray-300 leading-relaxed">
-                  Purpose: {event.purpose}
-                </p>
-              </>
-            )}
-          </div>
-
-          <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
-            <p className="text-white font-semibold text-sm">
-              <span className="block my-1 text-gray-400 font-normal">
-                Event Organizer:
-              </span>{" "}
-              {detail.organizer || "N/A"}
-            </p>
-            <p className="text-white font-semibold text-sm">
-              <span className="block mb-1 mt-5 text-gray-400 font-normal">
-                Contact Person:
-              </span>{" "}
-              {detail.contact_person || "N/A"}
-            </p>
-            <p className="text-white font-semibold text-sm">
-              <span className="block mb-1 mt-5 text-gray-400 font-normal">
-                Email:
-              </span>{" "}
-              {detail.contact_email || "N/A"}
-            </p>
-          </div>
-        </div>
-        <div className="bg-neutral-900/90 backdrop-blur-md mt-6 p-6 rounded-2xl shadow-lg border border-neutral-800">
-          <h2 className="text-2xl font-semibold mb-5">
-            Event Photos and Videos
-          </h2>
-
-          {event.photos?.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {event.photos.map((photo, i) => (
-                <img
-                  key={i}
-                  src={photo}
-                  alt={`Photo ${i + 1}`}
-                  className="rounded-xl object-cover w-full h-40"
-                />
-              ))}
+              {event.purpose && (
+                <>
+                  <h3 className="text-xl font-semibold my-3">Purpose</h3>
+                  <p className="text-gray-300 leading-relaxed">
+                    {event.purpose}
+                  </p>
+                </>
+              )}
             </div>
-          ) : (
-            <p className="text-gray-500">No photos available.</p>
-          )}
 
-          {event.videos?.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {event.videos.map((video, i) => (
-                <video
-                  key={i}
-                  src={video}
-                  controls
-                  className="rounded-xl w-full h-64 object-cover"
-                />
-              ))}
+            {/* Right: Organizer Info */}
+            <div className="space-y-4">
+              <div>
+                <span className="block text-gray-400 text-sm mt-10 font-normal">
+                  Event Organizer:
+                </span>
+                <p className="text-white font-semibold">
+                  {detail.organizer || "N/A"}
+                </p>
+              </div>
+
+              <div>
+                <span className="block text-gray-400 text-sm font-normal">
+                  Contact Person:
+                </span>
+                <p className="text-white font-semibold">
+                  {detail.contact_person || "N/A"}
+                </p>
+              </div>
+
+              <div>
+                <span className="block text-gray-400 text-sm font-normal">
+                  Email:
+                </span>
+                <p className="text-white font-semibold break-words">
+                  {detail.contact_email || "N/A"}
+                </p>
+              </div>
+
+              {detail.contact_website && (
+                <div>
+                  <span className="block text-gray-400 text-sm font-normal">
+                    Website:
+                  </span>
+                  <a
+                    href={detail.contact_website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-400 font-semibold hover:underline break-words"
+                  >
+                    {detail.contact_website}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Photos and Videos */}
+          {(event.photos?.length > 0 || event.videos?.length > 0) && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-semibold mb-5">
+                Event Photos and Videos
+              </h2>
+
+              {/* Photos */}
+              {event.photos?.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {event.photos.map((photo, i) => (
+                    <img
+                      key={i}
+                      src={photo}
+                      alt={`Photo ${i + 1}`}
+                      className="rounded-xl object-cover w-full h-40"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">No photos available.</p>
+              )}
+
+              {/* Videos */}
+              {event.videos?.length > 0 && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {event.videos.map((video, i) => (
+                    <video
+                      key={i}
+                      src={video}
+                      controls
+                      className="rounded-xl w-full h-64 object-cover"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +11,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, X } from "lucide-react";
 import { DatePicker } from "../DatePicker";
 import { TimePicker } from "../TimePicker";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import { X } from "lucide-react";
 
-export default function CreateEventModal({ onSuccess }) {
+
+export default function UpdateEventModal({ event, onSuccess }) {
   const { token } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { canManageClub } = usePermissions();
 
   const [form, setForm] = useState({
     club_id: "",
@@ -40,6 +43,30 @@ export default function CreateEventModal({ onSuccess }) {
     event_mode: "face_to_face",
     duration: "",
   });
+
+  useEffect(() => {
+    console.log(canManageClub)
+    if (event) {
+      setForm({
+        club_id: event.club_id || "",
+        title: event.title || "",
+        purpose: event.purpose || "",
+        description: event.description || "",
+        cover_image: event.cover_image || null,
+        photos: event.photos || [],
+        videos: event.videos || [],
+        status: event.status || "upcoming",
+        event_date: event.detail?.event_date || "",
+        event_time: event.detail?.event_time || "",
+        venue: event.detail?.venue || "",
+        organizer: event.detail?.organizer || "",
+        contact_person: event.detail?.contact_person || "",
+        contact_email: event.detail?.contact_email || "",
+        event_mode: event.detail?.event_mode || "face_to_face",
+        duration: event.detail?.duration || "",
+      });
+    }
+  }, [event]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,17 +89,32 @@ export default function CreateEventModal({ onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const formData = new FormData();
+      formData.append("_method", "PATCH");
+
       Object.entries(form).forEach(([key, value]) => {
         if (key === "photos" || key === "videos") {
-          value.forEach((file) => formData.append(`${key}[]`, file));
+          if (Array.isArray(value)) {
+            value.forEach((file) => {
+              if (file instanceof File) {
+                formData.append(`${key}[]`, file);
+              }
+            });
+          }
+        } else if (key === "cover_image") {
+          if (value instanceof File) {
+            formData.append("cover_image", value);
+          } else if (typeof value === "string" && value !== "") {
+            formData.append("existing_cover_image", value);
+          }
         } else if (value !== null && value !== undefined) {
           formData.append(key, value);
         }
       });
 
-      const res = await fetch(`${APP_URL}/events`, {
+      const res = await fetch(`${APP_URL}/events/${event.id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -80,30 +122,47 @@ export default function CreateEventModal({ onSuccess }) {
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Failed to create event");
       const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Update failed:", data);
+        alert(
+          data.message ||
+            "Failed to update event. Please check all fields and try again."
+        );
+        return;
+      }
+
+      console.log("Updated event:", data);
       onSuccess?.(data.event);
       setOpen(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to create event. Please try again.");
+      alert("Failed to update event. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const isAllow = canManageClub(event.club_id)
+
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center gap-2 bg-blue-950 text-gray-100 hover:bg-blue-900">
-          <CalendarPlus className="w-4 h-4" />
-          Create Event
-        </Button>
-      </DialogTrigger>
+      {isAllow && ( 
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 text-blue-700 hover:text-blue-400"
+          >
+            Edit Event
+          </Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="!max-w-3xl max-h-[90vh] overflow-y-auto bg-neutral-950 text-white">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Add Events</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Edit Event</DialogTitle>
         </DialogHeader>
 
         <form
@@ -112,63 +171,54 @@ export default function CreateEventModal({ onSuccess }) {
         >
           {/* LEFT SECTION */}
           <div className="space-y-4">
-            {/* Club ID */}
             <div>
               <Label>Club ID</Label>
               <Input
                 name="club_id"
                 value={form.club_id}
                 onChange={handleChange}
-                placeholder="Enter club ID"
                 className="bg-neutral-900 border-neutral-800"
               />
             </div>
 
-            {/* Title */}
             <div>
               <Label>Event Title</Label>
               <Input
                 name="title"
                 value={form.title}
                 onChange={handleChange}
-                placeholder="Lorem ipsum dolor sit amet..."
                 className="bg-neutral-900 border-neutral-800"
               />
             </div>
 
-            {/* Purpose */}
             <div>
-              <Label>Event Purpose</Label>
+              <Label>Purpose</Label>
               <Textarea
                 name="purpose"
                 value={form.purpose}
                 onChange={handleChange}
-                placeholder="Lorem ipsum dolor sit amet..."
-                className="bg-neutral-900 border-neutral-800 min-h-[100px]"
+                className="bg-neutral-900 border-neutral-800"
               />
             </div>
 
-            {/* Details */}
             <div>
-              <Label>Event Details</Label>
+              <Label>Description</Label>
               <Textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                placeholder="Lorem ipsum dolor sit amet..."
-                className="bg-neutral-900 border-neutral-800 min-h-[100px]"
+                className="bg-neutral-900 border-neutral-800"
               />
             </div>
 
-            {/* Cover Page */}
             <div>
-              <Label>Cover Page</Label>
+              <Label>Cover Image</Label>
               <label className="relative flex flex-col items-center justify-center h-40 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition mt-2 overflow-hidden">
-                {form.cover_image ? (
+                {form.cover_image && typeof form.cover_image === "string" ? (
                   <>
                     <img
-                      src={URL.createObjectURL(form.cover_image)}
-                      alt="Cover Preview"
+                      src={form.cover_image}
+                      alt="Current Cover"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     <button
@@ -182,10 +232,16 @@ export default function CreateEventModal({ onSuccess }) {
                       <X className="w-4 h-4 text-white" />
                     </button>
                   </>
+                ) : form.cover_image instanceof File ? (
+                  <img
+                    src={URL.createObjectURL(form.cover_image)}
+                    alt="Preview"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 ) : (
                   <>
                     <span className="text-3xl">+</span>
-                    <span className="text-xs mt-1">Add attachment</span>
+                    <span className="text-xs mt-1">Change Cover</span>
                   </>
                 )}
                 <input
@@ -197,14 +253,22 @@ export default function CreateEventModal({ onSuccess }) {
                 />
               </label>
             </div>
-
-            {/* Attachments (Photo or Video) */}
+            {/* Attachments (Dynamic Photos & Videos) */}
             <div>
               <Label>Attachments</Label>
               <div className="grid grid-cols-3 gap-3 mt-2">
-                {[...(form.attachments || []), null].map((file, index) => {
-                  const isVideo = file && file.type?.startsWith("video/");
-                  const isImage = file && file.type?.startsWith("image/");
+                {[
+                  ...(form.photos || []).filter(Boolean),
+                  ...(form.videos || []).filter(Boolean),
+                  null,
+                ].map((file, index, all) => {
+                  const isFromServer = typeof file === "string";
+                  const isVideo =
+                    (isFromServer && file?.endsWith(".mp4")) ||
+                    (file && file.type?.startsWith("video/"));
+                  const isImage =
+                    (isFromServer && !file?.endsWith(".mp4")) ||
+                    (file && file.type?.startsWith("image/"));
 
                   return (
                     <label
@@ -215,14 +279,18 @@ export default function CreateEventModal({ onSuccess }) {
                         <>
                           {isImage && (
                             <img
-                              src={URL.createObjectURL(file)}
+                              src={
+                                isFromServer ? file : URL.createObjectURL(file)
+                              }
                               alt="Attachment Preview"
                               className="absolute inset-0 w-full h-full object-cover"
                             />
                           )}
                           {isVideo && (
                             <video
-                              src={URL.createObjectURL(file)}
+                              src={
+                                isFromServer ? file : URL.createObjectURL(file)
+                              }
                               className="absolute inset-0 w-full h-full object-cover"
                               muted
                             />
@@ -233,8 +301,17 @@ export default function CreateEventModal({ onSuccess }) {
                               e.stopPropagation();
                               setForm((prev) => ({
                                 ...prev,
-                                attachments: prev.attachments.filter(
-                                  (_, i) => i !== index
+                                photos: (prev.photos || []).filter(
+                                  (p) =>
+                                    p !== file ||
+                                    (typeof p === "object" &&
+                                      p.name !== file?.name)
+                                ),
+                                videos: (prev.videos || []).filter(
+                                  (v) =>
+                                    v !== file ||
+                                    (typeof v === "object" &&
+                                      v.name !== file?.name)
                                 ),
                               }));
                             }}
@@ -257,9 +334,16 @@ export default function CreateEventModal({ onSuccess }) {
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
+
+                          const isVideo = file.type.startsWith("video/");
                           setForm((prev) => ({
                             ...prev,
-                            attachments: [...(prev.attachments || []), file],
+                            photos: isVideo
+                              ? [...(prev.photos || [])]
+                              : [...(prev.photos || []), file],
+                            videos: isVideo
+                              ? [...(prev.videos || []), file]
+                              : [...(prev.videos || [])],
                           }));
                         }}
                       />
@@ -336,7 +420,6 @@ export default function CreateEventModal({ onSuccess }) {
               />
             </div>
 
-            {/* Event Mode */}
             <div>
               <Label>Event Mode</Label>
               <select
@@ -351,7 +434,6 @@ export default function CreateEventModal({ onSuccess }) {
               </select>
             </div>
 
-            {/* Status */}
             <div>
               <Label>Status</Label>
               <select
@@ -368,7 +450,7 @@ export default function CreateEventModal({ onSuccess }) {
             </div>
 
             <div>
-              <Label>Event Duration</Label>
+              <Label>Duration</Label>
               <Input
                 name="duration"
                 value={form.duration}
@@ -381,17 +463,15 @@ export default function CreateEventModal({ onSuccess }) {
         </form>
 
         <DialogFooter className="mt-6">
-          <div className="flex justify-end gap-3 w-full">
-            <Button
-              variant="outline"
-              className="text-green-600 hover:text-green-400 cursor-pointer"
-            >
-              Add Task
-            </Button>
-            <Button variant="outline" type="submit" disabled={loading} onClick={handleSubmit} className="text-blue-700 hover:text-blue-500 cursor-pointer">
-              {loading ? "Creating..." : "Create"}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            type="submit"
+            disabled={loading}
+            onClick={handleSubmit}
+            className="text-blue-700 hover:text-blue-500 cursor-pointer"
+          >
+            {loading ? "Updating..." : "Update"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

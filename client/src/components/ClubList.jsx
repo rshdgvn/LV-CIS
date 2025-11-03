@@ -27,6 +27,7 @@ export default function ClubList({
           onEnter={onEnter ? () => onEnter(club.id) : undefined}
           onJoin={onJoin ? () => onJoin(club.id) : undefined}
           onCancel={onCancel ? () => onCancel(club.id) : undefined}
+          bg_color="slate-950/90"
         />
       ))}
     </div>

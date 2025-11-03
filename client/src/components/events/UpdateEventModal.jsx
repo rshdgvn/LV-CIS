@@ -11,16 +11,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Pencil, X } from "lucide-react";
 import { DatePicker } from "../DatePicker";
 import { TimePicker } from "../TimePicker";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import { X } from "lucide-react";
+
 
 export default function UpdateEventModal({ event, onSuccess }) {
   const { token } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { canManageClub } = usePermissions();
 
   const [form, setForm] = useState({
     club_id: "",
@@ -42,6 +45,7 @@ export default function UpdateEventModal({ event, onSuccess }) {
   });
 
   useEffect(() => {
+    console.log(canManageClub)
     if (event) {
       setForm({
         club_id: event.club_id || "",
@@ -140,14 +144,21 @@ export default function UpdateEventModal({ event, onSuccess }) {
     }
   };
 
+  const isAllow = canManageClub(event.club_id)
+
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center gap-2 bg-yellow-600 text-white hover:bg-yellow-500">
-          <Pencil className="w-4 h-4" />
-          Edit Event
-        </Button>
-      </DialogTrigger>
+      {isAllow && (
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 text-blue-700 hover:text-blue-400"
+          >
+            Edit Event
+          </Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="!max-w-3xl max-h-[90vh] overflow-y-auto bg-neutral-950 text-white">
         <DialogHeader>
@@ -249,7 +260,7 @@ export default function UpdateEventModal({ event, onSuccess }) {
                 {[
                   ...(form.photos || []).filter(Boolean),
                   ...(form.videos || []).filter(Boolean),
-                  null, 
+                  null,
                 ].map((file, index, all) => {
                   const isFromServer = typeof file === "string";
                   const isVideo =

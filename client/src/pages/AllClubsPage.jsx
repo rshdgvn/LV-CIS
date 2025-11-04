@@ -108,6 +108,7 @@ export default function AllClubsPage() {
                       logo={club.logo}
                       background="/Lv-Background.jpg"
                       status={club.status}
+                      showButton={false}
                     />
                   </motion.div>
                 ))}

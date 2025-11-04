@@ -150,6 +150,7 @@ export default function ClubsThreeColumnRotator({ intervalMs = 5000 }) {
                           logo={activeClub.logo}
                           background="/Lv-Background.jpg"
                           status={activeClub.status}
+                          showButton={false}
                         />
                       </motion.div>
                     ) : (

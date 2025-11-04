@@ -11,23 +11,28 @@ function ClubCard({
   onJoin,
   onEnter,
   onCancel,
-  bg_color,
+  bg_color = "slate-900",
+  showButton = true, 
 }) {
   const renderButton = () => {
+    if (!showButton) {
+      return <div className="h-6" />;
+    }
+
     if (status === "pending") {
       return (
-        <div className="flex justify-between">
-          <button className="flex items-center justify-start gap-2 text-yellow-400/50 text-sm font-semibold transition-colors">
+        <div className="flex justify-between items-center h-6">
+          <div className="flex items-center gap-2 text-yellow-400/70 text-sm font-semibold">
             <HourglassIcon className="w-4 h-4" />
             <span>Pending</span>
-          </button>
+          </div>
 
           <AlertDialogTemplate
             title="Cancel Application?"
             description="Are you sure you want to cancel your club application?"
             onConfirm={onCancel}
             button={
-              <button className="flex items-center justify-start gap-2 text-red-400 text-sm font-semibold transition-colors">
+              <button className="flex items-center gap-2 text-red-400 text-sm font-semibold hover:text-red-300 transition">
                 Cancel
               </button>
             }
@@ -40,7 +45,7 @@ function ClubCard({
       return (
         <button
           onClick={onEnter}
-          className="flex items-center justify-start gap-2 text-green-600 text-sm font-semibold transition-colors hover:text-green-500"
+          className="flex items-center gap-2 text-green-500 text-sm font-semibold hover:text-green-400 transition h-6"
         >
           <DoorOpen className="w-4 h-4" />
           Access Club
@@ -54,7 +59,7 @@ function ClubCard({
         description="Are you sure you want to join this club?"
         onConfirm={() => onJoin && onJoin("member", null)}
         button={
-          <div className="flex items-center justify-start gap-2 text-blue-500 hover:text-blue-400 text-sm font-semibold cursor-pointer transition-colors">
+          <div className="flex items-center gap-2 text-blue-500 hover:text-blue-400 text-sm font-semibold cursor-pointer transition h-6">
             <Handshake className="w-4 h-4" />
             <span>Join Us</span>
           </div>
@@ -66,7 +71,7 @@ function ClubCard({
   return (
     <div
       onClick={onEnter}
-      className={`w-80 rounded-xl overflow-hidden border border-gray-800 bg-${bg_color} backdrop-blur-sm shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)] hover:scale-[1.03] transition-all duration-300 ease-out  flex flex-col cursor-pointer`}
+      className={`w-80 rounded-xl overflow-hidden border border-gray-800 bg-${bg_color} backdrop-blur-sm shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)] hover:scale-[1.03] transition-all duration-300 ease-out flex flex-col cursor-pointer`}
     >
       <div
         className="relative h-28 bg-cover bg-center flex items-center justify-center"

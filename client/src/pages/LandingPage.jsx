@@ -150,10 +150,10 @@ function LandingPage() {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileOpen((s) => !s)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+              className="md:hidden p-2 rounded-lg"
               aria-label="Toggle menu"
             >
-              <Menu className="w-5 h-5 text-gray-700" />
+              <Menu className="w-7 h-7 text-blue-600 hover:text-blue-400 transition" />
             </button>
           </div>
         </div>
@@ -189,7 +189,7 @@ function LandingPage() {
                   </Button>
                 ) : (
                   <Button
-                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                    className="w-full bg-blue-900 text-white hover:bg-blue-950"
                     onClick={() => nav("/login")}
                   >
                     Login

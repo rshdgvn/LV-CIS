@@ -1,78 +1,212 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { isLoggedIn } from "@/lib/auth";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/lvcc-logo.png";
 import LVCIS from "../assets/LVCIS.png";
 import { useAuth } from "@/contexts/AuthContext";
 import FeaturesSection from "@/components/FeaturesSection";
 import ClubsSection from "@/components/ClubsSection";
-import { motion } from "framer-motion";
 import Footer from "@/components/FooterSection";
+import { motion } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
+import { Menu } from "lucide-react";
 
 function LandingPage() {
   const nav = useNavigate();
   const { user } = useAuth();
   const admin = user?.role === "admin";
 
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState("home");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const sectionsRef = useRef({});
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const ids = ["home", "features", "about", "clubs"];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) sectionsRef.current[id] = el;
+    });
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActive(entry.target.id);
+          }
+        });
+      },
+      { root: null, rootMargin: "-40% 0px -40% 0px", threshold: 0.01 }
+    );
+
+    Object.values(sectionsRef.current).forEach((el) => observer.observe(el));
+
+    return () => {
+      Object.values(sectionsRef.current).forEach((el) =>
+        observer.unobserve(el)
+      );
+    };
+  }, []);
+
+  const scrollToSection = (id) => {
+    setMobileOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div className="w-full bg-slate-950 text-white overflow-x-hidden">
+    <div className="w-full bg-slate-950 text-white overflow-x-hidden scroll-smooth">
+      {/* NAVBAR */}
+      <motion.header
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] md:w-[85%] transition-all duration-300 rounded-2xl border ${
+          scrolled
+            ? "shadow-md backdrop-blur-lg py-3"
+            : "border-transparent py-4"
+        }`}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="flex items-center justify-between px-6 md:px-10">
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-3">
+            <img src={logo} alt="La Verdad Club" className="h-10 w-10" />
+            <img src={LVCIS} alt="LVCIS Logo" className="h-5 w-auto" />
+          </a>
+
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex gap-8 text-gray-600 items-center text-sm font-medium">
+            <button
+              onClick={() => scrollToSection("home")}
+              className={`transition-colors ${
+                active === "home"
+                  ? "text-blue-600 font-semibold"
+                  : "hover:text-blue-600"
+              }`}
+            >
+              Home
+            </button>
+            <button
+              onClick={() => scrollToSection("features")}
+              className={`transition-colors ${
+                active === "features"
+                  ? "text-blue-600 font-semibold"
+                  : "hover:text-blue-600"
+              }`}
+            >
+              Features
+            </button>
+            <button
+              onClick={() => scrollToSection("about")}
+              className={`transition-colors ${
+                active === "about"
+                  ? "text-blue-600 font-semibold"
+                  : "hover:text-blue-600"
+              }`}
+            >
+              About
+            </button>
+            <button
+              onClick={() => scrollToSection("clubs")}
+              className={`transition-colors ${
+                active === "clubs"
+                  ? "text-blue-600 font-semibold"
+                  : "hover:text-blue-600"
+              }`}
+            >
+              Clubs
+            </button>
+          </nav>
+
+          {/* Auth Button + Mobile Toggle */}
+          <div className="flex items-center gap-3">
+            <div className="hidden md:block">
+              {isLoggedIn() ? (
+                <Button
+                  variant="outline"
+                  onClick={() => nav(admin ? "/admin/dashboard" : "/dashboard")}
+                  className="border-blue-600 text-blue-900 hover:bg-blue-950 hover:text-white transition"
+                >
+                  Dashboard
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="text-blue-600 hover:text-blue-400 transition"
+                  onClick={() => nav("/login")}
+                >
+                  Login
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMobileOpen((s) => !s)}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Nav Drawer */}
+        {mobileOpen && (
+          <div className="md:hidden mt-3 px-6 pb-4">
+            <div className="flex flex-col gap-3 text-gray-700">
+              {["home", "features", "about", "clubs"].map((id) => (
+                <button
+                  key={id}
+                  onClick={() => scrollToSection(id)}
+                  className={`text-left py-2 px-2 rounded-md ${
+                    active === id
+                      ? "text-blue-600 font-semibold"
+                      : "hover:text-blue-600"
+                  }`}
+                >
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </button>
+              ))}
+
+              <div className="pt-3">
+                {isLoggedIn() ? (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      nav(admin ? "/admin/dashboard" : "/dashboard")
+                    }
+                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                  >
+                    Dashboard
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => nav("/login")}
+                  >
+                    Login
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.header>
+
       {/* HERO SECTION */}
       <section
         id="home"
-        className="relative flex flex-col h-screen md:px-6
-             bg-[radial-gradient(ellipse_at_top,theme(colors.slate.800)_5%,theme(colors.slate.900)_20%,theme(colors.slate-950)_70%)] bg-[length:100%_30%] bg-no-repeat"
+        className="relative flex flex-col h-screen px-10 md:px-6 pt-28
+          bg-[radial-gradient(ellipse_at_top,theme(colors.slate.800)_5%,theme(colors.slate.900)_20%,theme(colors.slate-950)_70%)] bg-[length:100%_30%] bg-no-repeat"
       >
-        {/* NAVBAR */}
-        <div className="flex flex-row items-center justify-between px-20 py-5">
-          <motion.a
-            href="/dashboard"
-            className="flex items-center font-medium gap-3"
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6 }}
-          >
-            <img src={logo} alt="La Verdad Club" className="h-13 w-12" />
-            <img src={LVCIS} alt="LVCIS Logo" className="h-5 w-auto" />
-          </motion.a>
-
-          <motion.nav
-            className="hidden md:flex gap-8 text-gray-300"
-            initial={{ opacity: 0, y: -10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <a href="#about" className="hover:text-white transition-colors">
-              About
-            </a>
-            <a href="#clubs" className="hover:text-white transition-colors">
-              Clubs
-            </a>
-          </motion.nav>
-
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            {isLoggedIn() ? (
-              <Button
-                variant="outline"
-                onClick={() => nav(admin ? "/admin/dashboard" : "/dashboard")}
-              >
-                Dashboard
-              </Button>
-            ) : (
-              <Button variant="outline" onClick={() => nav("/login")}>
-                Login
-              </Button>
-            )}
-          </motion.div>
-        </div>
-
-        {/* HERO TEXT */}
         <div className="flex flex-col items-center justify-center mb-20 text-center flex-1">
           <motion.span
             className="block bg-blue-900 text-white px-3 py-1 rounded-xl text-xs md:text-sm font-medium mb-5 opacity-90"
@@ -81,7 +215,7 @@ function LandingPage() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            Manage Clubs Digitally
+            Manage Clubs Digitally.
           </motion.span>
 
           <motion.h1
@@ -134,11 +268,7 @@ function LandingPage() {
               <Button
                 variant="outline"
                 className="mt-6"
-                onClick={() =>
-                  document
-                    .getElementById("about")
-                    .scrollIntoView({ behavior: "smooth" })
-                }
+                onClick={() => scrollToSection("about")}
               >
                 Learn more →
               </Button>
@@ -147,8 +277,10 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <FeaturesSection />
+      {/* FEATURES (wrapped in section with id for nav) */}
+      <section id="features" className="w-full">
+        <FeaturesSection />
+      </section>
 
       {/* ABOUT SECTION */}
       <section
@@ -162,11 +294,11 @@ function LandingPage() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8 }}
         >
-          What are we About?
+          About LVCIS
         </motion.h2>
 
         <motion.p
-          className="mt-5 max-w-7xl text-gray-400 md:text-xl text-lg leading-relaxed"
+          className="mt-5 max-w-6xl text-gray-400 md:text-xl text-lg leading-relaxed"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
@@ -176,10 +308,7 @@ function LandingPage() {
           platform designed for La Verdad Christian College students and
           organizations. LVCIS streamlines the way clubs operate by making it
           simple to manage memberships, record attendance, organize events, and
-          share updates — all within a single, user-friendly system. Empowering
-          collaboration, transparency, and engagement, LVCIS helps every student
-          and club leader stay connected and focused on what matters most —
-          building a vibrant and active campus community.
+          share updates — all within a single, user-friendly system.
         </motion.p>
 
         <motion.div
@@ -191,11 +320,17 @@ function LandingPage() {
           <img
             src={logo}
             alt="LVCC Logo"
-            className="absolute w-20 h-20 object-contain rounded-lg shadow-md hover:scale-105 transition-transform opacity-15"
+            className="absolute w-20 h-20 object-contain rounded-lg shadow-md hover:scale-105 transition-transform opacity-30"
           />
         </motion.div>
       </section>
-      <ClubsSection />
+
+      {/* CLUBS */}
+      <section id="clubs">
+        <ClubsSection />
+      </section>
+
+      {/* FOOTER */}
       <Footer />
     </div>
   );

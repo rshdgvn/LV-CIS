@@ -104,7 +104,7 @@ export default function ClubsThreeColumnRotator({ intervalMs = 5000 }) {
       <div className="max-w-7xl mx-auto px-6">
         {/* Animate section title on scroll */}
         <motion.h2
-          className="text-5xl font-bold mb-4 text-center mb-5 bg-gradient-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent"
+          className="text-5xl font-bold mb-20 text-center bg-linear-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}

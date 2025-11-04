@@ -35,7 +35,7 @@ export default function Footer() {
 
           {/* About Us - Centered */}
           <div className="flex flex-col items-center md:items-center text-center">
-            <h3 className="text-lg font-semibold text-white mb-3">About Us</h3>
+            <h3 className="text-lg font-semibold text-white mb-3">Developers</h3>
             <p className="text-gray-400 max-w-sm leading-relaxed">
               Developed by BS Information System 3B students to promote
               innovation and teamwork through technology.

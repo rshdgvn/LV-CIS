@@ -43,7 +43,7 @@ export default function FeaturesSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent">
+          <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent py-2">
             System Features
           </h2>
           <p className="text-gray-400 max-w-3xl mx-auto text-lg">

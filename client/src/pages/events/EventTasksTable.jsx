@@ -33,6 +33,16 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
 export default function EventTasksTable() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -204,8 +214,17 @@ export default function EventTasksTable() {
     []
   );
 
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const rowsPerPage = 8;
+
+  const totalPages = Math.ceil(filteredTasks.length / rowsPerPage);
+  const paginatedTasks = filteredTasks.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   const table = useReactTable({
-    data: filteredTasks,
+    data: paginatedTasks,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -337,7 +356,7 @@ export default function EventTasksTable() {
                     {columns.map((_, colIndex) => (
                       <TableCell
                         key={colIndex}
-                        className="py-4 text-sm text-gray-500"
+                        className="py-4 text-sm text-gray-600"
                       >
                         —
                       </TableCell>

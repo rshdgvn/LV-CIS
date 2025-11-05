@@ -8,8 +8,9 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ArrowLeft } from "lucide-react";
+import { ArrowUpDown, ArrowLeft, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -23,6 +24,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
 import { formatTaskStatus } from "@/utils/formatTaskStatus";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function EventTasksTable() {
   const navigate = useNavigate();
@@ -32,6 +41,10 @@ export default function EventTasksTable() {
   const [eventTitle, setEventTitle] = React.useState("");
   const [eventDescription, setEventDescription] = React.useState("");
   const [tasks, setTasks] = React.useState([]);
+  const [filteredTasks, setFilteredTasks] = React.useState([]);
+  const [search, setSearch] = React.useState("");
+  const [filterStatus, setFilterStatus] = React.useState("all");
+  const [filterPriority, setFilterPriority] = React.useState("all");
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
@@ -64,6 +77,7 @@ export default function EventTasksTable() {
         if (!taskRes.ok) throw new Error("Failed to fetch tasks.");
         const taskData = await taskRes.json();
         setTasks(taskData);
+        setFilteredTasks(taskData);
       } catch (err) {
         console.error(err);
         setError("Failed to load event tasks.");
@@ -74,6 +88,30 @@ export default function EventTasksTable() {
 
     fetchData();
   }, [id, token]);
+
+  React.useEffect(() => {
+    let filtered = tasks;
+
+    if (filterStatus !== "all") {
+      filtered = filtered.filter(
+        (t) => t.status?.toLowerCase() === filterStatus
+      );
+    }
+
+    if (filterPriority !== "all") {
+      filtered = filtered.filter(
+        (t) => t.priority?.toLowerCase() === filterPriority
+      );
+    }
+
+    if (search.trim() !== "") {
+      filtered = filtered.filter((t) =>
+        t.title?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    setFilteredTasks(filtered);
+  }, [search, filterStatus, filterPriority, tasks]);
 
   const columns = React.useMemo(
     () => [
@@ -104,7 +142,6 @@ export default function EventTasksTable() {
           );
         },
       }),
-      // ✅ Added created_at before due_date
       columnHelper.accessor("created_at", {
         header: "Date Created",
         cell: (info) => {
@@ -123,7 +160,6 @@ export default function EventTasksTable() {
           );
         },
       }),
-
       columnHelper.accessor("status", {
         header: "Status",
         cell: (info) => {
@@ -169,7 +205,7 @@ export default function EventTasksTable() {
   );
 
   const table = useReactTable({
-    data: tasks,
+    data: filteredTasks,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -191,7 +227,6 @@ export default function EventTasksTable() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-8 flex flex-col">
-      {/* Header */}
       <div className="flex mb-6">
         <Button
           onClick={() => navigate(-1)}
@@ -206,6 +241,57 @@ export default function EventTasksTable() {
           </h1>
           <p className="text-gray-400">{eventDescription}</p>
         </div>
+      </div>
+
+      <div className="flex items-center gap-10 w-5/6 mx-auto mb-4">
+        <div className="relative w-1/2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+          <Input
+            placeholder="Search Tasks"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 bg-neutral-900 border-neutral-800 text-white placeholder:text-gray-500 w-full"
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 flex items-center"
+            >
+              <Filter className="w-4 h-4 mr-2" /> Filter
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-neutral-900 border-neutral-800 text-white">
+            <DropdownMenuLabel>Filter Tasks</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-gray-400 text-xs">
+              Status
+            </DropdownMenuLabel>
+            {["all", "pending", "in-progress", "completed"].map((status) => (
+              <DropdownMenuItem
+                key={status}
+                onClick={() => setFilterStatus(status)}
+              >
+                {status === "all" ? "All Statuses" : formatTaskStatus(status)}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-gray-400 text-xs">
+              Priority
+            </DropdownMenuLabel>
+            {["all", "high", "medium", "low"].map((priority) => (
+              <DropdownMenuItem
+                key={priority}
+                onClick={() => setFilterPriority(priority)}
+              >
+                {priority === "all"
+                  ? "All Priorities"
+                  : priority.charAt(0).toUpperCase() + priority.slice(1)}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="rounded-2xl w-5/6 border border-neutral-800 bg-neutral-900/70 self-center shadow-lg overflow-hidden">

@@ -40,6 +40,7 @@ function EventDetails() {
 
       if (!res.ok) throw new Error("Failed to fetch event details.");
       const data = await res.json();
+      console.log(data);
       setEvent(data);
     } catch (err) {
       console.error(err);
@@ -50,7 +51,6 @@ function EventDetails() {
     }
   };
 
-  // Fetch tasks for this event
   const fetchTasks = async () => {
     try {
       const res = await fetch(`${APP_URL}/events/${id}/tasks`, {
@@ -59,10 +59,13 @@ function EventDetails() {
           Authorization: `Bearer ${token}`,
         },
       });
+
       if (!res.ok) throw new Error("Failed to fetch tasks.");
       const data = await res.json();
+
       setTasks(data);
-      console.log(tasks);
+
+      console.log("Fetched tasks:", data);
     } catch (err) {
       console.error(err);
       setTasks([]);
@@ -149,6 +152,9 @@ function EventDetails() {
               <h2 className="text-lg font-semibold mb-4 text-gray-400">
                 Tasks
               </h2>
+              <button onClick={() => nav(`/events/${id}/tasks`)}>
+                View Tasks
+              </button>
             </div>
             {tasks?.length > 0 ? (
               <ul className="space-y-3">

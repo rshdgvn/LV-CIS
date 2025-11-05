@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\EventTask;
-use App\Models\EventTaskAssignment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class TaskController extends Controller
 {
@@ -13,7 +14,7 @@ class TaskController extends Controller
      */
     public function getAllTasks(Request $request)
     {
-        $query = EventTask::with(['event', 'assignments.clubMembership.user']);
+        $query = EventTask::with('event');
 
         if ($request->has('event_id')) {
             $query->where('event_id', $request->event_id);
@@ -25,11 +26,11 @@ class TaskController extends Controller
     }
 
     /**
-     * Get task by ID (with relationships)
+     * Get task by ID
      */
     public function getTaskById($id)
     {
-        $task = EventTask::with(['event', 'assignments.clubMembership.user'])->find($id);
+        $task = EventTask::with('event')->find($id);
 
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
@@ -50,8 +51,6 @@ class TaskController extends Controller
             'priority' => 'required|in:low,medium,high',
             'status' => 'required|in:pending,in_progress,completed',
             'due_date' => 'nullable|date',
-            'assigned_members' => 'nullable|array', 
-            'assigned_members.*' => 'exists:club_memberships,id',
         ]);
 
         $task = EventTask::create([
@@ -63,21 +62,7 @@ class TaskController extends Controller
             'due_date' => $request->due_date ?? now()->addDays(5),
         ]);
 
-        // Optionally assign members to the task
-        if ($request->has('assigned_members')) {
-            foreach ($request->assigned_members as $clubMembershipId) {
-                EventTaskAssignment::create([
-                    'event_task_id' => $task->id,
-                    'club_membership_id' => $clubMembershipId,
-                    'assigned_at' => now(),
-                ]);
-            }
-        }
-
-        return response()->json(
-            $task->load(['assignments.clubMembership.user']),
-            201
-        );
+        return response()->json($task, 201);
     }
 
     /**
@@ -101,7 +86,7 @@ class TaskController extends Controller
 
         $task->update($request->only(['title', 'description', 'priority', 'status', 'due_date']));
 
-        return response()->json($task->load(['assignments.clubMembership.user']));
+        return response()->json($task);
     }
 
     /**
@@ -125,7 +110,7 @@ class TaskController extends Controller
      */
     public function getTasksByEvent($eventId)
     {
-        $tasks = EventTask::where('event_id', $eventId)
+        $tasks = \App\Models\EventTask::where('event_id', $eventId)
             ->with(['assignments.clubMembership.user'])
             ->get();
 
@@ -134,14 +119,9 @@ class TaskController extends Controller
         }
 
         $tasks = $tasks->map(function ($task) {
-            $assignedUsers = $task->assignments
-                ->map(fn($a) => [
-                    'id' => $a->clubMembership->user->id ?? null,
-                    'name' => $a->clubMembership->user->name ?? null,
-                    'assigned_at' => $a->assigned_at,
-                ])
-                ->filter(fn($u) => $u['id'])
-                ->values();
+            $assignedBy = $task->assignments->map(function ($assignment) {
+                return $assignment->clubMembership->user->name ?? null;
+            })->filter()->values();
 
             return [
                 'id' => $task->id,
@@ -149,7 +129,7 @@ class TaskController extends Controller
                 'priority' => $task->priority,
                 'status' => $task->status,
                 'due_date' => $task->due_date,
-                'assigned_users' => $assignedUsers,
+                'assigned_by' => $assignedBy,
             ];
         });
 

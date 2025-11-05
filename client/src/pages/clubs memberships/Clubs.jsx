@@ -257,7 +257,9 @@ export default function Clubs() {
         <>
           <div className="flex flex-col gap-2 my-8 mx-4">
             <div className="flex flex-row items-center gap-5">
-              <GraduationCap className="h-9 w-9 bg-blue-400 text-blue-900 border-blue-300 p-1 rounded-lg" />
+              <div className="shrink-0 p-2 bg-blue-900/30 rounded-lg">
+                <GraduationCap className="w-9 h-9 text-blue-400" />
+              </div>
               <h1 className="text-4xl font-semibold">Explore Clubs</h1>
             </div>
             <p className="text-gray-400 my-2">

@@ -227,14 +227,14 @@ export default function EventTasksTable() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-8 flex flex-col">
-      <div className="flex mb-6">
+      <div className="flex">
         <button
           onClick={() => navigate(-1)}
           className="absolute top-4 left-4 z-50 p-2 rounded-md bg-neutral-800/60 hover:bg-neutral-950/60 transition"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex flex-col my-5 ml-14 gap-3">
+        <div className="flex flex-col mb-10 ml-14 gap-3">
           <h1 className="text-4xl font-semibold text-white">
             {eventTitle || "Event Tasks"}
           </h1>
@@ -312,29 +312,40 @@ export default function EventTasksTable() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-neutral-800/50">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-4 text-sm">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center text-gray-500"
-                >
-                  No tasks found.
-                </TableCell>
-              </TableRow>
-            )}
+            {(() => {
+              const MIN_ROWS = 8;
+              const rows = table.getRowModel().rows;
+              const paddedRows = [
+                ...rows,
+                ...Array(Math.max(0, MIN_ROWS - rows.length)).fill(null),
+              ];
+
+              return paddedRows.map((row, i) =>
+                row ? (
+                  <TableRow key={row.id} className="hover:bg-neutral-800/50">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-4 text-sm">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ) : (
+                  <TableRow key={`empty-${i}`} className="opacity-20">
+                    {columns.map((_, colIndex) => (
+                      <TableCell
+                        key={colIndex}
+                        className="py-4 text-sm text-gray-500"
+                      >
+                        —
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              );
+            })()}
           </TableBody>
         </Table>
       </div>

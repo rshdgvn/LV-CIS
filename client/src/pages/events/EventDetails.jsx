@@ -5,7 +5,7 @@ import {
   Clock,
   MapPin,
   Share2,
-  ArrowLeftSquare,
+  ArrowLeft,
   UserRound,
 } from "lucide-react";
 import { APP_URL } from "@/lib/config";
@@ -15,6 +15,7 @@ import "nprogress/nprogress.css";
 import { formatTaskStatus } from "@/utils/formatTaskStatus";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 import UpdateEventModal from "@/components/events/UpdateEventModal";
+import { Button } from "@/components/ui/button";
 
 function EventDetails() {
   const { id } = useParams();
@@ -98,7 +99,7 @@ function EventDetails() {
         onClick={() => nav(-1)}
         className="absolute top-4 left-4 z-50 p-2 rounded-md bg-neutral-800/60 hover:bg-neutral-950/60 transition"
       >
-        <ArrowLeftSquare className="w-7 h-7 text-white" />
+        <ArrowLeft className="w-5 h-5" />
       </button>
 
       <div className="relative z-10 pt-72 pb-20 px-6 max-w-6xl mx-auto">
@@ -147,14 +148,21 @@ function EventDetails() {
           </div>
 
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
-            <div className="flex gap-2 ">
-              <UserRound className="h-7 w-7 text-red-400" />
-              <h2 className="text-lg font-semibold mb-4 text-gray-400">
-                Tasks
-              </h2>
-              <button onClick={() => nav(`/events/${id}/tasks`)}>
+            <div className="flex justify-between">
+              <div className="flex gap-2">
+                <UserRound className="h-7 w-7 text-red-400" />
+                <h2 className="text-lg font-semibold mb-4 text-gray-400">
+                  Tasks
+                </h2>
+              </div>
+
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 text-blue-700 hover:text-blue-400"
+                onClick={() => nav(`/events/${id}/tasks`)}
+              >
                 View Tasks
-              </button>
+              </Button>
             </div>
             {tasks?.length > 0 ? (
               <ul className="space-y-3">

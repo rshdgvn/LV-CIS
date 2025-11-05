@@ -228,13 +228,12 @@ export default function EventTasksTable() {
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-8 flex flex-col">
       <div className="flex mb-6">
-        <Button
+        <button
           onClick={() => navigate(-1)}
-          variant="ghost"
-          className="bg-neutral-900 hover:bg-neutral-800 border border-neutral-800"
+          className="absolute top-4 left-4 z-50 p-2 rounded-md bg-neutral-800/60 hover:bg-neutral-950/60 transition"
         >
-          <ArrowLeft className="w-5 h-5" /> Back
-        </Button>
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div className="flex flex-col my-5 ml-14 gap-3">
           <h1 className="text-4xl font-semibold text-white">
             {eventTitle || "Event Tasks"}

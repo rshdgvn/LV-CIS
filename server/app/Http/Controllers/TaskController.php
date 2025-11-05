@@ -129,6 +129,7 @@ class TaskController extends Controller
                 'priority' => $task->priority,
                 'status' => $task->status,
                 'due_date' => $task->due_date,
+                'created_at' => $task->created_at ? $task->created_at->format('Y-m-d') : null,
                 'assigned_by' => $assignedBy,
             ];
         });

@@ -104,6 +104,16 @@ export default function EventTasksTable() {
           );
         },
       }),
+      // ✅ Added created_at before due_date
+      columnHelper.accessor("created_at", {
+        header: "Date Created",
+        cell: (info) => {
+          const date = new Date(info.getValue());
+          return (
+            <span className="text-gray-300">{date.toLocaleDateString()}</span>
+          );
+        },
+      }),
       columnHelper.accessor("due_date", {
         header: "Due Date",
         cell: (info) => {

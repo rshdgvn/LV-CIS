@@ -25,6 +25,7 @@ import Unauthorized from "./pages/errors/Unauthorized";
 import Forbidden from "./pages/errors/Forbidden";
 import EventDetails from "./pages/events/EventDetails";
 import AllClubsPage from "./pages/AllClubsPage";
+import EventTasksTable from "./pages/events/EventTasksTable";
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
                 path="/club/:clubId/members/:userId"
                 element={<MemberDetails />}
               />
+
               <Route path="/profile" element={<Profile />} />
 
               <Route element={<OfficersRoute />}>
@@ -75,6 +77,7 @@ function App() {
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/forbidden" element={<Forbidden />} />
             <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/events/:id/tasks" element={<EventTasksTable />} />
           </Routes>
         </ClubProvider>
       </AuthProvider>

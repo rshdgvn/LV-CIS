@@ -23,6 +23,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { formatStatus } from "@/utils/formatStatus";
+import { SkeletonAttendanceDetails } from "@/components/skeletons/SkeletonAttendanceDetails";
 
 export default function AttendanceDetails() {
   const { id } = useParams();
@@ -102,12 +103,7 @@ export default function AttendanceDetails() {
     return { present, absent, late };
   }, [session]);
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen text-white">
-        Loading...
-      </div>
-    );
+  if (loading) return <SkeletonAttendanceDetails />;
 
   if (!session)
     return (

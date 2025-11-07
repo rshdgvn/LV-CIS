@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
 import { formatTaskStatus } from "@/utils/formatTaskStatus";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
+import { SkeletonEventTasksTable } from "@/components/skeletons/SkeletonEventTasksTable";
 
 function normalizeTasks(data) {
   if (!data) return [];
@@ -151,12 +152,7 @@ export default function EventTasksTable() {
   const totalRows = 8;
   const blankRows = Math.max(totalRows - tasks.length, 0);
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400">
-        Loading event tasks...
-      </div>
-    );
+  if (loading) return <SkeletonEventTasksTable />;
 
   if (error)
     return (

@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { APP_URL } from "@/lib/config";
+import { useNavigate } from "react-router-dom";
 
 export default function Attendances() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const nav = useNavigate();
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -28,7 +30,7 @@ export default function Attendances() {
         }
 
         const data = await res.json();
-        setSessions(data.sessions || []); 
+        setSessions(data.sessions || []);
       } catch (error) {
         console.error("Error fetching attendance sessions:", error);
       } finally {
@@ -106,9 +108,7 @@ export default function Attendances() {
                       <Button
                         variant="secondary"
                         className="bg-slate-700 hover:bg-slate-600"
-                        onClick={() =>
-                          console.log("Clicked session:", session.id)
-                        }
+                        onClick={() => nav(`/attendance/${session.id}`)}
                       >
                         View
                       </Button>

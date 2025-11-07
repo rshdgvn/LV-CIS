@@ -27,6 +27,7 @@ import AllClubsPage from "./pages/AllClubsPage";
 import EventTasksTable from "./pages/events/EventTasksTable";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Attendances from "./pages/attendances/Attendances";
+import AttendanceDetails from "./pages/attendances/AttendanceDetails";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ function App() {
               <Route path="/forbidden" element={<Forbidden />} />
               <Route path="/events/:id" element={<EventDetails />} />
               <Route path="/events/:id/tasks" element={<EventTasksTable />} />
+              <Route path="/attendance/:id" element={<AttendanceDetails />} />
             </Routes>
           </ClubProvider>
         </AuthProvider>

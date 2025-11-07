@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, ArrowLeft, CheckCircle2, Filter } from "lucide-react";
+import { Check, User, Clock8 } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import {
   Table,
@@ -125,10 +126,10 @@ export default function AttendanceDetails() {
         </button>
 
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-3xl font-semibold">
             {session.event?.title || session.title}
           </h1>
-          <p className="text-gray-400 text-sm">Record today’s attendance</p>
+          <p className="text-gray-400 text-md">Record today’s attendance</p>
         </div>
       </div>
 
@@ -237,46 +238,49 @@ export default function AttendanceDetails() {
         </Card>
 
         {/* Summary cards on the right */}
-        <div className="flex flex-row lg:flex-col gap-3 w-full lg:w-64 mt-2">
-          <Card className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Total student present</p>
-                <h3 className="text-2xl font-semibold text-green-400">
-                  {stats.present}
-                </h3>
-              </div>
-              <div className="w-8 h-8 bg-green-900/20 rounded-full flex items-center justify-center text-green-400">
-                ✔
-              </div>
+        <div className="flex flex-row lg:flex-col gap-4 w-full lg:w-[260px] mt-2">
+          {/* Present */}
+          <Card className="bg-[#111111] border-none rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
+            <div className="w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center">
+              <Check className="text-green-500 w-5 h-5" />
+            </div>
+            <div className="text-right">
+              <p className="text-md text-gray-300 font-medium">
+                Total Students Present
+              </p>
+              <h3 className="text-2xl font-bold text-start text-white mt-1">
+                {stats.present}
+              </h3>
             </div>
           </Card>
 
-          <Card className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Total student absent</p>
-                <h3 className="text-2xl font-semibold text-red-400">
-                  {stats.absent}
-                </h3>
-              </div>
-              <div className="w-8 h-8 bg-red-900/20 rounded-full flex items-center justify-center text-red-400">
-                ✖
-              </div>
+          {/* Absent */}
+          <Card className="bg-[#111111] border-none rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
+            <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center">
+              <User className="text-red-500 w-5 h-5" />
+            </div>
+            <div className="text-right">
+              <p className="text-md text-gray-300 font-medium">
+                Total Students Absent
+              </p>
+              <h3 className="text-2xl font-bold text-start text-white mt-1">
+                {stats.absent}
+              </h3>
             </div>
           </Card>
 
-          <Card className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Total student late</p>
-                <h3 className="text-2xl font-semibold text-yellow-400">
-                  {stats.late}
-                </h3>
-              </div>
-              <div className="w-8 h-8 bg-yellow-900/20 rounded-full flex items-center justify-center text-yellow-400">
-                ⏰
-              </div>
+          {/* Late */}
+          <Card className="bg-[#111111] border-none rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
+            <div className="w-9 h-9 rounded-full bg-yellow-500/20 flex items-center justify-center">
+              <Clock8 className="text-yellow-400 w-5 h-5" />
+            </div>
+            <div className="text-right">
+              <p className="text-md text-gray-300 font-medium">
+                Total Students Late
+              </p>
+              <h3 className="text-2xl font-bold text-start text-white mt-1">
+                {stats.late}
+              </h3>
             </div>
           </Card>
         </div>

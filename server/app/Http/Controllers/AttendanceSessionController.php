@@ -63,10 +63,10 @@ class AttendanceSessionController extends Controller
                 ->where('user_id', $user->id)
                 ->first();
 
-            $member = $user->member; 
+            $member = $user->member;
 
             return [
-                'id' => $user->id,
+                'user_id' => $user->id, 
                 'name' => $user->name,
                 'course' => $member->course ?? 'N/A',
                 'year_level' => $member->year_level ?? 'N/A',

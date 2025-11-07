@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSessionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -67,4 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/attendance-sessions', [AttendanceSessionController::class, 'index']);
     Route::get('/attendance-sessions/{id}', [AttendanceSessionController::class, 'show']);
+
+    Route::get('/attendance-sessions/{sessionId}/attendance', [AttendanceController::class, 'index']);
+    Route::patch('/attendance-sessions/{sessionId}/members/{userId}', [AttendanceController::class, 'updateStatus']);
+
+    Route::get('/user/profile', [ProfileController::class, 'show']);
+    Route::patch('/user/profile', [ProfileController::class, 'update']);
+    Route::post('/user/setup-profile', [ProfileController::class, 'setup']);
 });

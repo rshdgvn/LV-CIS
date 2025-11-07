@@ -1,0 +1,119 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Member;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
+class ProfileController extends Controller
+{
+    public function show(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            Log::warning('Profile fetch failed: no authenticated user found.');
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $member = Member::where('user_id', $user->id)->first();
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+                'avatar' => $user->avatar
+                    ? $user->avatar
+                    : url('default-avatar.png'),
+            ],
+            'member' => $member ?? [
+                'course' => null,
+                'year_level' => null,
+            ],
+        ]);
+    }
+
+    public function update(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $validatedUser = $request->validate([
+                'name' => 'nullable|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'username' => 'nullable|string|max:255',
+                'avatar' => 'nullable|string',
+            ]);
+
+            if ($request->avatar && !is_file($request->avatar)) {
+                $validatedUser['avatar'] = $request->avatar;
+            }
+
+            $user->update($validatedUser);
+
+            $validatedMember = $request->validate([
+                'course' => 'nullable|string|max:255',
+                'year_level' => 'nullable|string|max:255',
+            ]);
+
+            $member = Member::updateOrCreate(
+                ['user_id' => $user->id],
+                $validatedMember
+            );
+
+            return response()->json([
+                'message' => 'Profile updated successfully',
+                'user' => $user,
+                'member' => $member,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error updating profile: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'An unexpected error occurred while updating the profile.',
+            ], 500);
+        }
+    }
+
+    public function setup(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            $validated = $request->validate([
+                'course' => 'required|string|max:255',
+                'year_level' => 'required|string|max:255',
+            ]);
+
+            $member = Member::create([
+                'user_id' => $user->id,
+                ...$validated,
+            ]);
+
+            return response()->json([
+                'message' => 'Profile setup successfully',
+                'user' => $user,
+                'member' => $member,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error setting up profile: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'An unexpected error occurred while setting up the profile.',
+            ], 500);
+        }
+    }
+}

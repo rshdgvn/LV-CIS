@@ -4,58 +4,93 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Calendar,
-  MapPin,
-  ArrowLeft,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { APP_URL } from "@/lib/config";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AttendanceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState(null);
+
+  const fetchSession = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${APP_URL}/attendance-sessions/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setSession(data);
+    } catch (error) {
+      console.error("Error fetching session details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${APP_URL}/attendance-sessions/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setSession(data);
-      } catch (error) {
-        console.error("Error fetching session details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSession();
   }, [id]);
 
-  if (loading) {
+  const updateStatus = async (userId, newStatus) => {
+    const token = localStorage.getItem("token");
+    setSavingId(userId);
+
+    try {
+      const res = await fetch(
+        `${APP_URL}/attendance-sessions/${id}/members/${userId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update status");
+
+      // Update local state immediately
+      setSession((prev) => ({
+        ...prev,
+        members: prev.members.map((m) =>
+          m.user_id === userId ? { ...m, status: newStatus } : m
+        ),
+      }));
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("❌ Failed to update status");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  if (loading)
     return (
       <div className="flex justify-center items-center h-screen text-white">
         Loading...
       </div>
     );
-  }
 
-  if (!session) {
+  if (!session)
     return (
       <div className="p-6 text-center text-red-400">Session not found.</div>
     );
-  }
 
   return (
     <div className="p-6 text-white">
@@ -103,21 +138,36 @@ export default function AttendanceDetails() {
               {session.members?.length > 0 ? (
                 session.members.map((member) => (
                   <tr
-                    key={member.id}
+                    key={member.user_id}
                     className="border-t border-slate-800 hover:bg-slate-800/50 transition"
                   >
-                    <td className="px-4 py-3">{member.name}</td>
+                    <td className="px-4 py-3 flex items-center gap-2">
+                      {member.name}
+                      {savingId === member.user_id && (
+                        <CheckCircle2
+                          size={16}
+                          className="text-green-500 animate-pulse"
+                        />
+                      )}
+                    </td>
                     <td className="px-4 py-3">{member.course}</td>
                     <td className="px-4 py-3 text-right">
-                      {member.status === "Present" ? (
-                        <span className="flex justify-end items-center text-green-400 gap-1">
-                          <CheckCircle size={14} /> Present
-                        </span>
-                      ) : (
-                        <span className="flex justify-end items-center text-red-400 gap-1">
-                          <XCircle size={14} /> Absent
-                        </span>
-                      )}
+                      <Select
+                        value={member.status.toLowerCase()}
+                        onValueChange={(value) =>
+                          updateStatus(member.user_id, value)
+                        }
+                      >
+                        <SelectTrigger className="w-[130px] bg-slate-800 border-slate-700 text-white">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="present">✅ Present</SelectItem>
+                          <SelectItem value="absent">❌ Absent</SelectItem>
+                          <SelectItem value="late">🕒 Late</SelectItem>
+                          <SelectItem value="excuse">📄 Excuse</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </td>
                   </tr>
                 ))

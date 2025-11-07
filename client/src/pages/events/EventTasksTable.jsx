@@ -7,7 +7,7 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bell, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -55,7 +55,6 @@ export default function EventTasksTable() {
           return;
         }
 
-        // Fetch event details
         const eventRes = await fetch(`${APP_URL}/events/${id}`, {
           headers: {
             Accept: "application/json",
@@ -68,7 +67,6 @@ export default function EventTasksTable() {
         setEventTitle(eventData.title || "");
         setEventDescription(eventData.description || "");
 
-        // Fetch tasks
         const taskRes = await fetch(`${APP_URL}/events/${id}/tasks`, {
           headers: {
             Accept: "application/json",
@@ -95,38 +93,28 @@ export default function EventTasksTable() {
   const columns = useMemo(
     () => [
       columnHelper.accessor("title", {
-        header: "Task",
+        header: "Tasks",
         cell: (info) => (
-          <div className="font-medium text-gray-100">
+          <div className="font-medium text-gray-100 text-center">
             {info.getValue() ?? "Untitled"}
           </div>
         ),
       }),
       columnHelper.accessor("assigned_by", {
-        header: "Assigned By",
+        header: "Assigned",
         cell: (info) => {
           const val = info.getValue();
           return (
-            <span className="text-gray-400 text-sm">
+            <span className="text-gray-400 text-sm text-center block">
               {Array.isArray(val) ? val.join(", ") : val || "N/A"}
             </span>
           );
         },
       }),
-      columnHelper.accessor("created_at", {
-        header: "Date Created",
-        cell: (info) => (
-          <span className="text-gray-300">
-            {info.getValue()
-              ? new Date(info.getValue()).toLocaleDateString()
-              : "—"}
-          </span>
-        ),
-      }),
       columnHelper.accessor("due_date", {
         header: "Due Date",
         cell: (info) => (
-          <span className="text-gray-300">
+          <span className="text-gray-300 text-center block">
             {info.getValue()
               ? new Date(info.getValue()).toLocaleDateString()
               : "—"}
@@ -138,30 +126,15 @@ export default function EventTasksTable() {
         cell: (info) => {
           const status = info.getValue();
           return (
-            <span
-              className={`${getTaskStatusColor(
-                status
-              )} text-white text-xs px-3 py-1 rounded-full font-medium`}
-            >
-              {formatTaskStatus(status)}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor("priority", {
-        header: "Priority",
-        cell: (info) => {
-          const priority = info.getValue();
-          const color =
-            priority === "high"
-              ? "text-red-400"
-              : priority === "medium"
-              ? "text-yellow-400"
-              : "text-green-400";
-          return (
-            <span className={`${color} font-semibold capitalize`}>
-              {priority ?? "N/A"}
-            </span>
+            <div className="flex justify-center">
+              <span
+                className={`${getTaskStatusColor(
+                  status
+                )} text-white text-xs px-3 py-1 rounded-full font-medium`}
+              >
+                {formatTaskStatus(status)}
+              </span>
+            </div>
           );
         },
       }),
@@ -174,6 +147,9 @@ export default function EventTasksTable() {
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const totalRows = 8;
+  const blankRows = Math.max(totalRows - tasks.length, 0);
 
   if (loading)
     return (
@@ -190,7 +166,7 @@ export default function EventTasksTable() {
     );
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-8 flex flex-col">
+    <div className="min-h-screen bg-neutral-900 text-white p-8 flex flex-col">
       <div className="flex">
         <button
           onClick={() => navigate(-1)}
@@ -207,13 +183,36 @@ export default function EventTasksTable() {
         </div>
       </div>
 
-      <div className="rounded-2xl w-5/6 border border-neutral-800 bg-neutral-900/70 self-center shadow-lg overflow-hidden">
+      {/* Search + Filter Bar */}
+      <div className="flex items-center gap-3 mb-6 w-5/6 self-center">
+        <div className="flex items-center gap-2 bg-[#121212] rounded-full px-4 py-2 w-xl border border-neutral-800">
+          <Search className="text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search Tasks"
+            className="flex-1 bg-transparent text-sm text-gray-300 outline-none placeholder-gray-500"
+          />
+        </div>
+
+        <Button
+          variant="secondary"
+          className="bg-[#121212] border border-neutral-800 hover:bg-neutral-800 text-gray-300 text-sm rounded-full px-5 py-2 flex items-center gap-2 shadow-sm"
+        >
+          <Filter className="w-4 h-4" />
+          Filter
+        </Button>
+      </div>
+
+      <div className="rounded-2xl w-5/6 bg-[#121212] border border-neutral-800 self-center shadow-md overflow-hidden">
         <Table>
-          <TableHeader className="bg-neutral-900/80">
+          <TableHeader className="bg-[#1a1a1a]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-gray-400">
+                  <TableHead
+                    key={header.id}
+                    className="text-gray-400 text-sm py-4 px-6 text-center"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -227,29 +226,35 @@ export default function EventTasksTable() {
           </TableHeader>
 
           <TableBody>
-            {tasks.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-neutral-800/50">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-4 px-4 text-sm">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center text-gray-400 py-6"
-                >
-                  No tasks found.
-                </TableCell>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                className="hover:bg-neutral-800/50 transition"
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
               </TableRow>
-            )}
+            ))}
+
+            {Array.from({ length: blankRows }).map((_, i) => (
+              <TableRow
+                key={`blank-${i}`}
+                className="hover:bg-neutral-800/10 transition"
+              >
+                {columns.map((_, j) => (
+                  <TableCell
+                    key={`blank-cell-${i}-${j}`}
+                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle"
+                  ></TableCell>
+                ))}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>

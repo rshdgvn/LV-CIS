@@ -105,7 +105,9 @@ export default function AttendanceDetails() {
       {/* Session Header */}
       <Card className="bg-slate-900 border-slate-800 rounded-2xl shadow-md mb-6">
         <CardContent className="p-6">
-          <h1 className="text-2xl font-bold mb-2">{session.title}</h1>
+          <h1 className="text-2xl font-bold mb-2">
+            {session.event?.title || session.title}
+          </h1>
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <Calendar size={16} /> {new Date(session.date).toLocaleDateString()}
           </div>
@@ -115,10 +117,6 @@ export default function AttendanceDetails() {
           <p className="text-slate-300 mt-2">
             <span className="font-semibold">Club:</span>{" "}
             {session.club?.name || "N/A"}
-          </p>
-          <p className="text-slate-300">
-            <span className="font-semibold">Event:</span>{" "}
-            {session.event?.title || "N/A"}
           </p>
         </CardContent>
       </Card>

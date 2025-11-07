@@ -23,7 +23,7 @@ class AttendanceSeeder extends Seeder
                     'event_id' => rand(0, 1) ? rand(1, 10) : null, 
                     'created_by' => $admin?->id,
                     'title' => "General Meeting {$i}",
-                    'description' => fake()->sentence(),
+                    'venue' => fake()->word(),
                     'date' => now()->subDays(rand(0, 15))->toDateString(),
                     'is_open' => fake()->boolean(80),
                 ]);

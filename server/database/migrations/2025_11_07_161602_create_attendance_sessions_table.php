@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('club_id')->constrained()->onDelete('cascade');
             $table->foreignId('event_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->string('title');
+            $table->string('title')->nullable();
             $table->text('description')->nullable();
             $table->date('date');
             $table->boolean('is_open')->default(true);

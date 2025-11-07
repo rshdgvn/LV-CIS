@@ -15,7 +15,6 @@ class AttendanceSession extends Model
         'created_by',
         'title',
         'venue',
-        'description',
         'date',
         'is_open',
     ];

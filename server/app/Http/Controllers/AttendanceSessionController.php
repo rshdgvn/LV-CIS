@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
-use Illuminate\Http\Request;
 use App\Models\AttendanceSession;
 use App\Models\ClubMembership;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AttendanceSessionController extends Controller
@@ -28,7 +28,7 @@ class AttendanceSessionController extends Controller
             ->map(function ($s) {
                 return [
                     'id' => $s->id,
-                    'title' => $s->title,
+                    'title' => $s->event ? $s->event->title : ($s->title ?? 'Untitled Session'),
                     'venue' => $s->venue ?? optional($s->event)->venue ?? 'N/A',
                     'date' => $s->date,
                     'is_open' => (bool) $s->is_open,
@@ -66,7 +66,7 @@ class AttendanceSessionController extends Controller
             $member = $user->member;
 
             return [
-                'user_id' => $user->id, 
+                'user_id' => $user->id,
                 'name' => $user->name,
                 'course' => $member->course ?? 'N/A',
                 'year_level' => $member->year_level ?? 'N/A',
@@ -76,7 +76,7 @@ class AttendanceSessionController extends Controller
 
         return response()->json([
             'id' => $session->id,
-            'title' => $session->title,
+            'title' => $session->event ? $session->event->title : ($session->title ?? 'Untitled Session'),
             'venue' => $session->venue ?? optional($session->event)->venue ?? 'N/A',
             'date' => $session->date,
             'is_open' => (bool) $session->is_open,

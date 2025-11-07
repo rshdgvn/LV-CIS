@@ -66,4 +66,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/events/{eventId}/tasks', [TaskController::class, 'getTasksByEvent']);
 
     Route::get('/attendance-sessions', [AttendanceSessionController::class, 'index']);
+    Route::get('/attendance-sessions/{id}', [AttendanceSessionController::class, 'show']);
 });

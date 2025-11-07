@@ -3,7 +3,6 @@ import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Dashboard from "./pages/Dashboard";
-import Attendance from "./pages/Attendance";
 import Events from "./pages/events/Events";
 import Clubs from "./pages/clubs memberships/Clubs";
 import ClubDetails from "./pages/clubs memberships/ClubDetails";
@@ -27,6 +26,7 @@ import EventDetails from "./pages/events/EventDetails";
 import AllClubsPage from "./pages/AllClubsPage";
 import EventTasksTable from "./pages/events/EventTasksTable";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Attendances from "./pages/attendances/Attendances";
 
 const queryClient = new QueryClient();
 
@@ -53,7 +53,7 @@ function App() {
                 }
               >
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/attendance" element={<Attendance />} />
+                <Route path="/attendance" element={<Attendances />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/clubs" element={<Clubs />} />
                 <Route path="/club/:id" element={<ClubDetails />} />

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceSessionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
@@ -63,4 +64,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/delete/task/{id}', [TaskController::class, 'deleteTaskById']);
 
     Route::get('/events/{eventId}/tasks', [TaskController::class, 'getTasksByEvent']);
+
+    Route::get('/attendance-sessions', [AttendanceSessionController::class, 'index']);
 });

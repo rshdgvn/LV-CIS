@@ -14,10 +14,12 @@ class AttendanceSession extends Model
         'event_id',
         'created_by',
         'title',
+        'venue',
         'description',
         'date',
         'is_open',
     ];
+
 
     public function club()
     {

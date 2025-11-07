@@ -6,6 +6,8 @@ import { APP_URL } from "@/lib/config";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { toast } from "sonner";
+import { SkeletonProfile } from "@/components/skeletons/SkeletonProfile";
+
 
 export default function Profile() {
   const { token } = useAuth();
@@ -148,13 +150,7 @@ export default function Profile() {
     setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen text-gray-300">
-        Loading profile...
-      </div>
-    );
-  }
+  if (loading) return <SkeletonProfile />;
 
   return (
     <div className="min-h-screen text-white px-6 py-10 md:px-20">

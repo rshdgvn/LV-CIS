@@ -14,6 +14,7 @@ import {
 import { Calendar, Filter, Search } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { useNavigate } from "react-router-dom";
+import { SkeletonAttendances } from "@/components/skeletons/SkeletonAttendances";
 
 export default function Attendances() {
   const [sessions, setSessions] = useState([]);
@@ -54,13 +55,7 @@ export default function Attendances() {
     );
   });
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen text-neutral-400">
-        Loading attendance sessions...
-      </div>
-    );
-  }
+  if (loading) return <SkeletonAttendances />;
 
   return (
     <div className="p-6 text-neutral-200 flex flex-col gap-6">

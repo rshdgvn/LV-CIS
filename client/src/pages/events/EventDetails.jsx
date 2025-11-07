@@ -16,6 +16,7 @@ import { formatTaskStatus } from "@/utils/formatTaskStatus";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 import UpdateEventModal from "@/components/events/UpdateEventModal";
 import { Button } from "@/components/ui/button";
+import { SkeletonEventDetails } from "@/components/skeletons/SkeletonEventDetails";
 
 function EventDetails() {
   const { id } = useParams();
@@ -78,7 +79,7 @@ function EventDetails() {
     fetchTasks();
   }, [id]);
 
-  if (loading) return <p className="p-10 text-gray-400">Loading event...</p>;
+  if (loading) return <SkeletonEventDetails />;
   if (error) return <p className="p-10 text-red-500">{error}</p>;
   if (!event) return null;
 

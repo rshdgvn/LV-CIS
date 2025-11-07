@@ -12,6 +12,7 @@ class AttendanceSession extends Model
     protected $fillable = [
         'club_id',
         'event_id',
+        'created_by',
         'title',
         'description',
         'date',
@@ -31,5 +32,10 @@ class AttendanceSession extends Model
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

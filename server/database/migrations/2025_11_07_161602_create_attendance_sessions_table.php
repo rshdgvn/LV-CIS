@@ -12,11 +12,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('club_id')->constrained()->onDelete('cascade');
             $table->foreignId('event_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->string('title');
             $table->text('description')->nullable();
             $table->date('date');
             $table->boolean('is_open')->default(true);
             $table->timestamps();
+            $table->unique(['club_id', 'date', 'title']); 
         });
     }
 

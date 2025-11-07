@@ -10,26 +10,18 @@ class Attendance extends Model
     use HasFactory;
 
     protected $fillable = [
+        'attendance_session_id',
         'user_id',
-        'event_id',
         'status',
-        'time_in',
-        'time_out',
     ];
 
-    // Relationships
+    public function session()
+    {
+        return $this->belongsTo(AttendanceSession::class, 'attendance_session_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function event()
-    {
-        return $this->belongsTo(Event::class);
-    }
-
-    public function attendanceSession()
-    {
-        return $this->belongsTo(AttendanceSession::class);
     }
 }

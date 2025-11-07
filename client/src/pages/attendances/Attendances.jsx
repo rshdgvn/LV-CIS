@@ -2,9 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Calendar, Filter, Search } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { useNavigate } from "react-router-dom";
 
@@ -25,10 +32,7 @@ export default function Attendances() {
           },
         });
 
-        if (!res.ok) {
-          throw new Error(`HTTP error ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
         setSessions(data.sessions || []);
       } catch (error) {
@@ -52,81 +56,88 @@ export default function Attendances() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-white">
+      <div className="flex justify-center items-center h-screen text-neutral-400">
         Loading attendance sessions...
       </div>
     );
   }
 
   return (
-    <div className="p-6 text-white">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold">Attendance Sessions</h1>
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Search sessions"
-            className="w-64 bg-slate-800 border-slate-700 text-white"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Button variant="secondary" className="bg-slate-800 text-white">
+    <div className="p-6 text-neutral-200 flex flex-col gap-6">
+      {/* Header: Search + Filter */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-white">
+          Attendance Sessions
+        </h1>
+
+        <div className="flex items-center gap-3">
+          {/* Search Bar */}
+          <div className="flex items-center gap-2 bg-neutral-900 rounded-full px-4 py-2 border border-neutral-800 w-xs">
+            <Search className="w-5 h-5 text-neutral-400" />
+            <input
+              type="text"
+              placeholder="Search sessions"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 bg-transparent text-sm text-neutral-300 outline-none placeholder-neutral-500"
+            />
+          </div>
+
+          {/* Filter Button */}
+          <Button
+            variant="secondary"
+            className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-neutral-300 text-sm rounded-full px-5 py-2 flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
             Filter
           </Button>
         </div>
       </div>
 
       {/* Table */}
-      <Card className="bg-slate-900 border-slate-800 rounded-2xl shadow-md">
+      <Card className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-sm">
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-800 text-left">
-              <tr>
-                <th className="px-4 py-3 font-medium">Title</th>
-                <th className="px-4 py-3 font-medium">Club</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-neutral-800 text-neutral-400">
+                <TableHead className="text-left px-6 py-3">Event</TableHead>
+                <TableHead className="text-left px-6 py-3">Club</TableHead>
+                <TableHead className="text-left px-6 py-3">Date</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
               {filteredSessions.length > 0 ? (
                 filteredSessions.map((session) => (
-                  <tr
+                  <TableRow
                     key={session.id}
-                    className="border-t border-slate-800 hover:bg-slate-800/50 transition"
+                    onClick={() => nav(`/attendance/${session.id}`)}
+                    className="border-neutral-900 hover:bg-neutral-950/70 transition cursor-pointer"
                   >
-                    <td className="px-4 py-3">
+                    <TableCell className="px-6 py-4 text-neutral-200">
                       {session.event?.title || session.title || "N/A"}
-                    </td>
-                    <td className="px-4 py-3">{session.club?.name || "N/A"}</td>
-                    <td className="px-4 py-3 flex items-center gap-2">
-                      <Calendar size={14} />{" "}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-neutral-400">
+                      {session.club?.name || "N/A"}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-neutral-400 flex items-center gap-2">
+                      <Calendar size={14} />
                       {new Date(session.date).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button
-                        variant="secondary"
-                        className="bg-slate-700 hover:bg-slate-600"
-                        onClick={() => nav(`/attendance/${session.id}`)}
-                      >
-                        View
-                      </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td
-                    colSpan="4"
-                    className="text-center py-6 text-slate-400 italic"
+                <TableRow>
+                  <TableCell
+                    colSpan="3"
+                    className="text-center py-6 text-neutral-500 italic"
                   >
                     No attendance sessions found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

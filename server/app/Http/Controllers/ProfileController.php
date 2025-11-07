@@ -43,15 +43,19 @@ class ProfileController extends Controller
         try {
             $user = $request->user();
 
+            // Handle both JSON and multipart/form-data
             $validatedUser = $request->validate([
                 'name' => 'nullable|string|max:255',
                 'email' => 'nullable|email|max:255',
                 'username' => 'nullable|string|max:255',
-                'avatar' => 'nullable|string',
+                'avatar' => 'nullable|file|image|max:2048',
             ]);
 
-            if ($request->avatar && !is_file($request->avatar)) {
-                $validatedUser['avatar'] = $request->avatar;
+            // If avatar is uploaded via FormData (file)
+            if ($request->hasFile('avatar')) {
+                $file = $request->file('avatar');
+                $path = $file->store('avatars', 'public');
+                $validatedUser['avatar'] = url('storage/' . $path);
             }
 
             $user->update($validatedUser);
@@ -61,7 +65,7 @@ class ProfileController extends Controller
                 'year_level' => 'nullable|string|max:255',
             ]);
 
-            $member = Member::updateOrCreate(
+            $member = \App\Models\Member::updateOrCreate(
                 ['user_id' => $user->id],
                 $validatedMember
             );
@@ -75,14 +79,14 @@ class ProfileController extends Controller
             Log::error('Error updating profile: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
-                'error' => 'An unexpected error occurred while updating the profile.',
+                'error' => 'Something went wrong while updating profile.',
             ], 500);
         }
     }
+
 
     public function setup(Request $request)
     {

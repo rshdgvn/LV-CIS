@@ -67,26 +67,40 @@ export default function Profile() {
       NProgress.start();
 
       const formData = new FormData();
+      formData.append("_method", "PATCH");
+
       Object.entries(data.user).forEach(([key, value]) => {
-        if (key === "avatar" && typeof value !== "string") {
-          formData.append("avatar", value);
+        if (key === "avatar") {
+          if (value instanceof File) {
+            formData.append("avatar", value);
+          }
         } else {
-          formData.append(key, value || "");
+          formData.append(key, value ?? "");
         }
       });
+
       Object.entries(data.member).forEach(([key, value]) => {
-        formData.append(key, value || "");
+        formData.append(key, value ?? "");
       });
 
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+      }
+
       const res = await fetch(`${APP_URL}/user/profile`, {
-        method: "PATCH",
+        method: "POST", 
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Failed to save profile");
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("Update failed:", errText);
+        throw new Error("Failed to save profile");
+      }
+
       const updated = await res.json();
       setData(updated);
       setEditMode(false);

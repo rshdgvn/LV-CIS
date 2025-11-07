@@ -166,7 +166,7 @@ export default function EventTasksTable() {
     );
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white p-8 flex flex-col">
+    <div className="min-h-screen bg-neutral-950 text-white p-8 flex flex-col">
       <div className="flex">
         <button
           onClick={() => navigate(-1)}

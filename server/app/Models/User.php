@@ -74,4 +74,9 @@ class User extends Authenticatable
 
         $this->notify(new ResetPassword($url));
     }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
 }

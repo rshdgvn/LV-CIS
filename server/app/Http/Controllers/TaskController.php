@@ -92,30 +92,28 @@ class TaskController extends Controller
     /**
      * Delete a task by ID
      */
-    public function deleteTaskById($id)
+    public function getTasksByEvent(Request $request, $eventId)
     {
-        $task = EventTask::find($id);
+        $query = EventTask::where('event_id', $eventId)
+            ->with(['assignments.clubMembership.user']);
 
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', strtolower($request->status));
         }
 
-        $task->delete();
+        if ($request->filled('priority') && $request->priority !== 'all') {
+            $query->where('priority', strtolower($request->priority));
+        }
 
-        return response()->json(['message' => 'Task deleted successfully']);
-    }
+        if ($request->filled('search')) {
+            $searchTerm = strtolower($request->search);
+            $query->whereRaw('LOWER(title) LIKE ?', ["%{$searchTerm}%"]);
+        }
 
-    /**
-     * Get all tasks for a specific event, including assigned users
-     */
-    public function getTasksByEvent($eventId)
-    {
-        $tasks = \App\Models\EventTask::where('event_id', $eventId)
-            ->with(['assignments.clubMembership.user'])
-            ->get();
+        $tasks = $query->get();
 
         if ($tasks->isEmpty()) {
-            return response()->json(['message' => 'No tasks found for this event'], 404);
+            return response()->json([]);
         }
 
         $tasks = $tasks->map(function ($task) {
@@ -129,7 +127,7 @@ class TaskController extends Controller
                 'priority' => $task->priority,
                 'status' => $task->status,
                 'due_date' => $task->due_date,
-                'created_at' => $task->created_at ? $task->created_at->format('Y-m-d') : null,
+                'created_at' => optional($task->created_at)->format('Y-m-d'),
                 'assigned_by' => $assignedBy,
             ];
         });

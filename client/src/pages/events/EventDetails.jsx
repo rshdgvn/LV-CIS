@@ -158,10 +158,10 @@ function EventDetails() {
 
               <Button
                 variant="outline"
-                className="flex items-center gap-2 text-blue-700 hover:text-blue-400"
+                className="flex items-center gap-2 text-white"
                 onClick={() => nav(`/events/${id}/tasks`)}
               >
-                View Tasks
+                View All
               </Button>
             </div>
             {tasks?.length > 0 ? (

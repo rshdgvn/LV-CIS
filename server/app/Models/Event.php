@@ -40,4 +40,9 @@ class Event extends Model
     {
         return $this->hasMany(EventTask::class);
     }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
 }

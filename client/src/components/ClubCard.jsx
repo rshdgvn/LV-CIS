@@ -12,8 +12,12 @@ function ClubCard({
   onEnter,
   onCancel,
   bg_color = "slate-900",
-  showButton = true, 
+  showButton = true,
 }) {
+  const handleStopPropagation = (e) => {
+    e.stopPropagation(); // prevent triggering onEnter
+  };
+
   const renderButton = () => {
     if (!showButton) {
       return <div className="h-6" />;
@@ -21,7 +25,10 @@ function ClubCard({
 
     if (status === "pending") {
       return (
-        <div className="flex justify-between items-center h-6">
+        <div
+          className="flex justify-between items-center h-6"
+          onClick={handleStopPropagation}
+        >
           <div className="flex items-center gap-2 text-yellow-400/70 text-sm font-semibold">
             <HourglassIcon className="w-4 h-4" />
             <span>Pending</span>
@@ -32,7 +39,10 @@ function ClubCard({
             description="Are you sure you want to cancel your club application?"
             onConfirm={onCancel}
             button={
-              <button className="flex items-center gap-2 text-red-400 text-sm font-semibold hover:text-red-300 transition">
+              <button
+                onClick={handleStopPropagation}
+                className="flex items-center gap-2 text-red-400 text-sm font-semibold hover:text-red-300 transition"
+              >
                 Cancel
               </button>
             }
@@ -44,7 +54,10 @@ function ClubCard({
     if (status === "approved") {
       return (
         <button
-          onClick={onEnter}
+          onClick={(e) => {
+            handleStopPropagation(e);
+            onEnter?.();
+          }}
           className="flex items-center gap-2 text-green-500 text-sm font-semibold hover:text-green-400 transition h-6"
         >
           <DoorOpen className="w-4 h-4" />
@@ -54,17 +67,19 @@ function ClubCard({
     }
 
     return (
-      <AlertDialogTemplate
-        title="Join this club?"
-        description="Are you sure you want to join this club?"
-        onConfirm={() => onJoin && onJoin("member", null)}
-        button={
-          <div className="flex items-center gap-2 text-blue-500 hover:text-blue-400 text-sm font-semibold cursor-pointer transition h-6">
-            <Handshake className="w-4 h-4" />
-            <span>Apply</span>
-          </div>
-        }
-      />
+      <div onClick={handleStopPropagation}>
+        <AlertDialogTemplate
+          title="Join this club?"
+          description="Are you sure you want to join this club?"
+          onConfirm={() => onJoin && onJoin("member", null)}
+          button={
+            <div className="flex items-center gap-2 text-blue-500 hover:text-blue-400 text-sm font-semibold cursor-pointer transition h-6">
+              <Handshake className="w-4 h-4" />
+              <span>Apply</span>
+            </div>
+          }
+        />
+      </div>
     );
   };
 

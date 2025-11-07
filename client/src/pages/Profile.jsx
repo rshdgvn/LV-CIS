@@ -16,6 +16,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
+  });
 
   const fetchProfile = async () => {
     try {
@@ -83,23 +88,15 @@ export default function Profile() {
         formData.append(key, value ?? "");
       });
 
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ": " + pair[1]);
-      }
-
       const res = await fetch(`${APP_URL}/user/profile`, {
-        method: "POST", 
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error("Update failed:", errText);
-        throw new Error("Failed to save profile");
-      }
+      if (!res.ok) throw new Error("Failed to save profile");
 
       const updated = await res.json();
       setData(updated);
@@ -112,6 +109,43 @@ export default function Profile() {
       setLoading(false);
       NProgress.done();
     }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    try {
+      NProgress.start();
+      const res = await fetch(`${APP_URL}/user/change-password`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(passwordForm),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok)
+        throw new Error(result.message || "Failed to change password");
+
+      toast.success("Password updated successfully!");
+      setPasswordForm({
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to update password");
+    } finally {
+      NProgress.done();
+    }
+  };
+
+  const handlePasswordInput = (e) => {
+    setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
   };
 
   if (loading) {
@@ -187,7 +221,7 @@ export default function Profile() {
       </div>
 
       {/* Member Info */}
-      <div className="space-y-4">
+      <div className="space-y-4 mb-10">
         <h2 className="text-lg font-semibold mb-2">Member Information</h2>
         {["course", "year_level"].map((field) => (
           <div key={field}>
@@ -207,6 +241,43 @@ export default function Profile() {
             />
           </div>
         ))}
+      </div>
+
+      {/* Change Password */}
+      <div className="border-t border-gray-700 pt-6">
+        <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          {[
+            { name: "current_password", label: "Current Password" },
+            { name: "new_password", label: "New Password" },
+            {
+              name: "new_password_confirmation",
+              label: "Confirm New Password",
+            },
+          ].map((field) => (
+            <div key={field.name}>
+              <label className="block text-gray-400 text-sm mb-1">
+                {field.label}
+              </label>
+              <input
+                type="password"
+                name={field.name}
+                value={passwordForm[field.name]}
+                onChange={handlePasswordInput}
+                required
+                className="w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white focus:border-blue-500"
+              />
+            </div>
+          ))}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
+          >
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
       </div>
     </div>
   );

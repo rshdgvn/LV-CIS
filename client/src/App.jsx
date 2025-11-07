@@ -3,7 +3,6 @@ import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Dashboard from "./pages/Dashboard";
-import Attendance from "./pages/Attendance";
 import Events from "./pages/events/Events";
 import Clubs from "./pages/clubs memberships/Clubs";
 import ClubDetails from "./pages/clubs memberships/ClubDetails";
@@ -26,62 +25,70 @@ import Forbidden from "./pages/errors/Forbidden";
 import EventDetails from "./pages/events/EventDetails";
 import AllClubsPage from "./pages/AllClubsPage";
 import EventTasksTable from "./pages/events/EventTasksTable";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Attendances from "./pages/attendances/Attendances";
+import AttendanceDetails from "./pages/attendances/AttendanceDetails";
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ClubProvider>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="all-clubs" element={<AllClubsPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/google/callback" element={<GoogleCallback />} />
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <ClubProvider>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="all-clubs" element={<AllClubsPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/google/callback" element={<GoogleCallback />} />
 
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route
-              element={
-                <Layout>
-                  <ProtectedRoute />
-                </Layout>
-              }
-            >
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/attendance" element={<Attendance />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/clubs" element={<Clubs />} />
-              <Route path="/club/:id" element={<ClubDetails />} />
-              <Route path="/pending-clubs" element={<PendingClubs />} />
               <Route
-                path="/club/:clubId/members/:userId"
-                element={<MemberDetails />}
-              />
-
-              <Route path="/profile" element={<Profile />} />
-
-              <Route element={<OfficersRoute />}>
+                element={
+                  <Layout>
+                    <ProtectedRoute />
+                  </Layout>
+                }
+              >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/attendance" element={<Attendances />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/clubs" element={<Clubs />} />
+                <Route path="/club/:id" element={<ClubDetails />} />
+                <Route path="/pending-clubs" element={<PendingClubs />} />
                 <Route
-                  path="/club/:id/pending-requests"
-                  element={<PendingRequests />}
+                  path="/club/:clubId/members/:userId"
+                  element={<MemberDetails />}
                 />
+
+                <Route path="/profile" element={<Profile />} />
+
+                <Route element={<OfficersRoute />}>
+                  <Route
+                    path="/club/:id/pending-requests"
+                    element={<PendingRequests />}
+                  />
+                </Route>
+
+                <Route element={<AdminRoute />}>
+                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                </Route>
               </Route>
 
-              <Route element={<AdminRoute />}>
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              </Route>
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            <Route path="/forbidden" element={<Forbidden />} />
-            <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/events/:id/tasks" element={<EventTasksTable />} />
-          </Routes>
-        </ClubProvider>
-      </AuthProvider>
-    </BrowserRouter>
+              <Route path="*" element={<NotFound />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/forbidden" element={<Forbidden />} />
+              <Route path="/events/:id" element={<EventDetails />} />
+              <Route path="/events/:id/tasks" element={<EventTasksTable />} />
+              <Route path="/attendance/:id" element={<AttendanceDetails />} />
+            </Routes>
+          </ClubProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

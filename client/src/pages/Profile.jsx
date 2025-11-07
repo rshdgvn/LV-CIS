@@ -1,68 +1,43 @@
 "use client";
 
-import Layout from "@/components/app/layout";
-import NavTabs from "@/components/NavTabs";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { APP_URL } from "@/lib/config";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { toast } from "sonner";
-import { APP_URL } from "@/lib/config";
 
-NProgress.configure({ showSpinner: false });
-
-function Profile() {
+export default function Profile() {
   const { token } = useAuth();
-
-  const [member, setMember] = useState(() => {
-    const cached = sessionStorage.getItem("memberProfile");
-    return cached
-      ? JSON.parse(cached)
-      : { student_id: "", course: "", year_level: "" };
+  const [data, setData] = useState({
+    user: { name: "", username: "", email: "", role: "", avatar: "" },
+    member: { course: "", year_level: "" },
+  });
+  const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
   });
 
-  const [loading, setLoading] = useState(
-    !sessionStorage.getItem("memberProfile")
-  );
-  const [error, setError] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [showSetupModal, setShowSetupModal] = useState(false);
-
-  const fetchMemberInfo = async (showLoading = true) => {
-    if (!token) return;
-
+  const fetchProfile = async () => {
     try {
-      if (showLoading) setLoading(true);
-      setError(null);
+      setLoading(true);
       NProgress.start();
-
-      const res = await fetch(`${APP_URL}/user/member-info`, {
+      const res = await fetch(`${APP_URL}/user/profile`, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
       });
-
-      if (!res.ok) throw new Error("Failed to fetch profile data");
-
-      const data = await res.json();
-      const newMember = {
-        student_id: data.member?.student_id || "",
-        course: data.member?.course || "",
-        year_level: data.member?.year_level || "",
-      };
-
-      setMember(newMember);
-      sessionStorage.setItem("memberProfile", JSON.stringify(newMember));
-      console.log(newMember);
-
-      // If no data yet → show setup modal
-      if (!newMember.student_id && !newMember.course && !newMember.year_level) {
-        setShowSetupModal(true);
-      }
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      const json = await res.json();
+      setData(json);
     } catch (err) {
       console.error(err);
-      setError("Failed to load profile.");
+      toast.error("Failed to load profile");
     } finally {
       setLoading(false);
       NProgress.done();
@@ -70,224 +45,255 @@ function Profile() {
   };
 
   useEffect(() => {
-    if (token) fetchMemberInfo(!sessionStorage.getItem("memberProfile"));
-    console.log("APP_URL", APP_URL);
+    if (token) fetchProfile();
   }, [token]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setMember((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (section, key, value) => {
+    setData((prev) => ({
+      ...prev,
+      [section]: { ...prev[section], [key]: value },
+    }));
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setData((prev) => ({
+        ...prev,
+        user: { ...prev.user, avatar: file },
+      }));
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSave = async () => {
-    if (!token) return;
-
     try {
       setLoading(true);
-      setError(null);
       NProgress.start();
 
-      const res = await fetch(`${APP_URL}/user/member-info`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(member),
+      const formData = new FormData();
+      formData.append("_method", "PATCH");
+
+      Object.entries(data.user).forEach(([key, value]) => {
+        if (key === "avatar") {
+          if (value instanceof File) {
+            formData.append("avatar", value);
+          }
+        } else {
+          formData.append(key, value ?? "");
+        }
       });
 
-      if (!res.ok) {
-        if (res.status === 404) {
-          setError("No member profile found. Please join a club first.");
-        } else {
-          throw new Error("Failed to save profile");
-        }
-        return;
-      }
+      Object.entries(data.member).forEach(([key, value]) => {
+        formData.append(key, value ?? "");
+      });
 
-      const data = await res.json();
-      const updated = {
-        student_id: data.member?.student_id || "",
-        course: data.member?.course || "",
-        year_level: data.member?.year_level || "",
-      };
+      const res = await fetch(`${APP_URL}/user/profile`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-      setMember(updated);
+      if (!res.ok) throw new Error("Failed to save profile");
+
+      const updated = await res.json();
+      setData(updated);
       setEditMode(false);
-      sessionStorage.removeItem("memberProfile");
-      await fetchMemberInfo(false);
       toast.success("Profile updated successfully!");
     } catch (err) {
       console.error(err);
-      setError("Failed to save profile.");
+      toast.error("Failed to update profile");
     } finally {
       setLoading(false);
       NProgress.done();
     }
   };
 
-  const handleSetupProfile = async () => {
-    if (!token) return;
-
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
     try {
-      setLoading(true);
-      setError(null);
       NProgress.start();
-
-      const res = await fetch(`${APP_URL}/user/setup-profile`, {
+      const res = await fetch(`${APP_URL}/user/change-password`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify(member),
+        body: JSON.stringify(passwordForm),
       });
 
-      const data = await res.json();
-      console.log(JSON.stringify(data));
+      const result = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Failed to setup profile");
+      if (!res.ok)
+        throw new Error(result.message || "Failed to change password");
 
-      setMember(data.member);
-      sessionStorage.setItem("memberProfile", JSON.stringify(data.member));
-      setShowSetupModal(false);
-      toast.success("Profile setup successfully!");
+      toast.success("Password updated successfully!");
+      setPasswordForm({
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
+      });
     } catch (err) {
       console.error(err);
-      toast.error(err.message);
+      toast.error(err.message || "Failed to update password");
     } finally {
-      setLoading(false);
       NProgress.done();
     }
   };
 
-  return (
-    <div className="min-h-screen bg-black p-6 text-white max-w-md mx-auto relative">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Profile</h1>
-        {!showSetupModal && (
-          <button
-            onClick={() => {
-              if (editMode) handleSave();
-              else setEditMode(true);
-            }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-semibold"
-          >
-            {editMode ? "Save" : "Edit Profile"}
-          </button>
-        )}
+  const handlePasswordInput = (e) => {
+    setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-300">
+        Loading profile...
       </div>
+    );
+  }
 
-      {loading && <p className="text-gray-400">Loading profile...</p>}
-      {error && <p className="text-red-400">{error}</p>}
+  return (
+    <div className="min-h-screen text-white px-6 py-10 md:px-20">
+      <h1 className="text-2xl font-semibold mb-2">Account Settings</h1>
+      <p className="text-sm text-gray-400 mb-8">
+        Manage your account settings and preferences
+      </p>
 
-      {!loading && (
-        <form className="space-y-4">
+      {/* PROFILE CARD */}
+      <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 mb-10 shadow-lg border border-neutral-800">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <img
+              src={
+                avatarPreview ||
+                data.user.avatar ||
+                `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
+                  data.user.name || "User"
+                )}`
+              }
+              alt="Avatar"
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-700"
+            />
+            <div>
+              <h2 className="text-lg font-semibold">{data.user.name}</h2>
+              <p className="text-sm text-gray-400">{data.user.email}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => (editMode ? handleSave() : setEditMode(true))}
+            className="mt-4 md:mt-0 px-4 py-2 bg-blue-900 hover:bg-blue-950 rounded text-white text-sm font-semibold"
+          >
+            {editMode ? "Save Profile" : "Edit Profile"}
+          </button>
+        </div>
+
+        {/* Profile Info */}
+        <div className="grid md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-gray-300 text-sm mb-1">
-              Student ID
+            <label className="block text-sm text-gray-400 mb-1">
+              First Name
             </label>
             <input
               type="text"
-              name="student_id"
-              value={member.student_id}
-              onChange={handleChange}
+              value={data.user.name?.split(" ")[0] || ""}
               readOnly={!editMode}
-              className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
-                editMode ? "border-blue-500" : ""
+              onChange={(e) =>
+                handleChange("user", "name", e.target.value || "")
+              }
+              className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
+                editMode ? "focus:border-blue-500" : ""
               }`}
             />
           </div>
-
           <div>
-            <label className="block text-gray-300 text-sm mb-1">Course</label>
+            <label className="block text-sm text-gray-400 mb-1">
+              Last Name
+            </label>
             <input
               type="text"
-              name="course"
-              value={member.course}
-              onChange={handleChange}
+              value={data.user.name?.split(" ")[1] || ""}
               readOnly={!editMode}
-              className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
-                editMode ? "border-blue-500" : ""
+              onChange={(e) =>
+                handleChange("user", "name", e.target.value || "")
+              }
+              className={`w-full p-2 rounded-md bg-neutral-90 0 border border-neutral-700 text-white ${
+                editMode ? "focus:border-blue-500" : ""
               }`}
             />
           </div>
-
           <div>
-            <label className="block text-gray-300 text-sm mb-1">
+            <label className="block text-sm text-gray-400 mb-1">Course</label>
+            <input
+              type="text"
+              value={data.member.course || ""}
+              readOnly={!editMode}
+              onChange={(e) =>
+                handleChange("member", "course", e.target.value || "")
+              }
+              className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
+                editMode ? "focus:border-blue-500" : ""
+              }`}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">
               Year Level
             </label>
             <input
               type="text"
-              name="year_level"
-              value={member.year_level}
-              onChange={handleChange}
+              value={data.member.year_level || ""}
               readOnly={!editMode}
-              className={`w-full p-2 rounded bg-neutral-900 border border-gray-700 text-white ${
-                editMode ? "border-blue-500" : ""
+              onChange={(e) =>
+                handleChange("member", "year_level", e.target.value || "")
+              }
+              className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
+                editMode ? "focus:border-blue-500" : ""
               }`}
             />
           </div>
-        </form>
-      )}
-
-      {showSetupModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-          <div className="bg-neutral-900 p-6 rounded-xl w-80 text-center border border-gray-700">
-            <h2 className="text-lg font-semibold text-white mb-2">
-              Setup Your Profile
-            </h2>
-            <p className="text-gray-400 mb-4 text-sm">
-              Please complete your profile to continue using the app.
-            </p>
-
-            <form
-              className="space-y-3 mb-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSetupProfile();
-              }}
-            >
-              <input
-                type="text"
-                name="student_id"
-                placeholder="Student ID"
-                value={member.student_id}
-                onChange={handleChange}
-                required
-                className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
-              />
-              <input
-                type="text"
-                name="course"
-                placeholder="Course"
-                value={member.course}
-                onChange={handleChange}
-                required
-                className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
-              />
-              <input
-                type="text"
-                name="year_level"
-                placeholder="Year Level"
-                value={member.year_level}
-                onChange={handleChange}
-                required
-                className="w-full p-2 rounded bg-neutral-800 border border-gray-700 text-white text-sm"
-              />
-
-              <button
-                type="submit"
-                className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium text-sm"
-              >
-                {loading ? "Saving..." : "Save Profile"}
-              </button>
-            </form>
-          </div>
         </div>
-      )}
+      </div>
+
+      {/* ACCOUNT SECURITY CARD */}
+      <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 shadow-lg border border-neutral-800">
+        <h2 className="text-lg font-semibold mb-4">Account Security</h2>
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          {[
+            { name: "current_password", label: "Current Password" },
+            { name: "new_password", label: "New Password" },
+            {
+              name: "new_password_confirmation",
+              label: "Confirm New Password",
+            },
+          ].map((field) => (
+            <div key={field.name}>
+              <label className="block text-sm text-gray-400 mb-1">
+                {field.label}
+              </label>
+              <input
+                type="password"
+                name={field.name}
+                value={passwordForm[field.name]}
+                onChange={handlePasswordInput}
+                required
+                className="w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white focus:border-blue-500"
+              />
+            </div>
+          ))}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-900 hover:bg-blue-950 text-white py-2 rounded font-semibold"
+          >
+            {loading ? "Updating..." : "Change Password"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
-export default Profile;

@@ -149,7 +149,7 @@ function EventDetails() {
 
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
             <div className="flex justify-between">
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-3">
                 <UserRound className="h-7 w-7 text-red-400" />
                 <h2 className="text-lg font-semibold mb-4 text-gray-400">
                   Tasks
@@ -158,10 +158,10 @@ function EventDetails() {
 
               <Button
                 variant="outline"
-                className="flex items-center gap-2 text-blue-700 hover:text-blue-400"
+                className="flex items-center gap-2 text-white"
                 onClick={() => nav(`/events/${id}/tasks`)}
               >
-                View Tasks
+                View All
               </Button>
             </div>
             {tasks?.length > 0 ? (

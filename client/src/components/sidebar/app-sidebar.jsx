@@ -5,6 +5,7 @@ import {
   GraduationCap,
   CalendarCheck,
   House,
+  User
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "../nav-user";
@@ -40,6 +41,7 @@ export function AppSidebar(props) {
       { title: "Clubs", url: "/clubs", icon: GraduationCap },
       { title: "Attendance", url: "/attendance", icon: UserRoundCheck },
       { title: "Events", url: "/events", icon: CalendarCheck },
+      { title: "Profile", url: "/profile", icon: User },
     ],
   };
 

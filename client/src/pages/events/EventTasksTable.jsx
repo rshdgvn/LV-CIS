@@ -1,16 +1,14 @@
 "use client";
 
-import * as React from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ArrowLeft, Filter, Search } from "lucide-react";
+import { ArrowLeft, Bell, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -24,46 +22,38 @@ import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
 import { formatTaskStatus } from "@/utils/formatTaskStatus";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+function normalizeTasks(data) {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.tasks)) return data.tasks;
+  if (Array.isArray(data.data)) return data.data;
+  return [];
+}
 
 export default function EventTasksTable() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { token } = useAuth();
 
-  const [eventTitle, setEventTitle] = React.useState("");
-  const [eventDescription, setEventDescription] = React.useState("");
-  const [tasks, setTasks] = React.useState([]);
-  const [filteredTasks, setFilteredTasks] = React.useState([]);
-  const [search, setSearch] = React.useState("");
-  const [filterStatus, setFilterStatus] = React.useState("all");
-  const [filterPriority, setFilterPriority] = React.useState("all");
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDescription, setEventDescription] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const columnHelper = createColumnHelper();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
+
+        if (!id || !token) {
+          setLoading(false);
+          return;
+        }
 
         const eventRes = await fetch(`${APP_URL}/events/${id}`, {
           headers: {
@@ -74,8 +64,8 @@ export default function EventTasksTable() {
 
         if (!eventRes.ok) throw new Error("Failed to fetch event details.");
         const eventData = await eventRes.json();
-        setEventTitle(eventData.title);
-        setEventDescription(eventData.description);
+        setEventTitle(eventData.title || "");
+        setEventDescription(eventData.description || "");
 
         const taskRes = await fetch(`${APP_URL}/events/${id}/tasks`, {
           headers: {
@@ -86,8 +76,9 @@ export default function EventTasksTable() {
 
         if (!taskRes.ok) throw new Error("Failed to fetch tasks.");
         const taskData = await taskRes.json();
-        setTasks(taskData);
-        setFilteredTasks(taskData);
+
+        const normalized = normalizeTasks(taskData);
+        setTasks(normalized);
       } catch (err) {
         console.error(err);
         setError("Failed to load event tasks.");
@@ -99,114 +90,51 @@ export default function EventTasksTable() {
     fetchData();
   }, [id, token]);
 
-  React.useEffect(() => {
-    let filtered = tasks;
-
-    if (filterStatus !== "all") {
-      filtered = filtered.filter(
-        (t) => t.status?.toLowerCase() === filterStatus
-      );
-    }
-
-    if (filterPriority !== "all") {
-      filtered = filtered.filter(
-        (t) => t.priority?.toLowerCase() === filterPriority
-      );
-    }
-
-    if (search.trim() !== "") {
-      filtered = filtered.filter((t) =>
-        t.title?.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    setFilteredTasks(filtered);
-  }, [search, filterStatus, filterPriority, tasks]);
-
-  const columns = React.useMemo(
+  const columns = useMemo(
     () => [
       columnHelper.accessor("title", {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Tasks
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
+        header: "Tasks",
         cell: (info) => (
-          <div className="font-medium text-gray-100">{info.getValue()}</div>
+          <div className="font-medium text-gray-100 text-center">
+            {info.getValue() ?? "Untitled"}
+          </div>
         ),
       }),
       columnHelper.accessor("assigned_by", {
-        header: "Assigned By",
+        header: "Assigned",
         cell: (info) => {
-          const assigned = info.getValue() || [];
+          const val = info.getValue();
           return (
-            <span className="text-gray-400 text-sm">
-              {Array.isArray(assigned)
-                ? assigned.join(", ")
-                : assigned || "N/A"}
+            <span className="text-gray-400 text-sm text-center block">
+              {Array.isArray(val) ? val.join(", ") : val || "N/A"}
             </span>
-          );
-        },
-      }),
-      columnHelper.accessor("created_at", {
-        header: "Date Created",
-        cell: (info) => {
-          const date = new Date(info.getValue());
-          return (
-            <span className="text-gray-300">{date.toLocaleDateString()}</span>
           );
         },
       }),
       columnHelper.accessor("due_date", {
         header: "Due Date",
-        cell: (info) => {
-          const date = new Date(info.getValue());
-          return (
-            <span className="text-gray-300">{date.toLocaleDateString()}</span>
-          );
-        },
+        cell: (info) => (
+          <span className="text-gray-300 text-center block">
+            {info.getValue()
+              ? new Date(info.getValue()).toLocaleDateString()
+              : "—"}
+          </span>
+        ),
       }),
       columnHelper.accessor("status", {
         header: "Status",
         cell: (info) => {
           const status = info.getValue();
           return (
-            <span
-              className={`${getTaskStatusColor(
-                status
-              )} text-white text-xs px-3 py-1 rounded-full font-medium`}
-            >
-              {formatTaskStatus(status)}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor("priority", {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Priority
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: (info) => {
-          const priority = info.getValue();
-          const color =
-            priority === "high"
-              ? "text-red-400"
-              : priority === "medium"
-              ? "text-yellow-400"
-              : "text-green-400";
-          return (
-            <span className={`${color} font-semibold capitalize`}>
-              {priority}
-            </span>
+            <div className="flex justify-center">
+              <span
+                className={`${getTaskStatusColor(
+                  status
+                )} text-white text-xs px-3 py-1 rounded-full font-medium`}
+              >
+                {formatTaskStatus(status)}
+              </span>
+            </div>
           );
         },
       }),
@@ -214,21 +142,14 @@ export default function EventTasksTable() {
     []
   );
 
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const rowsPerPage = 8;
-
-  const totalPages = Math.ceil(filteredTasks.length / rowsPerPage);
-  const paginatedTasks = filteredTasks.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
   const table = useReactTable({
-    data: paginatedTasks,
+    data: tasks,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
+
+  const totalRows = 8;
+  const blankRows = Math.max(totalRows - tasks.length, 0);
 
   if (loading)
     return (
@@ -253,6 +174,7 @@ export default function EventTasksTable() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
+
         <div className="flex flex-col mb-10 ml-14 gap-3">
           <h1 className="text-4xl font-semibold text-white">
             {eventTitle || "Event Tasks"}
@@ -261,64 +183,36 @@ export default function EventTasksTable() {
         </div>
       </div>
 
-      <div className="flex items-center gap-10 w-5/6 mx-auto mb-4">
-        <div className="relative w-1/2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-          <Input
+      {/* Search + Filter Bar */}
+      <div className="flex items-center gap-3 mb-6 w-5/6 self-center">
+        <div className="flex items-center gap-2 bg-[#121212] rounded-full px-4 py-2 w-xl border border-neutral-800">
+          <Search className="text-gray-400 w-5 h-5" />
+          <input
+            type="text"
             placeholder="Search Tasks"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-neutral-900 border-neutral-800 text-white placeholder:text-gray-500 w-full"
+            className="flex-1 bg-transparent text-sm text-gray-300 outline-none placeholder-gray-500"
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 flex items-center"
-            >
-              <Filter className="w-4 h-4 mr-2" /> Filter
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-neutral-900 border-neutral-800 text-white">
-            <DropdownMenuLabel>Filter Tasks</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-gray-400 text-xs">
-              Status
-            </DropdownMenuLabel>
-            {["all", "pending", "in-progress", "completed"].map((status) => (
-              <DropdownMenuItem
-                key={status}
-                onClick={() => setFilterStatus(status)}
-              >
-                {status === "all" ? "All Statuses" : formatTaskStatus(status)}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-gray-400 text-xs">
-              Priority
-            </DropdownMenuLabel>
-            {["all", "high", "medium", "low"].map((priority) => (
-              <DropdownMenuItem
-                key={priority}
-                onClick={() => setFilterPriority(priority)}
-              >
-                {priority === "all"
-                  ? "All Priorities"
-                  : priority.charAt(0).toUpperCase() + priority.slice(1)}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+        <Button
+          variant="secondary"
+          className="bg-[#121212] border border-neutral-800 hover:bg-neutral-800 text-gray-300 text-sm rounded-full px-5 py-2 flex items-center gap-2 shadow-sm"
+        >
+          <Filter className="w-4 h-4" />
+          Filter
+        </Button>
       </div>
 
-      <div className="rounded-2xl w-5/6 border border-neutral-800 bg-neutral-900/70 self-center shadow-lg overflow-hidden">
+      <div className="rounded-2xl w-5/6 bg-[#121212] border border-neutral-800 self-center shadow-md overflow-hidden">
         <Table>
-          <TableHeader className="bg-neutral-900/80">
+          <TableHeader className="bg-[#1a1a1a]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-gray-400">
+                  <TableHead
+                    key={header.id}
+                    className="text-gray-400 text-sm py-4 px-6 text-center"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -330,41 +224,37 @@ export default function EventTasksTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
-            {(() => {
-              const MIN_ROWS = 8;
-              const rows = table.getRowModel().rows;
-              const paddedRows = [
-                ...rows,
-                ...Array(Math.max(0, MIN_ROWS - rows.length)).fill(null),
-              ];
 
-              return paddedRows.map((row, i) =>
-                row ? (
-                  <TableRow key={row.id} className="hover:bg-neutral-800/50">
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-4 text-sm">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ) : (
-                  <TableRow key={`empty-${i}`} className="opacity-20">
-                    {columns.map((_, colIndex) => (
-                      <TableCell
-                        key={colIndex}
-                        className="py-4 text-sm text-gray-600"
-                      >
-                        —
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                )
-              );
-            })()}
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                className="hover:bg-neutral-800/50 transition"
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+
+            {Array.from({ length: blankRows }).map((_, i) => (
+              <TableRow
+                key={`blank-${i}`}
+                className="hover:bg-neutral-800/10 transition"
+              >
+                {columns.map((_, j) => (
+                  <TableCell
+                    key={`blank-cell-${i}-${j}`}
+                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle"
+                  ></TableCell>
+                ))}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>

@@ -132,14 +132,14 @@ function LandingPage() {
                 <Button
                   variant="outline"
                   onClick={() => nav(admin ? "/admin/dashboard" : "/dashboard")}
-                  className="border-blue-600 text-blue-900 hover:bg-blue-950 hover:text-white transition"
+                  className="text-white transition"
                 >
                   Dashboard
                 </Button>
               ) : (
                 <Button
                   variant="outline"
-                  className="text-blue-600 hover:text-blue-400 transition"
+                  className="text-white transition"
                   onClick={() => nav("/login")}
                 >
                   Login

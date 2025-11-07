@@ -22,7 +22,6 @@ class ClubMembershipSeeder extends Seeder
                 Member::firstOrCreate(
                     ['user_id' => $user->id],
                     [
-                        'student_id' => fake()->unique()->numerify('STU###'),
                         'course' => fake()->randomElement(['BSIS', 'BAB', 'BSSW', 'ACT', 'BSA', 'BSAIS']),
                         'year_level' => fake()->numberBetween(1, 4),
                     ]

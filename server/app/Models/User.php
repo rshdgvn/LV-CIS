@@ -25,7 +25,8 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
-        'role'
+        'role',
+        'avatar'
     ];
 
     /**
@@ -73,5 +74,10 @@ class User extends Authenticatable
         $url = config('app.frontend_url') . "/reset-password?token=$token&email=" . urlencode($this->email);
 
         $this->notify(new ResetPassword($url));
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
     }
 }

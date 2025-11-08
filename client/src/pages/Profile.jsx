@@ -8,7 +8,6 @@ import "nprogress/nprogress.css";
 import { toast } from "sonner";
 import { SkeletonProfile } from "@/components/skeletons/SkeletonProfile";
 
-
 export default function Profile() {
   const { token } = useAuth();
   const [data, setData] = useState({
@@ -24,6 +23,7 @@ export default function Profile() {
     new_password_confirmation: "",
   });
 
+  // ✅ Fetch profile from Laravel API
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -68,6 +68,7 @@ export default function Profile() {
     }
   };
 
+  // ✅ Save profile + avatar
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -76,25 +77,24 @@ export default function Profile() {
       const formData = new FormData();
       formData.append("_method", "PATCH");
 
-      Object.entries(data.user).forEach(([key, value]) => {
-        if (key === "avatar") {
-          if (value instanceof File) {
-            formData.append("avatar", value);
-          }
-        } else {
-          formData.append(key, value ?? "");
-        }
-      });
+      // ✅ Append main user fields
+      formData.append("name", data.user.name || "");
+      formData.append("username", data.user.username || "");
+      formData.append("email", data.user.email || "");
+      formData.append("role", data.user.role || "");
 
-      Object.entries(data.member).forEach(([key, value]) => {
-        formData.append(key, value ?? "");
-      });
+      // ✅ Append avatar file if changed
+      if (data.user.avatar instanceof File) {
+        formData.append("avatar", data.user.avatar);
+      }
+
+      // ✅ Append member info
+      formData.append("course", data.member.course || "");
+      formData.append("year_level", data.member.year_level || "");
 
       const res = await fetch(`${APP_URL}/user/profile`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
@@ -102,6 +102,7 @@ export default function Profile() {
 
       const updated = await res.json();
       setData(updated);
+      setAvatarPreview(null);
       setEditMode(false);
       toast.success("Profile updated successfully!");
     } catch (err) {
@@ -174,6 +175,14 @@ export default function Profile() {
               alt="Avatar"
               className="w-20 h-20 rounded-full object-cover border-2 border-gray-700"
             />
+            {editMode && (
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="text-sm text-gray-300"
+              />
+            )}
             <div>
               <h2 className="text-lg font-semibold">{data.user.name}</h2>
               <p className="text-sm text-gray-400">{data.user.email}</p>
@@ -192,50 +201,45 @@ export default function Profile() {
         <div className="grid md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">
-              First Name
+              Full Name
             </label>
             <input
               type="text"
-              value={data.user.name?.split(" ")[0] || ""}
+              value={data.user.name || ""}
               readOnly={!editMode}
-              onChange={(e) =>
-                handleChange("user", "name", e.target.value || "")
-              }
+              onChange={(e) => handleChange("user", "name", e.target.value)}
               className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
                 editMode ? "focus:border-blue-500" : ""
               }`}
             />
           </div>
+
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              Last Name
-            </label>
+            <label className="block text-sm text-gray-400 mb-1">Username</label>
             <input
               type="text"
-              value={data.user.name?.split(" ")[1] || ""}
+              value={data.user.username || ""}
               readOnly={!editMode}
-              onChange={(e) =>
-                handleChange("user", "name", e.target.value || "")
-              }
-              className={`w-full p-2 rounded-md bg-neutral-90 0 border border-neutral-700 text-white ${
+              onChange={(e) => handleChange("user", "username", e.target.value)}
+              className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
                 editMode ? "focus:border-blue-500" : ""
               }`}
             />
           </div>
+
           <div>
             <label className="block text-sm text-gray-400 mb-1">Course</label>
             <input
               type="text"
               value={data.member.course || ""}
               readOnly={!editMode}
-              onChange={(e) =>
-                handleChange("member", "course", e.target.value || "")
-              }
+              onChange={(e) => handleChange("member", "course", e.target.value)}
               className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
                 editMode ? "focus:border-blue-500" : ""
               }`}
             />
           </div>
+
           <div>
             <label className="block text-sm text-gray-400 mb-1">
               Year Level
@@ -245,7 +249,7 @@ export default function Profile() {
               value={data.member.year_level || ""}
               readOnly={!editMode}
               onChange={(e) =>
-                handleChange("member", "year_level", e.target.value || "")
+                handleChange("member", "year_level", e.target.value)
               }
               className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
                 editMode ? "focus:border-blue-500" : ""

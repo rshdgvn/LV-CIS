@@ -97,6 +97,11 @@ return [
             'retry_after' => 60,
         ],
 
+        'mailtrap' => [
+            'transport' => 'mailtrap',
+            'api_token' => env('MAILTRAP_API_KEY'),
+        ],
+
     ],
 
     /*

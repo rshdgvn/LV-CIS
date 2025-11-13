@@ -102,6 +102,11 @@ return [
             'api_token' => env('MAILTRAP_API_KEY'),
         ],
 
+        'mailersend' => [
+            'transport' => 'mailersend',
+             'api_key' => env('MAIL_MAILERSEND_API_KEY'),
+        ],
+
     ],
 
     /*

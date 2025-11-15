@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function LoginForm({
   className,
@@ -25,6 +26,7 @@ export function LoginForm({
 }) {
   const [resendDisabled, setResendDisabled] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const nav = useNavigate();
 
   const handleResendClick = async () => {
     if (resendDisabled) return;
@@ -50,7 +52,7 @@ export function LoginForm({
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">
-            La Verdad Club Integrated System
+            Welcome Back
           </CardTitle>
           <CardDescription>Login with your La Verdad account</CardDescription>
         </CardHeader>
@@ -144,10 +146,24 @@ export function LoginForm({
 
               <Button
                 type="submit"
-                className="w-full bg-blue-900 text-white mt-2"
+                className="w-full bg-blue-900 text-white"
                 disabled={loading}
               >
                 {loading ? "Logging in..." : "Login"}
+              </Button>
+
+              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                <span className="bg-card text-muted-foreground relative z-10 px-2">
+                  Don't have an account?
+                </span>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full bg-blue-900 text-white"
+                onClick={() => nav("/signup")}
+              >
+                Create an account →
               </Button>
 
               <div className="text-muted-foreground text-center text-xs">

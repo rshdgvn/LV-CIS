@@ -39,7 +39,7 @@ export default function GoogleLoginError() {
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4 items-center">
-          <p className="text-center text-red-600">{message}</p>
+          <p className="text-center text-red-400">{message}</p>
 
           <Button
             className="w-full bg-blue-900 hover:bg-blue-950 text-white mt-2"

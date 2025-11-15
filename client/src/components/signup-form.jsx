@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 export function SignupForm({
   className,
@@ -27,6 +28,8 @@ export function SignupForm({
   handleGoogleSignup,
   errors = {},
 }) {
+  const nav = useNavigate();
+
   return (
     <div className={cn("flex flex-col gap-6", className)}>
       <Card>
@@ -171,6 +174,20 @@ export function SignupForm({
                 Create Account
               </Button>
 
+              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                <span className="bg-card text-muted-foreground relative z-10 px-2">
+                  Already have an account?
+                </span>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full bg-blue-900 text-white"
+                onClick={() => nav("/login")}
+              >
+                Sign in instead →
+              </Button>
+
               <div className="text-muted-foreground text-center text-xs">
                 Only La Verdad work accounts are accepted. For help, contact IT
                 support.
@@ -179,6 +196,17 @@ export function SignupForm({
           </form>
         </CardContent>
       </Card>
+      <div className="text-muted-foreground text-center text-xs *:[a]:underline *:[a]:underline-offset-4">
+        By clicking Login, you agree to our{" "}
+        <a target="blank" href="https://policies.google.com/terms?hl=en-US">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a target="blank" href="https://policies.google.com/privacy?hl=en-US">
+          Privacy Policy
+        </a>
+        .
+      </div>
     </div>
   );
 }

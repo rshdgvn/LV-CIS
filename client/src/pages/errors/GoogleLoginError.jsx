@@ -43,9 +43,9 @@ export default function GoogleLoginError() {
 
           <Button
             className="w-full bg-blue-900 hover:bg-blue-950 text-white mt-2"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/login")}
           >
-            Signup
+            Go Back to Login
           </Button>
         </CardContent>
       </Card>

@@ -51,9 +51,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">
-            Welcome Back
-          </CardTitle>
+          <CardTitle className="text-xl">Welcome Back</CardTitle>
           <CardDescription>Login with your La Verdad account</CardDescription>
         </CardHeader>
 
@@ -108,7 +106,7 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                   <a
                     onClick={() => (window.location.href = "/forgot-password")}
-                    className="ml-auto cursor-pointer text-sm underline-offset-4 text-blue-700 hover:underline"
+                    className="ml-auto cursor-pointer text-sm underline-offset-4 text-blue-400 hover:underline"
                   >
                     Forgot your password?
                   </a>
@@ -126,23 +124,26 @@ export function LoginForm({
                 )}
               </div>
 
-              <div className="mt-1">
-                {showResend && (
+              {showResend && (
+                <div className="flex mt-1 justify-between">
+                  <p className="text-sm text-gray-200">
+                    Didn't receive an Email?
+                  </p>
                   <button
                     onClick={handleResendClick}
                     disabled={resendDisabled}
                     className={`text-sm hover:underline self-start ${
                       resendDisabled
                         ? "text-gray-400 cursor-not-allowed"
-                        : "text-blue-400"
+                        : "text-blue-400 cursor-pointer"
                     }`}
                   >
                     {resendDisabled
                       ? `Resend email in ${cooldown}s`
                       : "Resend verification email"}
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               <Button
                 type="submit"

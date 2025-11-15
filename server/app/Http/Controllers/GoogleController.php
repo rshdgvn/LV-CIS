@@ -28,9 +28,13 @@ class GoogleController extends Controller
             }
 
             $user = User::where('email', $googleUser->getEmail())->first();
-
             if (!$user) {
                 $msg = urlencode('This account is not registered. Please sign up first.');
+                return redirect()->away(config('app.frontend_url') . "/google/error?message={$msg}");
+            }
+
+            if (!$user->hasVerifiedEmail()) {
+                $msg = urlencode('Please verify your email before logging in.');
                 return redirect()->away(config('app.frontend_url') . "/google/error?message={$msg}");
             }
 

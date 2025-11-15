@@ -12,16 +12,18 @@ import {
 import { APP_URL } from "@/lib/config";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/providers/ToastProvider"; // import toast
 
 export function ResetPassword({ className, ...props }) {
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(""); // for validation/error messages
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { addToast } = useToast(); // toast hook
 
   useEffect(() => {
     const urlToken = searchParams.get("token");
@@ -48,13 +50,17 @@ export function ResetPassword({ className, ...props }) {
       });
 
       const data = await res.json();
-      setMessage(data.message || "Something went wrong");
 
       if (res.ok) {
+        addToast("Password reset successfully!", "success"); // only success
         setTimeout(() => navigate("/login"), 2000);
+      } else {
+        // do not use toast for error
+        setMessage(data.message || "Something went wrong.");
       }
     } catch (err) {
-      setMessage("Something went wrong. Please try again.");
+      console.error(err);
+      setMessage("Something went wrong. Please try again."); // still no toast
     } finally {
       setLoading(false);
     }
@@ -63,7 +69,7 @@ export function ResetPassword({ className, ...props }) {
   return (
     <div
       className={cn(
-        "flex min-h-screen items-center justify-center px-4",
+        "flex min-h-screen items-center justify-center px-4 bg-slate-950",
         className
       )}
       {...props}
@@ -81,17 +87,7 @@ export function ResetPassword({ className, ...props }) {
 
           <CardContent>
             <form onSubmit={handleSubmit} className="grid gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  disabled
-                  className="bg-gray-100 cursor-not-allowed"
-                />
-              </div>
-
+              <input type="hidden" value={email} readOnly />
               <input type="hidden" value={token} readOnly />
 
               <div className="grid gap-3">
@@ -127,13 +123,7 @@ export function ResetPassword({ className, ...props }) {
               </Button>
 
               {message && (
-                <p
-                  className={`text-sm text-center mt-2 ${
-                    message.toLowerCase().includes("success")
-                      ? "text-green-600"
-                      : "text-red-500"
-                  }`}
-                >
+                <p className="text-sm text-center mt-2 text-red-500">
                   {message}
                 </p>
               )}

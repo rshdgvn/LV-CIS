@@ -84,7 +84,7 @@ class PasswordResetController extends Controller
             ->first();
 
         if (!$record || !Hash::check($request->token, $record->token)) {
-            return response()->json(['message' => 'Invalid or expired token.'], 400);
+            return response()->json(['message' => 'Invalid or expired link.'], 400);
         }
 
         if (Carbon::parse($record->created_at)->addHour()->isPast()) {

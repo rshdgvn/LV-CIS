@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { SignupForm } from "@/components/signup-form";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +34,7 @@ function Signup() {
     e.preventDefault();
     setErrors({});
     NProgress.start();
+    setLoading(true);
 
     try {
       const res = await fetch(`${APP_URL}/signup`, {
@@ -48,24 +50,21 @@ function Signup() {
 
       if (!res.ok) {
         setErrors(data.errors || { general: data.message || "Signup failed" });
+        setLoading(false);
         return;
       }
 
-      setLoading(true);
+      // Do not set token yet if email verification is required
+      // Instead, show a message
+      alert("Account created! Please check your email to verify your account.");
 
-      await setToken(data.token);
-
-      const userData = await getUser(data.token);
-
-      if (userData?.role === "admin") {
-        nav("/admin/dashboard");
-      } else {
-        nav("/dashboard");
-      }
+      // Optionally, navigate to login page
+      nav("/login");
     } catch (error) {
       console.error("Signup error:", error);
       setErrors({ general: "Something went wrong. Try again." });
     } finally {
+      setLoading(false);
       NProgress.done();
     }
   };
@@ -77,7 +76,7 @@ function Signup() {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 bg-slate-950">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6 md:p-10 bg-slate-950">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="/" className="flex items-center gap-2 self-center font-medium">
           <img

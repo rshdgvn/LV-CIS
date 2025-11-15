@@ -26,10 +26,9 @@ export function SignupForm({
   submitSignup,
   handleGoogleSignup,
   errors = {},
-  ...props
 }) {
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
@@ -48,28 +47,18 @@ export function SignupForm({
                 type="button"
                 onClick={handleGoogleSignup}
               >
-                <svg
-                  className="h-4 w-4 mr-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                    fill="currentColor"
-                  />
-                </svg>
                 Sign up with Google
               </Button>
 
-              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                <span className="bg-card text-muted-foreground relative z-10 px-2">
+              <div className="text-center text-sm relative">
+                <span className="px-2 bg-card text-muted-foreground relative z-10">
                   Or continue with
                 </span>
               </div>
 
               {/* First + Last Name */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-3">
+                <div className="grid gap-1">
                   <Label>First name</Label>
                   <Input
                     name="first_name"
@@ -84,7 +73,7 @@ export function SignupForm({
                   )}
                 </div>
 
-                <div className="grid gap-3">
+                <div className="grid gap-1">
                   <Label>Last name</Label>
                   <Input
                     name="last_name"
@@ -101,7 +90,7 @@ export function SignupForm({
               </div>
 
               {/* Email */}
-              <div className="grid gap-3">
+              <div className="grid gap-1">
                 <Label>Email address</Label>
                 <Input
                   name="email"
@@ -118,7 +107,7 @@ export function SignupForm({
               </div>
 
               {/* Password */}
-              <div className="grid gap-3">
+              <div className="grid gap-1">
                 <Label>Password</Label>
                 <Input
                   name="password"
@@ -134,8 +123,7 @@ export function SignupForm({
 
               {/* Course + Year Level */}
               <div className="grid grid-cols-2 gap-3">
-                {/* Course */}
-                <div className="grid gap-3">
+                <div className="grid gap-1">
                   <Label>Course</Label>
                   <Select
                     value={formData.course}
@@ -150,9 +138,9 @@ export function SignupForm({
                       <SelectGroup>
                         <SelectLabel>Courses</SelectLabel>
                         {["ACT", "BAB", "BSA", "BSAIS", "BSIS", "BSSW"].map(
-                          (course) => (
-                            <SelectItem key={course} value={course}>
-                              {course}
+                          (c) => (
+                            <SelectItem key={c} value={c}>
+                              {c}
                             </SelectItem>
                           )
                         )}
@@ -163,8 +151,8 @@ export function SignupForm({
                     <p className="text-destructive text-xs">{errors.course}</p>
                   )}
                 </div>
-                {/* Year Level */}
-                <div className="grid gap-3">
+
+                <div className="grid gap-1">
                   <Label>Year Level</Label>
                   <Select
                     value={formData.year_level}
@@ -178,9 +166,9 @@ export function SignupForm({
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Year</SelectLabel>
-                        {[1, 2, 3, 4].map((year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
+                        {[1, 2, 3, 4].map((y) => (
+                          <SelectItem key={y} value={y.toString()}>
+                            {y}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -207,18 +195,6 @@ export function SignupForm({
           </form>
         </CardContent>
       </Card>
-
-      <div className="text-muted-foreground text-center text-xs *:[a]:underline *:[a]:underline-offset-4">
-        By joining, you agree to our{" "}
-        <a target="blank" href="https://policies.google.com/terms?hl=en-US">
-          Terms of Service
-        </a>{" "}
-        and{" "}
-        <a target="blank" href="https://policies.google.com/privacy?hl=en-US">
-          Privacy Policy
-        </a>
-        .
-      </div>
     </div>
   );
 }

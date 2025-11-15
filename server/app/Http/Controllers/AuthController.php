@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
 use App\Rules\LaverdadEmail;
+use App\Mail\VerifyEmailMail;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -34,7 +36,11 @@ class AuthController extends Controller
             'year_level' => $validated['year_level'],
         ]);
 
-        event(new Registered($user));
+        $frontendUrl = config('app.frontend_url');
+        $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
+
+        Mail::to($user->email)->send(new VerifyEmailMail($user->first_name, $verificationUrl));
+
 
         return response()->json([
             'message' => 'Account created! Please check your email to verify your account.',
@@ -81,23 +87,36 @@ class AuthController extends Controller
             'message' => 'Logged out successfully'
         ]);
     }
-
+    
     public function verify(Request $request, $id, $hash)
     {
         $user = User::findOrFail($id);
 
         if (!hash_equals($hash, sha1($user->getEmailForVerification()))) {
-            return response()->json(['message' => 'Invalid verification link.'], 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification link',
+                'redirect_url' => config('app.frontend_url') . '/login?verified=0'
+            ], 400);
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Already verified.'], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Email already verified',
+                'redirect_url' => config('app.frontend_url') . '/login?verified=1'
+            ]);
         }
 
         $user->markEmailAsVerified();
 
-        return response()->json(['message' => 'Email successfully verified!']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Email successfully verified!',
+            'redirect_url' => config('app.frontend_url') . '/login?verified=1'
+        ]);
     }
+
 
     public function resendVerification(Request $request)
     {

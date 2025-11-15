@@ -29,6 +29,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Attendances from "./pages/attendances/Attendances";
 import AttendanceDetails from "./pages/attendances/AttendanceDetails";
 import Signup from "./pages/auth/Signup";
+import VerifyEmail from "./pages/auth/VerifyEmail";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ function App() {
               <Route path="all-clubs" element={<AllClubsPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/google/callback" element={<GoogleCallback />} />
 
               <Route path="/forgot-password" element={<ForgotPassword />} />

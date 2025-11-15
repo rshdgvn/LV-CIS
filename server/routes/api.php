@@ -24,7 +24,6 @@ Route::post('/forgot-password', [PasswordResetController::class, 'sendResetToken
 Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
-    ->middleware('signed')
     ->name('verification.verify');
 
 Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory']);

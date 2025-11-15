@@ -7,10 +7,11 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState({
     id: null,
-    name: "",
-    username: "",
+    first_name: "",
+    last_name: "",
     email: "",
     role: "",
+    avatar: "",
     created_at: "",
     updated_at: "",
     email_verified_at: null,
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const getUser = async (authToken = token) => {
     if (!authToken) {
-      setLoading(false)
+      setLoading(false);
       return null;
     }
 

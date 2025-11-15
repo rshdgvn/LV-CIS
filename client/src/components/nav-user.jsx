@@ -77,18 +77,25 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar
-                className={`h-10 w-10 rounded-lg ${isCollapsed && 'ml-8'}`}
+                className={`h-10 w-10 rounded-lg ${isCollapsed && "ml-8"}`}
               >
                 <AvatarImage src={user.avatar} alt={user.name} />
               </Avatar>
               {!isCollapsed && (
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">
+                    {" "}
+                    {`${user.first_name || ""} ${
+                      user.last_name || ""
+                    }`.trim() || "User"}
+                  </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               )}
 
-              <MoreVertical className={`ml-auto w-5 h-5 ${isCollapsed && "mr-5"}`} />
+              <MoreVertical
+                className={`ml-auto w-5 h-5 ${isCollapsed && "mr-5"}`}
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

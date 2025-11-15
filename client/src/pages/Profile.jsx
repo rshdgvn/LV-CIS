@@ -11,9 +11,10 @@ import { SkeletonProfile } from "@/components/skeletons/SkeletonProfile";
 export default function Profile() {
   const { token } = useAuth();
   const [data, setData] = useState({
-    user: { name: "", username: "", email: "", role: "", avatar: "" },
+    user: { first_name: "", last_name: "", email: "", role: "", avatar: "" },
     member: { course: "", year_level: "" },
   });
+
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -23,7 +24,6 @@ export default function Profile() {
     new_password_confirmation: "",
   });
 
-  // ✅ Fetch profile from Laravel API
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -37,6 +37,7 @@ export default function Profile() {
       if (!res.ok) throw new Error("Failed to fetch profile");
       const json = await res.json();
       setData(json);
+      console.log(json)
     } catch (err) {
       console.error(err);
       toast.error("Failed to load profile");
@@ -68,7 +69,6 @@ export default function Profile() {
     }
   };
 
-  // ✅ Save profile + avatar
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -77,18 +77,15 @@ export default function Profile() {
       const formData = new FormData();
       formData.append("_method", "PATCH");
 
-      // ✅ Append main user fields
-      formData.append("name", data.user.name || "");
-      formData.append("username", data.user.username || "");
+      formData.append("first_name", data.user.first_name || "");
+      formData.append("last_name", data.user.last_name || "");
       formData.append("email", data.user.email || "");
       formData.append("role", data.user.role || "");
 
-      // ✅ Append avatar file if changed
       if (data.user.avatar instanceof File) {
         formData.append("avatar", data.user.avatar);
       }
 
-      // ✅ Append member info
       formData.append("course", data.member.course || "");
       formData.append("year_level", data.member.year_level || "");
 
@@ -160,7 +157,6 @@ export default function Profile() {
         Manage your account settings and preferences
       </p>
 
-      {/* PROFILE CARD */}
       <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 mb-10 shadow-lg border border-neutral-800">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -169,7 +165,9 @@ export default function Profile() {
                 avatarPreview ||
                 data.user.avatar ||
                 `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
-                  data.user.name || "User"
+                  `${data.user.first_name || ""} ${
+                    data.user.last_name || ""
+                  }`.trim() || "User"
                 )}`
               }
               alt="Avatar"
@@ -184,7 +182,11 @@ export default function Profile() {
               />
             )}
             <div>
-              <h2 className="text-lg font-semibold">{data.user.name}</h2>
+              <h2 className="text-lg font-semibold">
+                {`${data.user.first_name || ""} ${
+                  data.user.last_name || ""
+                }`.trim() || "User"}
+              </h2>
               <p className="text-sm text-gray-400">{data.user.email}</p>
             </div>
           </div>
@@ -197,17 +199,18 @@ export default function Profile() {
           </button>
         </div>
 
-        {/* Profile Info */}
         <div className="grid md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">
-              Full Name
+              First Name
             </label>
             <input
               type="text"
-              value={data.user.name || ""}
+              value={data.user.first_name || ""}
               readOnly={!editMode}
-              onChange={(e) => handleChange("user", "name", e.target.value)}
+              onChange={(e) =>
+                handleChange("user", "first_name", e.target.value)
+              }
               className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
                 editMode ? "focus:border-blue-500" : ""
               }`}
@@ -215,18 +218,21 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Username</label>
+            <label className="block text-sm text-gray-400 mb-1">
+              Last Name
+            </label>
             <input
               type="text"
-              value={data.user.username || ""}
+              value={data.user.last_name || ""}
               readOnly={!editMode}
-              onChange={(e) => handleChange("user", "username", e.target.value)}
+              onChange={(e) =>
+                handleChange("user", "last_name", e.target.value)
+              }
               className={`w-full p-2 rounded-md bg-neutral-900 border border-neutral-700 text-white ${
                 editMode ? "focus:border-blue-500" : ""
               }`}
             />
           </div>
-
           <div>
             <label className="block text-sm text-gray-400 mb-1">Course</label>
             <input
@@ -259,7 +265,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ACCOUNT SECURITY CARD */}
       <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 shadow-lg border border-neutral-800">
         <h2 className="text-lg font-semibold mb-4">Account Security</h2>
         <form onSubmit={handlePasswordChange} className="space-y-4">

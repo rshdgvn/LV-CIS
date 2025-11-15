@@ -22,20 +22,26 @@ class GoogleController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            if (!str_ends_with($googleUser->getEmail(), '@student.laverdad.edu.ph')) {
-                $msg = urlencode('Only LV student emails allowed');
+            if (!str_ends_with($googleUser->getEmail(), '.laverdad.edu.ph')) {
+                $msg = urlencode('Only La Verdad work emails allowed');
                 return redirect()->away(config('app.frontend_url') . "/google/error?message={$msg}");
             }
+
+            $fullName = $googleUser->getName();
+            $nameParts = explode(' ', $fullName, 2);
+
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? '';
 
             $user = User::firstOrCreate(
                 ['email' => $googleUser->getEmail()],
                 [
-                    'name' => $googleUser->getName(),
-                    'username' => explode('@', $googleUser->getEmail())[0],
-                    'password' => bcrypt(str()->random(16)),
-                    'role' => 'user',
-                    'google_id' => $googleUser->getId(), 
-                    'avatar' => $googleUser->getAvatar(), 
+                    'first_name' => $firstName,
+                    'last_name'  => $lastName,
+                    'password'   => bcrypt(str()->random(16)), 
+                    'role'       => 'user',
+                    'google_id'  => $googleUser->getId(),
+                    'avatar'     => $googleUser->getAvatar(),
                 ]
             );
 

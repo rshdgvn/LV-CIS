@@ -9,6 +9,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function SignupForm({
   className,
@@ -52,21 +61,21 @@ export function SignupForm({
                 Sign up with Google
               </Button>
 
-              {/* <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                  <span className="bg-card text-muted-foreground relative z-10 px-2">
-                    Or continue with
-                  </span>
-                </div> */}
+              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                <span className="bg-card text-muted-foreground relative z-10 px-2">
+                  Or continue with
+                </span>
+              </div>
 
               {/* First + Last Name */}
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>First Name</Label>
+                <div className="grid gap-3">
+                  <Label>First name</Label>
                   <Input
                     name="first_name"
                     value={formData.first_name}
                     onChange={handleChange}
-                    placeholder="Juan"
+                    placeholder="First name"
                   />
                   {errors.first_name && (
                     <p className="text-destructive text-xs">
@@ -75,13 +84,13 @@ export function SignupForm({
                   )}
                 </div>
 
-                <div>
-                  <Label>Last Name</Label>
+                <div className="grid gap-3">
+                  <Label>Last name</Label>
                   <Input
                     name="last_name"
                     value={formData.last_name}
                     onChange={handleChange}
-                    placeholder="Dela Cruz"
+                    placeholder="Last name"
                   />
                   {errors.last_name && (
                     <p className="text-destructive text-xs">
@@ -125,27 +134,58 @@ export function SignupForm({
 
               {/* Course + Year Level */}
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                {/* Course */}
+                <div className="grid gap-3">
                   <Label>Course</Label>
-                  <Input
-                    name="course"
+                  <Select
                     value={formData.course}
-                    onChange={handleChange}
-                    placeholder="BSIT, BSA, BSED..."
-                  />
+                    onValueChange={(value) =>
+                      handleChange({ target: { name: "course", value } })
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select your course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Courses</SelectLabel>
+                        {["ACT", "BAB", "BSA", "BSAIS", "BSIS", "BSSW"].map(
+                          (course) => (
+                            <SelectItem key={course} value={course}>
+                              {course}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                   {errors.course && (
                     <p className="text-destructive text-xs">{errors.course}</p>
                   )}
                 </div>
-
-                <div>
+                {/* Year Level */}
+                <div className="grid gap-3">
                   <Label>Year Level</Label>
-                  <Input
-                    name="year_level"
+                  <Select
                     value={formData.year_level}
-                    onChange={handleChange}
-                    placeholder="1st, 2nd, 3rd, 4th"
-                  />
+                    onValueChange={(value) =>
+                      handleChange({ target: { name: "year_level", value } })
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select year level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Year</SelectLabel>
+                        {[1, 2, 3, 4].map((year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                   {errors.year_level && (
                     <p className="text-destructive text-xs">
                       {errors.year_level}
@@ -169,7 +209,7 @@ export function SignupForm({
       </Card>
 
       <div className="text-muted-foreground text-center text-xs *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our{" "}
+        By joining, you agree to our{" "}
         <a target="blank" href="https://policies.google.com/terms?hl=en-US">
           Terms of Service
         </a>{" "}

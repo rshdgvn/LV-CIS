@@ -45,7 +45,7 @@ export function LoginForm({
                       fill="currentColor"
                     />
                   </svg>
-                  Sign in with Google
+                  Log in with Google
                 </Button>
               </div>
 
@@ -57,14 +57,14 @@ export function LoginForm({
 
               <div className="grid gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="login">Email or Username</Label>
+                  <Label htmlFor="login">Email</Label>
                   <Input
                     name="login"
                     value={formData.login}
                     onChange={handleChange}
                     id="login"
                     type="text"
-                    placeholder="Email or Username"
+                    placeholder="Email"
                   />
                   {errors.login ? (
                     <p className="text-destructive text-xs">{errors.login}</p>
@@ -91,6 +91,7 @@ export function LoginForm({
                     onChange={handleChange}
                     id="password"
                     type="password"
+                     placeholder="Password"
                   />
                   {errors.password && (
                     <p className="text-destructive text-xs">

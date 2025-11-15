@@ -15,6 +15,8 @@ class AuthController extends Controller
             'last_name'  => ['required', 'string', 'max:255'],
             'email'      => ['required', 'email', 'unique:users,email'],
             'password'   => ['required', 'string', 'min:6'],
+            'course'     => ['required', 'string', 'max:255'],
+            'year_level' => ['required', 'string', 'max:255'],
         ]);
 
         $user = User::create([
@@ -22,16 +24,34 @@ class AuthController extends Controller
             'last_name'  => $validated['last_name'],
             'email'      => $validated['email'],
             'password'   => Hash::make($validated['password']),
+            'role'       => 'member'
+        ]);
+
+        $member = $user->member()->create([
+            'course'     => $validated['course'],
+            'year_level' => $validated['year_level'],
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Account created successfully!',
-            'user'    => $user,
-            'token'   => $token,
+            'user' => [
+                'id'         => $user->id,
+                'first_name' => $user->first_name,
+                'last_name'  => $user->last_name,
+                'email'      => $user->email,
+                'role'       => $user->role,
+                'avatar'     => $user->avatar ?? url('default-avatar.png'),
+                'member'     => [
+                    'course'     => $member->course,
+                    'year_level' => $member->year_level,
+                ],
+            ],
+            'token' => $token,
         ], 201);
     }
+
 
     public function login(Request $request)
     {

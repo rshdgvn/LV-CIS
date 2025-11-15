@@ -62,7 +62,7 @@ function Login() {
   return (
     <div
       className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 
-  bg-linear-to-b from-slate-950 via-slate-900 to-slate-800"
+  bg-slate-900"
     >
       <div className="flex w-full max-w-sm flex-col gap-6 bg-s">
         <a href="/" className="flex items-center gap-2 self-center font-medium">

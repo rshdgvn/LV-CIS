@@ -28,6 +28,7 @@ import EventTasksTable from "./pages/events/EventTasksTable";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Attendances from "./pages/attendances/Attendances";
 import AttendanceDetails from "./pages/attendances/AttendanceDetails";
+import Signup from "./pages/auth/Signup";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="all-clubs" element={<AllClubsPage />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/google/callback" element={<GoogleCallback />} />
 
               <Route path="/forgot-password" element={<ForgotPassword />} />

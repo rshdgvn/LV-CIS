@@ -127,7 +127,7 @@ function LandingPage() {
 
           {/* Auth Button + Mobile Toggle */}
           <div className="flex items-center gap-3">
-            <div className="hidden md:block">
+            <div className="hidden md:flex gap-3">
               {isLoggedIn() ? (
                 <Button
                   variant="outline"
@@ -145,22 +145,27 @@ function LandingPage() {
                   Login
                 </Button>
               )}
+              <Button
+                className="bg-blue-900 text-white hover:bg-blue-950"
+                onClick={() => nav("/signup")}
+              >
+                Get Started
+              </Button>
             </div>
-
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileOpen((s) => !s)}
               className="md:hidden p-2 rounded-lg"
               aria-label="Toggle menu"
             >
-              <Menu className="w-7 h-7 text-blue-600 hover:text-blue-400 transition" />
+              <Menu className="w-7 h-7 text-white hover:text-blue-400 transition" />
             </button>
           </div>
         </div>
 
         {/* Mobile Nav Drawer */}
         {mobileOpen && (
-          <div className="md:hidden mt-3 px-6 pb-4">
+          <div className="md:hidden mt-3 px-6 pb-4 shadow-md backdrop-blur-lg">
             <div className="flex flex-col gap-3 text-gray-700">
               {["home", "features", "about", "clubs"].map((id) => (
                 <button
@@ -189,6 +194,7 @@ function LandingPage() {
                   </Button>
                 ) : (
                   <Button
+                    variant="outline"
                     className="w-full bg-blue-900 text-white hover:bg-blue-950"
                     onClick={() => nav("/login")}
                   >
@@ -196,6 +202,12 @@ function LandingPage() {
                   </Button>
                 )}
               </div>
+              <Button
+                className="bg-blue-900 text-white hover:bg-blue-950"
+                onClick={() => nav("/signup")}
+              >
+                Get Started
+              </Button>
             </div>
           </div>
         )}
@@ -258,7 +270,7 @@ function LandingPage() {
             <motion.div whileHover={{ scale: 1.05 }}>
               <Button
                 className="mt-6 bg-blue-900 text-white hover:bg-blue-950"
-                onClick={() => nav("/login")}
+                onClick={() => nav("/signup")}
               >
                 Get Started
               </Button>

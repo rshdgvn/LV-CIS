@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LoginForm } from "@/components/login-form";
+import { SignupForm } from "@/components/signup-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "../../assets/lvcc-logo.png";
@@ -8,10 +8,19 @@ import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import Loader from "@/components/app/Loader";
 
-function Login() {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+function Signup() {
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    course: "",
+    year_level: "",
+  });
+
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
+
   const { setToken, getUser } = useAuth();
   const nav = useNavigate();
 
@@ -20,13 +29,13 @@ function Login() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setErrors({});
     NProgress.start();
 
     try {
-      const res = await fetch(`${APP_URL}/login`, {
+      const res = await fetch(`${APP_URL}/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -38,7 +47,7 @@ function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrors(data.errors || { general: data.message || "Login failed" });
+        setErrors(data.errors || { general: data.message || "Signup failed" });
         return;
       }
 
@@ -54,18 +63,18 @@ function Login() {
         nav("/dashboard");
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Signup error:", error);
       setErrors({ general: "Something went wrong. Try again." });
     } finally {
       NProgress.done();
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleSignup = () => {
     window.location.href = `${APP_URL}/auth/google`;
   };
 
-  if (loading) return <Loader />; 
+  if (loading) return <Loader />;
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 bg-slate-900">
@@ -78,16 +87,16 @@ function Login() {
           />
         </a>
 
-        <LoginForm
+        <SignupForm
           formData={formData}
           handleChange={handleChange}
-          submitLogin={handleLogin}
+          submitSignup={handleSignup}
           errors={errors}
-          handleGoogleLogin={handleGoogleLogin}
+          handleGoogleSignup={handleGoogleSignup}
         />
       </div>
     </div>
   );
 }
 
-export default Login;
+export default Signup;

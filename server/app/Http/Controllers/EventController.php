@@ -23,9 +23,23 @@ class EventController extends Controller
 
     public function getAllEvents()
     {
-        $events = Event::with(['detail', 'club:id,name', 'club.users:id,name'])
+        $events = Event::with([
+            'detail',
+            'club:id,name',
+            'club.users:id,first_name,last_name,email' 
+        ])
             ->latest()
             ->get();
+
+        $events->transform(function ($event) {
+            if ($event->club && $event->club->users) {
+                $event->club->users->transform(function ($user) {
+                    $user->name = trim($user->first_name . ' ' . $user->last_name);
+                    return $user;
+                });
+            }
+            return $event;
+        });
 
         return response()->json($events);
     }

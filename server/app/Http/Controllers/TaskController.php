@@ -118,7 +118,10 @@ class TaskController extends Controller
 
         $tasks = $tasks->map(function ($task) {
             $assignedBy = $task->assignments->map(function ($assignment) {
-                return $assignment->clubMembership->user->name ?? null;
+                $user = $assignment->clubMembership->user;
+                if (!$user) return null;
+
+                return trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
             })->filter()->values();
 
             return [
@@ -131,6 +134,7 @@ class TaskController extends Controller
                 'assigned_by' => $assignedBy,
             ];
         });
+
 
         return response()->json($tasks);
     }

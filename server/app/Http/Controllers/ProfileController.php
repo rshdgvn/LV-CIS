@@ -7,9 +7,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Services\CloudinaryService; // make sure you have this service
 
 class ProfileController extends Controller
 {
+    protected $cloudinary;
+
+    public function __construct(CloudinaryService $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
+
     public function show(Request $request)
     {
         $user = $request->user();
@@ -23,17 +31,17 @@ class ProfileController extends Controller
 
         return response()->json([
             'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'email' => $user->email,
-                'role' => $user->role,
-                'avatar' => $user->avatar
+                'id'         => $user->id,
+                'first_name' => $user->first_name,
+                'last_name'  => $user->last_name,
+                'email'      => $user->email,
+                'role'       => $user->role,
+                'avatar'     => $user->avatar
                     ? $user->avatar
                     : url('default-avatar.png'),
             ],
             'member' => $member ?? [
-                'course' => null,
+                'course'     => null,
                 'year_level' => null,
             ],
         ]);
@@ -44,37 +52,36 @@ class ProfileController extends Controller
         try {
             $user = $request->user();
 
-            // Handle both JSON and multipart/form-data
             $validatedUser = $request->validate([
-                'name' => 'nullable|string|max:255',
-                'email' => 'nullable|email|max:255',
-                'username' => 'nullable|string|max:255',
-                'avatar' => 'nullable|file|image|max:2048',
+                'first_name' => 'nullable|string|max:255',
+                'last_name'  => 'nullable|string|max:255',
+                'email'      => 'nullable|email|max:255',
+                'avatar'     => 'nullable|file|image|max:2048',
             ]);
 
-            // If avatar is uploaded via FormData (file)
+            // ✅ Handle avatar upload via Cloudinary
             if ($request->hasFile('avatar')) {
-                $file = $request->file('avatar');
-                $path = $file->store('avatars', 'public');
-                $validatedUser['avatar'] = url('storage/' . $path);
+                $avatarFile = $request->file('avatar');
+                $avatarUrl  = $this->cloudinary->upload($avatarFile, 'avatars');
+                $validatedUser['avatar'] = $avatarUrl;
             }
 
             $user->update($validatedUser);
 
             $validatedMember = $request->validate([
-                'course' => 'nullable|string|max:255',
+                'course'     => 'nullable|string|max:255',
                 'year_level' => 'nullable|string|max:255',
             ]);
 
-            $member = \App\Models\Member::updateOrCreate(
+            $member = Member::updateOrCreate(
                 ['user_id' => $user->id],
                 $validatedMember
             );
 
             return response()->json([
                 'message' => 'Profile updated successfully',
-                'user' => $user,
-                'member' => $member,
+                'user'    => $user,
+                'member'  => $member,
             ]);
         } catch (\Throwable $e) {
             Log::error('Error updating profile: ' . $e->getMessage(), [
@@ -88,14 +95,13 @@ class ProfileController extends Controller
         }
     }
 
-
     public function setup(Request $request)
     {
         try {
             $user = Auth::user();
 
             $validated = $request->validate([
-                'course' => 'required|string|max:255',
+                'course'     => 'required|string|max:255',
                 'year_level' => 'required|string|max:255',
             ]);
 
@@ -106,13 +112,13 @@ class ProfileController extends Controller
 
             return response()->json([
                 'message' => 'Profile setup successfully',
-                'user' => $user,
-                'member' => $member,
+                'user'    => $user,
+                'member'  => $member,
             ]);
         } catch (\Throwable $e) {
             Log::error('Error setting up profile: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -128,7 +134,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'current_password' => 'required',
-            'new_password' => 'required|min:8|confirmed',
+            'new_password'     => 'required|min:8|confirmed',
         ]);
 
         if (!Hash::check($request->current_password, $user->password)) {

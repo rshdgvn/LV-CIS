@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Auth\Events\Registered;
 use App\Rules\LaverdadEmail;
 use App\Mail\VerifyEmailMail;
 use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -58,7 +59,7 @@ class AuthController extends Controller
 
         if (!$user) {
             return response()->json([
-                'message' => "Email not found"
+                'message' => "Email not found!"
             ], 401);
         }
 
@@ -124,37 +125,44 @@ class AuthController extends Controller
     }
 
 
+
+
     public function resendVerification(Request $request)
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
+        $request->validate(['email' => 'required|email']);
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
+            return response()->json(['message' => 'Email not found.'], 404);
         }
 
-        if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.'], 200);
+        $cooldown = 30; //
+        $record = DB::table('email_verification_tokens')->where('email', $request->email)->first();
+
+        if ($record) {
+            $createdAt = Carbon::parse($record->created_at);
+            if ($createdAt->addSeconds($cooldown) > now()) {
+                $remaining = $createdAt->addSeconds($cooldown)->diffInSeconds(now());
+                return response()->json([
+                    'message' => 'Please wait before requesting again.',
+                    'cooldown' => $remaining
+                ], 429);
+            }
         }
+
+        DB::table('email_verification_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            ['created_at' => now()]
+        );
 
         $frontendUrl = config('app.frontend_url');
         $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
 
         Mail::to($user->email)->send(new VerifyEmailMail($user->first_name, $verificationUrl));
 
-        return response()->json(['message' => 'Verification email sent again.']);
-    }
-
-
-
-    public function verifyToken(Request $request)
-    {
         return response()->json([
-            'valid' => true,
-            'user'  => $request->user(),
+            'message' => 'Verification email sent successfully!',
+            'cooldown' => $cooldown
         ]);
     }
 }

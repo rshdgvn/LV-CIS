@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LoginForm } from "@/components/login-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,9 +14,47 @@ function Login() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showResend, setShowResend] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const intervalRef = useRef(null);
+
   const { setToken, getUser } = useAuth();
   const nav = useNavigate();
   const { addToast } = useToast();
+
+  // Restore cooldown from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("resendCooldown");
+    if (stored) {
+      const remaining = Math.floor((Number(stored) - Date.now()) / 1000);
+      if (remaining > 0) setResendCooldown(remaining);
+    }
+  }, []);
+
+  // Handle cooldown countdown
+  useEffect(() => {
+    if (resendCooldown <= 0) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      localStorage.removeItem("resendCooldown");
+      return;
+    }
+
+    if (!intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+            localStorage.removeItem("resendCooldown");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => clearInterval(intervalRef.current);
+  }, [resendCooldown]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +105,8 @@ function Login() {
   };
 
   const handleResendVerification = async () => {
+    if (resendCooldown > 0) return;
+
     try {
       const res = await fetch(`${APP_URL}/email/resend`, {
         method: "POST",
@@ -76,9 +116,30 @@ function Login() {
         },
         body: JSON.stringify({ email: formData.email }),
       });
+
       const data = await res.json();
-      if (res.ok) addToast("Verification email sent!", "success");
-      else addToast(data.message || "Failed to resend email.", "error");
+
+      if (res.ok) {
+        addToast(data.message, "success");
+        if (data.cooldown) {
+          setResendCooldown(data.cooldown);
+          localStorage.setItem(
+            "resendCooldown",
+            (Date.now() + data.cooldown * 1000).toString()
+          );
+        }
+      } else if (res.status === 429) {
+        addToast(data.message, "error");
+        if (data.cooldown) {
+          setResendCooldown(data.cooldown);
+          localStorage.setItem(
+            "resendCooldown",
+            (Date.now() + data.cooldown * 1000).toString()
+          );
+        }
+      } else {
+        addToast(data.message || "Failed to resend email.", "error");
+      }
     } catch (error) {
       console.error(error);
       addToast("Failed to resend email.", "error");
@@ -110,7 +171,7 @@ function Login() {
           handleGoogleLogin={handleGoogleLogin}
           showResend={showResend}
           handleResendVerification={handleResendVerification}
-          loading={loading}
+          resendCooldown={resendCooldown}
         />
       </div>
     </div>

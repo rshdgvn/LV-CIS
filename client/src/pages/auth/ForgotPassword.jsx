@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,16 +11,52 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_URL } from "@/lib/config";
+import { useToast } from "@/providers/ToastProvider";
 
 export function ForgotPassword({ className, ...props }) {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const { addToast } = useToast();
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("resetCooldown");
+    if (stored) {
+      const remaining = Math.floor((Number(stored) - Date.now()) / 1000);
+      if (remaining > 0) setCooldown(remaining);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      return;
+    }
+
+    if (!intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+            localStorage.removeItem("resetCooldown");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => clearInterval(intervalRef.current);
+  }, [cooldown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (cooldown > 0) return;
+
     setLoading(true);
-    setMessage("");
 
     try {
       const res = await fetch(`${APP_URL}/forgot-password`, {
@@ -30,9 +66,27 @@ export function ForgotPassword({ className, ...props }) {
       });
 
       const data = await res.json();
-      setMessage(data.message || "Something went wrong");
+
+      if (res.status === 200) {
+        addToast(data.message, "success");
+        if (data.cooldown) {
+          setCooldown(data.cooldown);
+          const cooldownEnd = Date.now() + data.cooldown * 1000;
+          localStorage.setItem("resetCooldown", cooldownEnd.toString());
+        }
+      } else if (res.status === 429) {
+        addToast(data.message, "error");
+        if (data.cooldown) {
+          setCooldown(data.cooldown);
+          const cooldownEnd = Date.now() + data.cooldown * 1000;
+          localStorage.setItem("resetCooldown", cooldownEnd.toString());
+        }
+      } else {
+        addToast("Something went wrong!", "error");
+      }
     } catch (err) {
-      setMessage("Something went wrong. Please try again.");
+      console.log(err);
+      addToast("Something went wrong. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -41,7 +95,7 @@ export function ForgotPassword({ className, ...props }) {
   return (
     <div
       className={cn(
-        "flex min-h-screen items-center justify-center px-4",
+        "flex min-h-screen items-center justify-center px-4 bg-slate-950",
         className
       )}
       {...props}
@@ -64,7 +118,7 @@ export function ForgotPassword({ className, ...props }) {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="Enter email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -73,23 +127,15 @@ export function ForgotPassword({ className, ...props }) {
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || cooldown > 0}
                 className="w-full bg-blue-900 text-white"
               >
-                {loading ? "Sending..." : "Send Reset Link"}
+                {loading
+                  ? "Sending..."
+                  : cooldown > 0
+                  ? `Wait ${cooldown}s`
+                  : "Send Reset Link"}
               </Button>
-
-              {message && (
-                <p
-                  className={`text-sm text-center mt-2 ${
-                    message.toLowerCase().includes("success")
-                      ? "text-green-600"
-                      : "text-red-500"
-                  }`}
-                >
-                  {message}
-                </p>
-              )}
 
               <div className="text-sm text-muted-foreground mt-4">
                 <a

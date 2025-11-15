@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Mail\ResetPasswordMail;
 
+
 class PasswordResetController extends Controller
 {
     /**
@@ -25,8 +26,27 @@ class PasswordResetController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'If this email exists, a reset link has been sent.']);
+            return response()->json(['message' => 'Email not found.'], 404);
         }
+
+        $cooldown = 30;
+
+
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
+
+        if ($record) {
+            $createdAt = Carbon::parse($record->created_at); // convert to Carbon
+            if ($createdAt->addSeconds($cooldown) > now()) {
+                $remaining = $createdAt->diffInSeconds(now());
+                return response()->json([
+                    'message' => 'Please wait before requesting again.',
+                    'cooldown' => $remaining
+                ], 429);
+            }
+        }
+
 
         $plainToken = Str::random(64);
         $hashedToken = Hash::make($plainToken);
@@ -42,9 +62,11 @@ class PasswordResetController extends Controller
         Mail::to($user->email)->send(new ResetPasswordMail($plainToken, $user));
 
         return response()->json([
-            'message' => 'If this email exists, a reset link has been sent.',
+            'message' => 'Reset link has been sent successfully!.',
+            'cooldown' => $cooldown,
         ]);
     }
+
 
     /**
      * Step 2: Verify token and reset password

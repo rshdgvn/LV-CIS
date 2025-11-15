@@ -56,9 +56,15 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (!$user) {
             return response()->json([
-                'message' => 'Invalid credentials.'
+                'message' => "Email not found"
+            ], 401);
+        }
+
+        if (!$user->email || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Invalid Email or Password.'
             ], 401);
         }
 
@@ -87,7 +93,7 @@ class AuthController extends Controller
             'message' => 'Logged out successfully'
         ]);
     }
-    
+
     public function verify(Request $request, $id, $hash)
     {
         $user = User::findOrFail($id);
@@ -120,14 +126,29 @@ class AuthController extends Controller
 
     public function resendVerification(Request $request)
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email already verified.'], 200);
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        $frontendUrl = config('app.frontend_url');
+        $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
+
+        Mail::to($user->email)->send(new VerifyEmailMail($user->first_name, $verificationUrl));
 
         return response()->json(['message' => 'Verification email sent again.']);
     }
+
+
 
     public function verifyToken(Request $request)
     {

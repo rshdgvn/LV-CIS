@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
 export function LoginForm({
   className,
@@ -17,9 +18,33 @@ export function LoginForm({
   submitLogin,
   handleGoogleLogin,
   loading,
+  showResend,
+  handleResendVerification,
   errors = {},
   ...props
 }) {
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  const handleResendClick = async () => {
+    if (resendDisabled) return;
+
+    setResendDisabled(true);
+    setCooldown(30); // 30s cooldown
+    await handleResendVerification();
+
+    const interval = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setResendDisabled(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -33,6 +58,7 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={submitLogin}>
             <div className="grid gap-6">
+              {/* Google Login */}
               <Button
                 variant="outline"
                 className="w-full"
@@ -58,6 +84,7 @@ export function LoginForm({
                 </span>
               </div>
 
+              {/* Email */}
               <div className="grid gap-3">
                 <Label htmlFor="email">Email address</Label>
                 <Input
@@ -74,7 +101,6 @@ export function LoginForm({
                   </p>
                 )}
               </div>
-
               <div className="grid gap-3">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
@@ -98,9 +124,27 @@ export function LoginForm({
                 )}
               </div>
 
+              <div className="mt-1">
+                {showResend && (
+                  <button
+                    onClick={handleResendClick}
+                    disabled={resendDisabled}
+                    className={`text-sm hover:underline self-start ${
+                      resendDisabled
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-blue-400"
+                    }`}
+                  >
+                    {resendDisabled
+                      ? `Resend email in ${cooldown}s`
+                      : "Resend verification email"}
+                  </button>
+                )}
+              </div>
+
               <Button
                 type="submit"
-                className="w-full bg-blue-900 text-white"
+                className="w-full bg-blue-900 text-white mt-2"
                 disabled={loading}
               >
                 {loading ? "Logging in..." : "Login"}
@@ -116,7 +160,7 @@ export function LoginForm({
       </Card>
 
       <div className="text-muted-foreground text-center text-xs *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our{" "}
+        By clicking Login, you agree to our{" "}
         <a target="blank" href="https://policies.google.com/terms?hl=en-US">
           Terms of Service
         </a>{" "}

@@ -40,22 +40,6 @@ export function SignupForm({
         <CardContent>
           <form onSubmit={submitSignup}>
             <div className="grid gap-6">
-              {/* Google Signup */}
-              <Button
-                variant="outline"
-                className="w-full"
-                type="button"
-                onClick={handleGoogleSignup}
-              >
-                Sign up with Google
-              </Button>
-
-              <div className="text-center text-sm relative">
-                <span className="px-2 bg-card text-muted-foreground relative z-10">
-                  Or continue with
-                </span>
-              </div>
-
               {/* First + Last Name */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1">

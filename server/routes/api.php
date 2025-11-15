@@ -25,13 +25,14 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
     ->name('verification.verify');
+Route::post('/email/resend', [AuthController::class, 'resendVerification']);
+
 
 Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
     Route::get('/verify-token', [AuthController::class, 'verifyToken']);
-    Route::post('/email/resend', [AuthController::class, 'resendVerification']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/clubs', [ClubController::class, 'index']);

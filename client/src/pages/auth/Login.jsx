@@ -13,9 +13,10 @@ function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showResend, setShowResend] = useState(false);
   const { setToken, getUser } = useAuth();
   const nav = useNavigate();
-  const { addToast } = useToast(); 
+  const { addToast } = useToast();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,6 +26,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrors({});
+    setShowResend(false);
     NProgress.start();
 
     try {
@@ -40,28 +42,46 @@ function Login() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.message === "Please verify your email before logging in.") {
+          setShowResend(true);
+        }
         setErrors(data.errors || { general: data.message || "Login failed" });
         return;
       }
 
       setLoading(true);
-
       await setToken(data.token);
       const userData = await getUser(data.token);
 
-      addToast("Login successful!", "success"); 
+      addToast("Login successful!", "success");
 
-      if (userData?.role === "admin") {
-        nav("/admin/dashboard");
-      } else {
-        nav("/dashboard");
-      }
+      if (userData?.role === "admin") nav("/admin/dashboard");
+      else nav("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       setErrors({ general: "Something went wrong. Try again." });
-      addToast("Something went wrong. Try again.", "error"); 
+      addToast("Something went wrong. Try again.", "error");
     } finally {
       NProgress.done();
+    }
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      const res = await fetch(`${APP_URL}/email/resend`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await res.json();
+      if (res.ok) addToast("Verification email sent!", "success");
+      else addToast(data.message || "Failed to resend email.", "error");
+    } catch (error) {
+      console.error(error);
+      addToast("Failed to resend email.", "error");
     }
   };
 
@@ -88,6 +108,9 @@ function Login() {
           submitLogin={handleLogin}
           errors={errors}
           handleGoogleLogin={handleGoogleLogin}
+          showResend={showResend}
+          handleResendVerification={handleResendVerification}
+          loading={loading}
         />
       </div>
     </div>

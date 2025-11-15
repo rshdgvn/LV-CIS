@@ -7,7 +7,7 @@ export default function GoogleSignupSuccess() {
   const { addToast } = useToast();
 
   useEffect(() => {
-    addToast("Signup successful! You can now log in.", "success");
+    addToast("Signup successful! Please check your email to verify your account.", "success");
 
     nav("/login");
   }, []);

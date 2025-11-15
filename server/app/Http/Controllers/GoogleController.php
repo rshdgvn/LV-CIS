@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\VerifyEmailMail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Support\Facades\Mail;
 
 class GoogleController extends Controller
 {
@@ -29,10 +31,8 @@ class GoogleController extends Controller
                 ->stateless()
                 ->user();
 
-            // IMPORTANT: state is retrieved from Google, not from the URL
             $mode = $request->input('state', 'login');
 
-            // Domain restriction
             if (!str_ends_with($googleUser->getEmail(), '.laverdad.edu.ph')) {
                 return redirect()->away(
                     config('app.frontend_url')
@@ -60,16 +60,20 @@ class GoogleController extends Controller
                     'last_name'  => $googleUser->user['family_name'] ?? null,
                     'email'      => $googleUser->getEmail(),
                     'avatar'     => $googleUser->getAvatar(),
-                    'password'   => bcrypt(str()->random(16)), // random password
+                    'password'   => bcrypt(str()->random(16)),
+                    'role'       => 'user'
                 ]);
 
-                $user->markEmailAsVerified();
-                event(new Verified($user));
+                $frontendUrl = config('app.frontend_url');
+                $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
+
+                Mail::to($user->email)->send(new VerifyEmailMail($user->first_name, $verificationUrl));
 
                 return redirect()->away(
-                    config('app.frontend_url') . "/google/signup/success"
+                    config('app.frontend_url') . "/google/signup/success?email_sent=1"
                 );
             }
+
 
             /*
             |--------------------------------------------------------------------------

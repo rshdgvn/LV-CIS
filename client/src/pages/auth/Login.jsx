@@ -21,7 +21,7 @@ function Login() {
   const nav = useNavigate();
   const { addToast } = useToast();
 
-  // Restore cooldown from localStorage on mount
+  // Restore cooldown on mount
   useEffect(() => {
     const stored = localStorage.getItem("resendCooldown");
     if (stored) {
@@ -30,7 +30,7 @@ function Login() {
     }
   }, []);
 
-  // Handle cooldown countdown
+  // Cooldown countdown
   useEffect(() => {
     if (resendCooldown <= 0) {
       clearInterval(intervalRef.current);
@@ -147,7 +147,7 @@ function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${APP_URL}/auth/google`;
+    window.location.href = `${APP_URL}/auth/google?state=login`;
   };
 
   if (loading) return <Loader />;

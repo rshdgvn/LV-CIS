@@ -71,7 +71,7 @@ function Signup() {
     }
   };
   const handleGoogleSignup = () => {
-    window.location.href = `${APP_URL}/auth/google`;
+    window.location.href = `${APP_URL}/auth/google?state=signup`;
   };
 
   if (loading) return <Loader />;

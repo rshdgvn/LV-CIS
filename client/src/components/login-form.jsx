@@ -142,7 +142,7 @@ export function LoginForm({
                       ? `Resend email in ${cooldown}s`
                       : "Resend verification email"}
                   </button>
-                </div>
+                </div>  
               )}
 
               <Button

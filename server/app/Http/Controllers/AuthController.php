@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\Registered;
 use App\Rules\LaverdadEmail;
-
 
 class AuthController extends Controller
 {
@@ -15,7 +15,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name'  => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'email', 'unique:users,email',  new LaverdadEmail,],
+            'email'      => ['required', 'email', 'unique:users,email', new LaverdadEmail],
             'password'   => ['required', 'string', 'min:6'],
             'course'     => ['required', 'string', 'max:255'],
             'year_level' => ['required', 'string', 'max:255'],
@@ -34,26 +34,12 @@ class AuthController extends Controller
             'year_level' => $validated['year_level'],
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        event(new Registered($user));
 
         return response()->json([
-            'message' => 'Account created successfully!',
-            'user' => [
-                'id'         => $user->id,
-                'first_name' => $user->first_name,
-                'last_name'  => $user->last_name,
-                'email'      => $user->email,
-                'role'       => $user->role,
-                'avatar'     => $user->avatar ?? url('default-avatar.png'),
-                'member'     => [
-                    'course'     => $member->course,
-                    'year_level' => $member->year_level,
-                ],
-            ],
-            'token' => $token,
+            'message' => 'Account created! Please check your email to verify your account.',
         ], 201);
     }
-
 
     public function login(Request $request)
     {
@@ -66,8 +52,14 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
-                'message' => 'Invalid credentials. Please check your email or password.'
+                'message' => 'Invalid credentials.'
             ], 401);
+        }
+
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Please verify your email before logging in.'
+            ], 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -88,6 +80,34 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logged out successfully'
         ]);
+    }
+
+    public function verify(Request $request, $id, $hash)
+    {
+        $user = User::findOrFail($id);
+
+        if (!hash_equals($hash, sha1($user->getEmailForVerification()))) {
+            return response()->json(['message' => 'Invalid verification link.'], 400);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Already verified.'], 200);
+        }
+
+        $user->markEmailAsVerified();
+
+        return response()->json(['message' => 'Email successfully verified!']);
+    }
+
+    public function resendVerification(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.'], 200);
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Verification email sent again.']);
     }
 
     public function verifyToken(Request $request)

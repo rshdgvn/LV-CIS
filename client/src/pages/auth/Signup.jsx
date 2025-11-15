@@ -8,6 +8,7 @@ import { APP_URL } from "@/lib/config";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import Loader from "@/components/app/Loader";
+import { useToast } from "@/providers/ToastProvider";
 
 function Signup() {
   const [formData, setFormData] = useState({
@@ -18,6 +19,8 @@ function Signup() {
     course: "",
     year_level: "",
   });
+
+  const { addToast } = useToast();
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -34,8 +37,6 @@ function Signup() {
     e.preventDefault();
     setErrors({});
     NProgress.start();
-    setLoading(true);
-
     try {
       const res = await fetch(`${APP_URL}/signup`, {
         method: "POST",
@@ -54,21 +55,21 @@ function Signup() {
         return;
       }
 
-      // Do not set token yet if email verification is required
-      // Instead, show a message
-      alert("Account created! Please check your email to verify your account.");
+      addToast(
+        "Account created! Please check your email to verify your account.",
+        "success"
+      );
 
-      // Optionally, navigate to login page
       nav("/login");
     } catch (error) {
       console.error("Signup error:", error);
       setErrors({ general: "Something went wrong. Try again." });
+      addToast("Something went wrong. Try again.", "error");
     } finally {
       setLoading(false);
       NProgress.done();
     }
   };
-
   const handleGoogleSignup = () => {
     window.location.href = `${APP_URL}/auth/google`;
   };

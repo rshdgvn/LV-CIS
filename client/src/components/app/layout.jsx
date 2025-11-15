@@ -1,5 +1,4 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { SkeletonSidebar } from "../skeletons/SkeletonSidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import logo from "../../assets/lvcc-logo.png";
 
@@ -13,6 +12,7 @@ export default function Layout({ children }) {
     >
       <AppSidebar />
 
+      {/* Header */}
       <div
         className="fixed flex top-0 left-0 right-0 h-20 bg-neutral-900 border-b border-neutral-800 
              items-center justify-between z-[60] md:invisible"
@@ -33,10 +33,10 @@ export default function Layout({ children }) {
 
         <SidebarTrigger className="mx-3 relative z-[70]" />
       </div>
-      <main className="flex-1 m-4 pt-16 md:pt-0">
-        {/* <SidebarTrigger className="absolute" /> */}
-        {children}
-      </main>
+
+      <div className="relative flex-1">
+        <main className="m-4 pt-16 md:pt-0">{children}</main>
+      </div>
     </SidebarProvider>
   );
 }

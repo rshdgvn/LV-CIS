@@ -29,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { APP_URL } from "@/lib/config";
+import { useToast } from "@/providers/ToastProvider";
 
 export function NavUser() {
   const { token, setToken } = useAuth();
@@ -36,6 +37,8 @@ export function NavUser() {
   const nav = useNavigate();
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const { addToast } = useToast();
 
   const handleLogout = async () => {
     try {
@@ -56,8 +59,7 @@ export function NavUser() {
         sessionStorage.clear();
 
         const data = await res.json();
-        console.log("Logout response:", data);
-
+        addToast(data.message, 'success')
         nav("/");
       } else {
         console.error("Logout failed:", await res.json());

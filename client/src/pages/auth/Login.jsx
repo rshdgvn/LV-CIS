@@ -2,6 +2,7 @@ import { useState } from "react";
 import { LoginForm } from "@/components/login-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/providers/ToastProvider";
 import logo from "../../assets/lvcc-logo.png";
 import { APP_URL } from "@/lib/config";
 import NProgress from "nprogress";
@@ -11,9 +12,10 @@ import Loader from "@/components/app/Loader";
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
   const { setToken, getUser } = useAuth();
   const nav = useNavigate();
+  const { addToast } = useToast(); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,8 +47,9 @@ function Login() {
       setLoading(true);
 
       await setToken(data.token);
-
       const userData = await getUser(data.token);
+
+      addToast("Login successful!", "success"); 
 
       if (userData?.role === "admin") {
         nav("/admin/dashboard");
@@ -56,6 +59,7 @@ function Login() {
     } catch (error) {
       console.error("Login error:", error);
       setErrors({ general: "Something went wrong. Try again." });
+      addToast("Something went wrong. Try again.", "error"); 
     } finally {
       NProgress.done();
     }
@@ -65,7 +69,7 @@ function Login() {
     window.location.href = `${APP_URL}/auth/google`;
   };
 
-  if (loading) return <Loader />; 
+  if (loading) return <Loader />;
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 bg-slate-950">

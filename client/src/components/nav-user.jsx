@@ -59,7 +59,7 @@ export function NavUser() {
         sessionStorage.clear();
 
         const data = await res.json();
-        addToast(data.message, 'success')
+        addToast(data.message, "success");
         nav("/");
       } else {
         console.error("Logout failed:", await res.json());
@@ -113,7 +113,12 @@ export function NavUser() {
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">
+                    {" "}
+                    {`${user.first_name || ""} ${
+                      user.last_name || ""
+                    }`.trim() || "User"}
+                  </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>

@@ -13,6 +13,7 @@ import { APP_URL } from "@/lib/config";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/providers/ToastProvider"; // import toast
+import { Eye, EyeOff } from "lucide-react"; // icons
 
 export function ResetPassword({ className, ...props }) {
   const [email, setEmail] = useState("");
@@ -21,6 +22,8 @@ export function ResetPassword({ className, ...props }) {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(""); // for validation/error messages
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { addToast } = useToast(); // toast hook
@@ -55,12 +58,11 @@ export function ResetPassword({ className, ...props }) {
         addToast("Password reset successfully!", "success"); // only success
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        // do not use toast for error
         setMessage(data.message || "Something went wrong.");
       }
     } catch (err) {
       console.error(err);
-      setMessage("Something went wrong. Please try again."); // still no toast
+      setMessage("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -90,30 +92,47 @@ export function ResetPassword({ className, ...props }) {
               <input type="hidden" value={email} readOnly />
               <input type="hidden" value={token} readOnly />
 
-              <div className="grid gap-3">
+              {/* New Password */}
+              <div className="grid gap-3 relative">
                 <Label htmlFor="password">New Password</Label>
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter new password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-9 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
 
-              <div className="grid gap-3">
+              {/* Confirm Password */}
+              <div className="grid gap-3 relative">
                 <Label htmlFor="confirm">Confirm Password</Label>
                 <Input
                   id="confirm"
-                  type="password"
+                  type={showConfirm ? "text" : "password"}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
                   placeholder="Confirm new password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-9 text-muted-foreground"
+                >
+                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
 
+              {/* Submit Button */}
               <Button
                 disabled={loading}
                 type="submit"
@@ -122,6 +141,7 @@ export function ResetPassword({ className, ...props }) {
                 {loading ? "Resetting..." : "Reset Password"}
               </Button>
 
+              {/* Error / Validation Message */}
               {message && (
                 <p className="text-sm text-center mt-2 text-red-500">
                   {message}

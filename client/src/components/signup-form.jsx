@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 export function SignupForm({
   className,
@@ -29,6 +31,7 @@ export function SignupForm({
   errors = {},
 }) {
   const nav = useNavigate();
+  const [showPassword, setShowPassword] = useState(false); // toggle state
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
@@ -43,6 +46,7 @@ export function SignupForm({
         <CardContent>
           <form onSubmit={submitSignup}>
             <div className="grid gap-6">
+              {/* Google Signup */}
               <Button
                 variant="outline"
                 className="w-full"
@@ -67,6 +71,7 @@ export function SignupForm({
                   Or continue with
                 </span>
               </div>
+
               {/* First + Last Name */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1">
@@ -117,16 +122,23 @@ export function SignupForm({
                 )}
               </div>
 
-              {/* Password */}
-              <div className="grid gap-1">
+              {/* Password with toggle */}
+              <div className="grid gap-1 relative">
                 <Label>Password</Label>
                 <Input
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-6.5 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
                 {errors.password && (
                   <p className="text-destructive text-xs">{errors.password}</p>
                 )}
@@ -220,6 +232,7 @@ export function SignupForm({
           </form>
         </CardContent>
       </Card>
+
       <div className="text-muted-foreground text-center text-xs *:[a]:underline *:[a]:underline-offset-4">
         By clicking Login, you agree to our{" "}
         <a target="blank" href="https://policies.google.com/terms?hl=en-US">

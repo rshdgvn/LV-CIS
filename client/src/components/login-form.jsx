@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -26,6 +27,7 @@ export function LoginForm({
 }) {
   const [resendDisabled, setResendDisabled] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [showPassword, setShowPassword] = useState(false); // password toggle state
   const nav = useNavigate();
 
   const handleResendClick = async () => {
@@ -75,7 +77,7 @@ export function LoginForm({
                     fill="currentColor"
                   />
                 </svg>
-                Log in with Google
+                Sign in with Google
               </Button>
 
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
@@ -101,7 +103,9 @@ export function LoginForm({
                   </p>
                 )}
               </div>
-              <div className="grid gap-3">
+
+              {/* Password with toggle */}
+              <div className="grid gap-3 relative">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                   <a
@@ -116,14 +120,22 @@ export function LoginForm({
                   value={formData.password}
                   onChange={handleChange}
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-10 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
                 {errors.password && (
                   <p className="text-destructive text-xs">{errors.password}</p>
                 )}
               </div>
 
+              {/* Resend verification */}
               {showResend && (
                 <div className="flex mt-1 justify-between">
                   <p className="text-sm text-gray-200">
@@ -142,15 +154,16 @@ export function LoginForm({
                       ? `Resend email in ${cooldown}s`
                       : "Resend verification email"}
                   </button>
-                </div>  
+                </div>
               )}
 
+              {/* Login Button */}
               <Button
                 type="submit"
                 className="w-full bg-blue-900 text-white"
                 disabled={loading}
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Signing in..." : "Sign in"}
               </Button>
 
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">

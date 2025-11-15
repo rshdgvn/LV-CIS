@@ -14,12 +14,12 @@ class GoogleController extends Controller
 {
     public function redirect(Request $request)
     {
-        $state = $request->query('state', 'login'); // signup or login
+        $state = $request->query('state', 'login'); 
 
         return Socialite::driver('google')
             ->stateless()
             ->with(['prompt' => 'select_account'])
-            ->with(['state' => $state]) // IMPORTANT
+            ->with(['state' => $state]) 
             ->redirectUrl(config('app.url') . '/api/auth/google/callback')
             ->redirect();
     }
@@ -40,11 +40,6 @@ class GoogleController extends Controller
                 );
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | SIGNUP LOGIC
-            |--------------------------------------------------------------------------
-            */
             if ($mode === "signup") {
 
                 $existing = User::where('email', $googleUser->getEmail())->first();
@@ -74,12 +69,6 @@ class GoogleController extends Controller
                 );
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | LOGIN LOGIC
-            |--------------------------------------------------------------------------
-            */
             if ($mode === "login") {
 
                 $user = User::where('email', $googleUser->getEmail())->first();
@@ -98,7 +87,6 @@ class GoogleController extends Controller
                     );
                 }
 
-                // Update avatar if changed
                 if ($user->avatar !== $googleUser->getAvatar()) {
                     $user->avatar = $googleUser->getAvatar();
                     $user->save();

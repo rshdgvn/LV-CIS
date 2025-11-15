@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Rules\LaverdadEmail;
+
 
 class AuthController extends Controller
 {
@@ -13,7 +15,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name'  => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'email', 'unique:users,email'],
+            'email'      => ['required', 'email', 'unique:users,email',  new LaverdadEmail,],
             'password'   => ['required', 'string', 'min:6'],
             'course'     => ['required', 'string', 'max:255'],
             'year_level' => ['required', 'string', 'max:255'],

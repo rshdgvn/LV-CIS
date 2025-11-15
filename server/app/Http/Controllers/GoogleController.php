@@ -27,23 +27,12 @@ class GoogleController extends Controller
                 return redirect()->away(config('app.frontend_url') . "/google/error?message={$msg}");
             }
 
-            $fullName = $googleUser->getName();
-            $nameParts = explode(' ', $fullName, 2);
+            $user = User::where('email', $googleUser->getEmail())->first();
 
-            $firstName = $nameParts[0] ?? '';
-            $lastName = $nameParts[1] ?? '';
-
-            $user = User::firstOrCreate(
-                ['email' => $googleUser->getEmail()],
-                [
-                    'first_name' => $firstName,
-                    'last_name'  => $lastName,
-                    'password'   => bcrypt(str()->random(16)), 
-                    'role'       => 'user',
-                    'google_id'  => $googleUser->getId(),
-                    'avatar'     => $googleUser->getAvatar(),
-                ]
-            );
+            if (!$user) {
+                $msg = urlencode('This account is not registered. Please sign up first.');
+                return redirect()->away(config('app.frontend_url') . "/google/error?message={$msg}");
+            }
 
             if ($user->avatar !== $googleUser->getAvatar()) {
                 $user->avatar = $googleUser->getAvatar();

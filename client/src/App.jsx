@@ -31,6 +31,7 @@ import AttendanceDetails from "./pages/attendances/AttendanceDetails";
 import Signup from "./pages/auth/Signup";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import { ToastProvider } from "./providers/ToastProvider";
+import GoogleLoginError from "./pages/errors/GoogleLoginError";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,8 @@ function App() {
                 <Route path="*" element={<NotFound />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="/forbidden" element={<Forbidden />} />
+                <Route path="/google/error" element={<GoogleLoginError />} />
+
                 <Route path="/events/:id" element={<EventDetails />} />
                 <Route path="/events/:id/tasks" element={<EventTasksTable />} />
                 <Route path="/attendance/:id" element={<AttendanceDetails />} />

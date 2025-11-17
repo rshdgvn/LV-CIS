@@ -77,8 +77,15 @@ function Signup() {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6 md:p-10 bg-slate-950">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6 md:p-10  bg-[radial-gradient(circle_at_center,var(--color-slate-800)_5%,var(--color-slate-900)_40%,var(--color-slate-950)_80%)]">
       <div className="flex w-full max-w-sm flex-col gap-6">
+        <a href="/" className="flex items-center gap-2 self-center font-medium">
+          <img
+            src={logo}
+            alt="La Verdad Club"
+            className="h-16 w-16 object-contain"
+          />
+        </a>
         <SignupForm
           formData={formData}
           handleChange={handleChange}

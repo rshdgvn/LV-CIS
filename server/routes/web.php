@@ -1,6 +1,6 @@
 <?php
 
-
+use App\Http\Controllers\GmailAuthController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,3 +18,6 @@ Route::get('/club_logos/{filename}', function ($filename) {
 
     return response()->file($path);
 });
+
+Route::get('/gmail/oauth', [GmailAuthController::class, 'redirect']);
+Route::get('/gmail/oauth/callback', [GmailAuthController::class, 'callback']);

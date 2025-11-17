@@ -19,35 +19,15 @@ export function LoginForm({
   handleChange,
   submitLogin,
   handleGoogleLogin,
-  loading,
   showResend,
   handleResendVerification,
   errors = {},
+  resendCooldown,
+  loading,
   ...props
 }) {
-  const [resendDisabled, setResendDisabled] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
   const [showPassword, setShowPassword] = useState(false); // password toggle state
   const nav = useNavigate();
-
-  const handleResendClick = async () => {
-    if (resendDisabled) return;
-
-    setResendDisabled(true);
-    setCooldown(30); // 30s cooldown
-    await handleResendVerification();
-
-    const interval = setInterval(() => {
-      setCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setResendDisabled(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -142,22 +122,21 @@ export function LoginForm({
                     Didn't receive an Email?
                   </p>
                   <button
-                    onClick={handleResendClick}
-                    disabled={resendDisabled}
+                    onClick={handleResendVerification}
+                    disabled={resendCooldown > 0}
                     className={`text-sm hover:underline self-start ${
-                      resendDisabled
+                      resendCooldown > 0
                         ? "text-gray-400 cursor-not-allowed"
                         : "text-blue-400 cursor-pointer"
                     }`}
                   >
-                    {resendDisabled
-                      ? `Resend email in ${cooldown}s`
+                    {resendCooldown > 0
+                      ? `Resend email in ${resendCooldown}s`
                       : "Resend verification email"}
                   </button>
                 </div>
               )}
 
-              {/* Login Button */}
               <Button
                 type="submit"
                 className="w-full bg-blue-900 text-white"
@@ -166,23 +145,15 @@ export function LoginForm({
                 {loading ? "Signing in..." : "Sign in"}
               </Button>
 
-              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                <span className="bg-card text-muted-foreground relative z-10 px-2">
-                  Don't have an account?
-                </span>
-              </div>
-
-              <Button
-                variant="outline"
-                className="w-full bg-blue-900 text-white"
-                onClick={() => nav("/signup")}
-              >
-                Create an account →
-              </Button>
-
               <div className="text-muted-foreground text-center text-xs">
-                Only La Verdad work accounts are accepted. For help, contact IT
-                support.
+                Don't have an account?{" "}
+                <span
+                  className="text-blue-400 cursor-pointer hover:underline"
+                  onClick={() => nav("/signup")}
+                >
+                  Sign up
+                </span>
+                .
               </div>
             </div>
           </form>

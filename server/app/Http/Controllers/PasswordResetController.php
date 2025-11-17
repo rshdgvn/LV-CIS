@@ -5,18 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\User;
-use App\Mail\ResetPasswordMail;
-
+use App\Services\GmailService;
 
 class PasswordResetController extends Controller
 {
-    /**
-     * Step 1: Generate and email the reset token
-     */
+
     public function sendResetToken(Request $request)
     {
         $request->validate([
@@ -31,13 +27,12 @@ class PasswordResetController extends Controller
 
         $cooldown = 30;
 
-
         $record = DB::table('password_reset_tokens')
             ->where('email', $request->email)
             ->first();
 
         if ($record) {
-            $createdAt = Carbon::parse($record->created_at); // convert to Carbon
+            $createdAt = Carbon::parse($record->created_at);
             if ($createdAt->addSeconds($cooldown) > now()) {
                 $remaining = $createdAt->diffInSeconds(now());
                 return response()->json([
@@ -46,7 +41,6 @@ class PasswordResetController extends Controller
                 ], 429);
             }
         }
-
 
         $plainToken = Str::random(64);
         $hashedToken = Hash::make($plainToken);
@@ -59,7 +53,16 @@ class PasswordResetController extends Controller
             ]
         );
 
-        Mail::to($user->email)->send(new ResetPasswordMail($plainToken, $user));
+        $frontendUrl = config('app.frontend_url');
+        $resetLink = "{$frontendUrl}/reset-password?token={$plainToken}&email={$user->email}";
+
+        $htmlBody = view('emails.reset-password', [
+            'name' => $user->first_name,
+            'resetLink' => $resetLink,
+        ])->render();
+
+        (new GmailService)->send($user->email, 'Reset Your Password', $htmlBody);
+
 
         return response()->json([
             'message' => 'Reset link has been sent successfully!.',
@@ -67,10 +70,6 @@ class PasswordResetController extends Controller
         ]);
     }
 
-
-    /**
-     * Step 2: Verify token and reset password
-     */
     public function reset(Request $request)
     {
         $request->validate([

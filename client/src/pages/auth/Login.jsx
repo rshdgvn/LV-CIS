@@ -3,11 +3,11 @@ import { LoginForm } from "@/components/login-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/providers/ToastProvider";
-import logo from "../../assets/lvcc-logo.png";
 import { APP_URL } from "@/lib/config";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import Loader from "@/components/app/Loader";
+import logo from "../../assets/lvcc-logo.png";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -21,7 +21,6 @@ function Login() {
   const nav = useNavigate();
   const { addToast } = useToast();
 
-  // Restore cooldown on mount
   useEffect(() => {
     const stored = localStorage.getItem("resendCooldown");
     if (stored) {
@@ -30,7 +29,6 @@ function Login() {
     }
   }, []);
 
-  // Cooldown countdown
   useEffect(() => {
     if (resendCooldown <= 0) {
       clearInterval(intervalRef.current);
@@ -153,8 +151,15 @@ function Login() {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 bg-slate-950">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 bg-[radial-gradient(circle_at_center,var(--color-slate-800)_5%,var(--color-slate-900)_40%,var(--color-slate-950)_80%)]">
       <div className="flex w-full max-w-sm flex-col gap-6">
+        <a href="/" className="flex items-center gap-2 self-center font-medium">
+          <img
+            src={logo}
+            alt="La Verdad Club"
+            className="h-16 w-16 object-contain"
+          />
+        </a>
         <LoginForm
           formData={formData}
           handleChange={handleChange}
@@ -164,6 +169,7 @@ function Login() {
           showResend={showResend}
           handleResendVerification={handleResendVerification}
           resendCooldown={resendCooldown}
+          loading={loading}
         />
       </div>
     </div>

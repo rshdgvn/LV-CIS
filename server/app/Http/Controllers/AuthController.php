@@ -6,10 +6,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Rules\LaverdadEmail;
-use App\Mail\VerifyEmailMail;
-use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\GmailService;
 
 class AuthController extends Controller
 {
@@ -32,7 +31,7 @@ class AuthController extends Controller
             'role'       => 'user'
         ]);
 
-        $member = $user->member()->create([
+        $user->member()->create([
             'course'     => $validated['course'],
             'year_level' => $validated['year_level'],
         ]);
@@ -40,7 +39,12 @@ class AuthController extends Controller
         $frontendUrl = config('app.frontend_url');
         $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
 
-        Mail::to($user->email)->send(new VerifyEmailMail($user->first_name, $verificationUrl));
+        $htmlBody = view('emails.verify-email', [
+            'name' => $user->first_name,
+            'verificationLink' => $verificationUrl
+        ])->render();
+
+        (new GmailService)->send($user->email, "Verify Your Email - LVCIS", $htmlBody);
 
 
         return response()->json([
@@ -57,13 +61,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user) {
-            return response()->json([
-                'message' => "Email not found!"
-            ], 401);
-        }
-
-        if (!$user->email || !Hash::check($credentials['password'], $user->password)) {
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
                 'message' => 'Invalid Email or Password.'
             ], 401);
@@ -124,9 +122,6 @@ class AuthController extends Controller
         ]);
     }
 
-
-
-
     public function resendVerification(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -136,7 +131,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email not found.'], 404);
         }
 
-        $cooldown = 30; //
+        $cooldown = 30; // seconds
         $record = DB::table('email_verification_tokens')->where('email', $request->email)->first();
 
         if ($record) {
@@ -158,7 +153,13 @@ class AuthController extends Controller
         $frontendUrl = config('app.frontend_url');
         $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
 
-        Mail::to($user->email)->send(new VerifyEmailMail($user->first_name, $verificationUrl));
+        $htmlBody = view('emails.verify-email', [
+            'name' => $user->first_name,
+            'verificationLink' => $verificationUrl
+        ])->render();
+
+        (new GmailService)->send($user->email, "Verify Your Email - LVCIS", $htmlBody);
+
 
         return response()->json([
             'message' => 'Verification email sent successfully!',

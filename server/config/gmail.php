@@ -16,6 +16,7 @@ return [
     'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     'redirect_uri' => env('GOOGLE_REDIRECT_URI'),
 
+    'redirect_for_gmail' => env('GOOGLE_REDIRECT_FOR_GMAIL'),
     'from_email' => env('GMAIL_FROM'),
 
     /*

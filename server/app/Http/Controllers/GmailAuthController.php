@@ -13,9 +13,10 @@ class GmailAuthController extends Controller
     {
         $client = new Client();
 
-        $client->setClientId(env('GOOGLE_CLIENT_ID'));
-        $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
-        $client->setRedirectUri(env('GOOGLE_REDIRECT_FOR_GMAIL'));
+        // Use config() instead of env()
+        $client->setClientId(config('google.client_id'));
+        $client->setClientSecret(config('google.client_secret'));
+        $client->setRedirectUri(config('google.redirect_for_gmail'));
 
         $client->addScope(Gmail::GMAIL_SEND);
         $client->setAccessType('offline');

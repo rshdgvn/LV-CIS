@@ -8,7 +8,7 @@ class LaverdadEmail implements Rule
 {
     public function passes($attribute, $value)
     {
-        return str_ends_with($value, '.laverdad.edu.ph');
+        return str_ends_with($value, 'laverdad.edu.ph');
     }
 
     public function message()

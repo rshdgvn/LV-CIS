@@ -14,12 +14,14 @@ class GoogleController extends Controller
 {
     public function redirect(Request $request)
     {
-        $state = $request->query('state', 'login'); 
+        $state = $request->query('state', 'login');
 
         return Socialite::driver('google')
             ->stateless()
-            ->with(['prompt' => 'select_account'])
-            ->with(['state' => $state]) 
+            ->with([
+                'prompt' => 'select_account',
+                'state'  => $state
+            ])
             ->redirectUrl(config('app.url') . '/api/auth/google/callback')
             ->redirect();
     }

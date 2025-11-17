@@ -23,16 +23,18 @@ COPY --from=composer:2.5 /usr/bin/composer /usr/bin/composer
 # Copy application code
 COPY . .
 
-# Install PHP dependencies (no dev)
+# Install PHP dependencies (production)
 RUN composer install --no-dev --optimize-autoloader
 
-# Optimize Laravel for production
-RUN php artisan config:clear && php artisan route:clear && php artisan view:clear
+# Ensure all caches are cleared and built
+RUN php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan cache:clear && php artisan config:cache
+
+# Fix permissions for storage and cache
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Expose port 8000
 EXPOSE 8000
 
-# Command to run Laravel
+# Command: migrate, then run server
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000

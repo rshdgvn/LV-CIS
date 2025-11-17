@@ -22,8 +22,7 @@ COPY --from=composer:2.5 /usr/bin/composer /usr/bin/composer
 
 # Copy application code
 COPY . .
-
-# Install PHP dependencies (production)
+COPY .env .env 
 RUN composer install --no-dev --optimize-autoloader
 
 # Ensure all caches are cleared and built

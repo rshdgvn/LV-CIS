@@ -14,7 +14,7 @@ class GmailService
         $client->setClientId(env('GOOGLE_CLIENT_ID'));
         $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
 
-        $client->setRedirectUri(config('app.url') . '/api/auth/google/callback');
+        $client->setRedirectUri(env('GOOGLE_REDIRECT_URI'));
 
         $client->addScope(Gmail::GMAIL_SEND);
 

@@ -11,26 +11,26 @@ class GmailService
     {
         $client = new Client();
 
-        $client->setClientId(env('GOOGLE_CLIENT_ID'));
-        $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
-
-        $client->setRedirectUri(env('GOOGLE_REDIRECT_URI'));
+        $client->setClientId(config('gmail.client_id'));
+        $client->setClientSecret(config('gmail.client_secret'));
+        $client->setRedirectUri(config('gmail.redirect_uri'));
 
         $client->addScope(Gmail::GMAIL_SEND);
 
         $accessToken = [
-            'access_token' => env('GOOGLE_ACCESS_TOKEN'),
-            'refresh_token' => env('GOOGLE_REFRESH_TOKEN'),
-            'scope' => env('GOOGLE_TOKEN_SCOPE'),
-            'token_type' => env('GOOGLE_TOKEN_TYPE'),
-            'created' => env('GOOGLE_TOKEN_CREATED'),
-            'expires_in' => env('GOOGLE_TOKEN_EXPIRES_IN'),
+            'access_token' => config('gmail.access_token'),
+            'refresh_token' => config('gmail.refresh_token'),
+            'scope' => config('gmail.scope'),
+            'token_type' => config('gmail.token_type'),
+            'created' => config('gmail.token_created'),
+            'expires_in' => config('gmail.token_expires_in'),
         ];
 
         $client->setAccessToken($accessToken);
 
         if ($client->isAccessTokenExpired()) {
-            $client->fetchAccessTokenWithRefreshToken($accessToken['refresh_token']);
+            $newToken = $client->fetchAccessTokenWithRefreshToken($accessToken['refresh_token']);
+            // optionally update .env or config cache here
         }
 
         return $client;
@@ -41,7 +41,7 @@ class GmailService
         $client = $this->getClient();
         $gmail = new Gmail($client);
 
-        $rawMessage = "From: " . env('GMAIL_FROM') . "\r\n";
+        $rawMessage = "From: " . config('gmail.from_email') . "\r\n";
         $rawMessage .= "To: $to\r\n";
         $rawMessage .= "Subject: $subject\r\n";
         $rawMessage .= "MIME-Version: 1.0\r\n";

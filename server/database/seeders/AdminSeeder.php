@@ -5,13 +5,16 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Carbon\Carbon;
 
 class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        User::firstOrCreate(
-            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
+        $adminEmail = env('ADMIN_EMAIL', 'admin@example.com');
+
+        $user = User::firstOrCreate(
+            ['email' => $adminEmail],
             [
                 'first_name' => env('ADMIN_FIRST_NAME', 'Dan'),
                 'last_name'  => env('ADMIN_LAST_NAME', 'Teves'),
@@ -19,5 +22,9 @@ class AdminSeeder extends Seeder
                 'role'       => 'admin',
             ]
         );
+
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
     }
 }

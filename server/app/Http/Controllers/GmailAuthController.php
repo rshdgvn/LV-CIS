@@ -12,8 +12,11 @@ class GmailAuthController extends Controller
     private function client()
     {
         $client = new Client();
-        $client->setAuthConfig(storage_path('app/google/credentials.json'));
+
+        $client->setClientId(env('GOOGLE_CLIENT_ID'));
+        $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
         $client->setRedirectUri(env('GOOGLE_REDIRECT_FOR_GMAIL'));
+
         $client->addScope(Gmail::GMAIL_SEND);
         $client->setAccessType('offline');
         $client->setPrompt('consent');
@@ -23,12 +26,14 @@ class GmailAuthController extends Controller
 
     public function redirect()
     {
-        return redirect()->away($this->client()->createAuthUrl());
+        $authUrl = $this->client()->createAuthUrl();
+        return redirect()->away($authUrl);
     }
 
     public function callback(Request $request)
     {
         $client = $this->client();
+
         $token = $client->fetchAccessTokenWithAuthCode($request->code);
 
         Storage::put('google/token.json', json_encode($token));

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use Google\Client;
 use Google\Service\Gmail;
+use App\Models\GmailToken;
+use Carbon\Carbon;
 
 class GmailService
 {
@@ -14,23 +16,45 @@ class GmailService
         $client->setClientId(config('gmail.client_id'));
         $client->setClientSecret(config('gmail.client_secret'));
         $client->setRedirectUri(config('gmail.redirect_uri'));
-
         $client->addScope(Gmail::GMAIL_SEND);
 
+        // Get token from database or create from env (first time)
+        $tokenRecord = GmailToken::where('identifier', 'system')->first();
+
+        if (!$tokenRecord) {
+            // First time: seed from .env
+            $tokenRecord = GmailToken::create([
+                'identifier' => 'system',
+                'access_token' => config('gmail.access_token'),
+                'refresh_token' => config('gmail.refresh_token'),
+                'scope' => config('gmail.scope'),
+                'token_type' => config('gmail.token_type'),
+                'expires_in' => config('gmail.token_expires_in'),
+                'token_created_at' => Carbon::createFromTimestamp(config('gmail.token_created')),
+            ]);
+        }
+
         $accessToken = [
-            'access_token' => config('gmail.access_token'),
-            'refresh_token' => config('gmail.refresh_token'),
-            'scope' => config('gmail.scope'),
-            'token_type' => config('gmail.token_type'),
-            'created' => config('gmail.token_created'),
-            'expires_in' => config('gmail.token_expires_in'),
+            'access_token' => $tokenRecord->access_token,
+            'refresh_token' => $tokenRecord->refresh_token,
+            'scope' => $tokenRecord->scope,
+            'token_type' => $tokenRecord->token_type,
+            'created' => $tokenRecord->token_created_at->timestamp,
+            'expires_in' => $tokenRecord->expires_in,
         ];
 
         $client->setAccessToken($accessToken);
 
+        // Refresh token if expired
         if ($client->isAccessTokenExpired()) {
-            $newToken = $client->fetchAccessTokenWithRefreshToken($accessToken['refresh_token']);
-            // optionally update .env or config cache here
+            $newToken = $client->fetchAccessTokenWithRefreshToken($tokenRecord->refresh_token);
+
+            // Save new token to database
+            $tokenRecord->update([
+                'access_token' => $newToken['access_token'],
+                'expires_in' => $newToken['expires_in'],
+                'token_created_at' => Carbon::now(),
+            ]);
         }
 
         return $client;

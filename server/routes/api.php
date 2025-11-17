@@ -14,6 +14,64 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Services\GmailService;
+use Google\Client;
+
+Route::get('/gmail/oauth/init', function () {
+    $client = new Client();
+    $client->setClientId(config('gmail.client_id'));
+    $client->setClientSecret(config('gmail.client_secret'));
+    $client->setRedirectUri(config('gmail.redirect_for_gmail')); 
+    $client->setAccessType('offline');
+    $client->setPrompt('consent');
+    $client->addScope(\Google\Service\Gmail::GMAIL_SEND);
+
+    $authUrl = $client->createAuthUrl();
+
+    return response()->json([
+        'message' => 'Visit this URL to authorize:',
+        'auth_url' => $authUrl
+    ]);
+});
+
+Route::get('/gmail/oauth/callback', function () {
+    $code = request()->get('code');
+
+    if (!$code) {
+        return response()->json(['error' => 'No authorization code received'], 400);
+    }
+
+    $client = new Client();
+    $client->setClientId(config('gmail.client_id'));
+    $client->setClientSecret(config('gmail.client_secret'));
+    $client->setRedirectUri(config('gmail.redirect_for_gmail'));
+    $client->addScope(\Google\Service\Gmail::GMAIL_SEND);
+
+    $token = $client->fetchAccessTokenWithAuthCode($code);
+
+    if (isset($token['error'])) {
+        return response()->json(['error' => $token['error']], 400);
+    }
+
+    \App\Models\GmailToken::updateOrCreate(
+        ['identifier' => 'system'],
+        [
+            'access_token' => $token['access_token'],
+            'refresh_token' => $token['refresh_token'],
+            'scope' => $token['scope'] ?? 'https://www.googleapis.com/auth/gmail.send',
+            'token_type' => $token['token_type'] ?? 'Bearer',
+            'expires_in' => $token['expires_in'] ?? 3599,
+            'token_created_at' => now(),
+        ]
+    );
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Gmail tokens successfully generated and saved!',
+        'token' => $token
+    ]);
+});
+
 
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);

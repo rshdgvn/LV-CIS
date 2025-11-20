@@ -19,6 +19,7 @@ class AttendanceSessionController extends Controller
         }
 
         $clubIds = ClubMembership::where('user_id', $user->id)
+            ->where('status', 'approved') 
             ->pluck('club_id');
 
         $sessions = AttendanceSession::with(['club', 'event'])

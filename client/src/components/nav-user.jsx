@@ -38,8 +38,6 @@ export function NavUser() {
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
-  const { addToast } = useToast();
-
   const handleLogout = async () => {
     try {
       if (!token) return;
@@ -59,7 +57,6 @@ export function NavUser() {
         sessionStorage.clear();
 
         const data = await res.json();
-        addToast(data.message, "success");
         nav("/");
       } else {
         console.error("Logout failed:", await res.json());
@@ -81,7 +78,15 @@ export function NavUser() {
               <Avatar
                 className={`h-10 w-10 rounded-lg ${isCollapsed && "ml-8"}`}
               >
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage
+                  src={
+                    user.avatar ||
+                    `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
+                      `${user.first_name} ${user.last_name}`
+                    )}`
+                  }
+                  alt={user.name}
+                />
               </Avatar>
               {!isCollapsed && (
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -109,7 +114,15 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-6 w-6 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage
+                    src={
+                      user.avatar ||
+                      `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
+                        `${user.first_name} ${user.last_name}`
+                      )}`
+                    }
+                    alt={user.name}
+                  />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">

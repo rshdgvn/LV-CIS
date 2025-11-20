@@ -86,7 +86,9 @@ function Login() {
       }
 
       setLoading(true);
-      await setToken(data.token);
+      setToken(data.token);
+      localStorage.setItem("token", data.token);
+
       const userData = await getUser(data.token);
 
       addToast("Login successful!", "success");

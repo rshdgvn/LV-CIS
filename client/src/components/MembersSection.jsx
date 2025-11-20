@@ -87,7 +87,7 @@ export default function MembersSection({
   const openEditModal = (member) => {
     setFormData({
       userId: member.id,
-      name: member.name,
+      name: `${member.first_name} ${member.last_name}`,
       role: member.pivot?.role || "member",
       officer_title: member.pivot?.officer_title || "",
     });
@@ -289,14 +289,17 @@ export default function MembersSection({
               >
                 <div className="flex items-center gap-3">
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      user.name
-                    )}&background=111&color=fff`}
-                    alt={user.name}
+                    src={
+                      user.avatar ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        `${user.first_name} ${user.last_name}`
+                      )}&background=111&color=fff`
+                    }
+                    alt={`${user.first_name} ${user.last_name}`}
                     className="w-10 h-10 rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-medium text-sm">{user.name}</p>
+                    <p className="font-medium text-sm">{`${user.first_name} ${user.last_name}`}</p>
                     <p className="text-xs text-gray-400">
                       {user.student_id} | {user.course} | {user.year_level}
                     </p>
@@ -345,16 +348,16 @@ export default function MembersSection({
                 >
                   <img
                     src={
-                      member.profile_image ||
+                      member.avatar ||
                       `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        member.name
+                        `${member.first_name} ${member.last_name}`
                       )}&background=111&color=fff`
                     }
-                    alt={member.name}
+                    alt={`${member.first_name} ${member.last_name}`}
                     className="w-10 h-10 rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-medium text-sm">{member.name}</p>
+                    <p className="font-medium text-sm">{`${member.first_name} ${member.last_name}`}</p>
                     <p className="text-xs text-gray-400 capitalize">
                       {member.pivot?.officer_title ||
                         member.pivot?.role ||

@@ -100,7 +100,7 @@ class MembershipController extends Controller
     public function getClubMembers($clubId)
     {
         $club = Club::with(['users' => function ($query) {
-            $query->select('users.id', 'users.name', 'users.email', 'users.course', 'users.year_level', 'users.student_id');
+            $query->select('users.id', 'users.first_name', 'users.last_name', 'users.email', 'users.course', 'users.year_level', 'users.student_id');
         }])->findOrFail($clubId);
 
         return response()->json($club->users);
@@ -175,7 +175,8 @@ class MembershipController extends Controller
             ->map(function ($user) {
                 return [
                     'user_id' => $user->id,
-                    'name' => $user->name,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
                     'email' => $user->email,
                     'student_id' => $user->member?->student_id,
                     'course' => $user->member?->course,

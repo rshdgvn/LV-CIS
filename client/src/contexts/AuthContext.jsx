@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    console.log(user)
     getUser();
   }, [token]);
 

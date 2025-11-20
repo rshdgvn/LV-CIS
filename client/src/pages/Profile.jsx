@@ -186,7 +186,6 @@ export default function Profile() {
             <div className="flex items-center gap-4">
               <img
                 src={
-                  avatarPreview ||
                   data.user.avatar ||
                   `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
                     `${data.user.first_name} ${data.user.last_name}`

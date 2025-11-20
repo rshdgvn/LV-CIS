@@ -174,7 +174,7 @@ export default function ClubDetails() {
 
   const handleRemoveMember = async (member) => {
     const confirmDelete = confirm(
-      `Are you sure you want to remove ${member.name}?`
+      `Are you sure you want to remove ${member.first_name} ${member.last_name}?`
     );
     if (!confirmDelete) return;
 

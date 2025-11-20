@@ -36,9 +36,7 @@ class ProfileController extends Controller
                 'last_name'  => $user->last_name,
                 'email'      => $user->email,
                 'role'       => $user->role,
-                'avatar'     => $user->avatar
-                    ? $user->avatar
-                    : url('default-avatar.png'),
+                'avatar'     => $user->avatar,
             ],
             'member' => $member ?? [
                 'course'     => null,

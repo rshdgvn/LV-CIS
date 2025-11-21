@@ -7,7 +7,7 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ArrowLeft, Bell, Search, Filter } from "lucide-react";
+import { ArrowLeft, Search, Filter, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -17,6 +17,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
@@ -32,6 +43,218 @@ function normalizeTasks(data) {
   return [];
 }
 
+/**
+ * CreateTaskModal - standalone modal component used to create a single task
+ *
+ * Props:
+ * - open (boolean) controlled open state
+ * - setOpen (fn) setOpen callback
+ * - eventId (number|string) required: id of the event to attach the task to
+ * - onSuccess (fn) callback(task) called after successful creation
+ */
+function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
+  const { token } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    priority: "medium",
+    status: "pending",
+    due_date: "",
+  });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!open) {
+      // reset when closed
+      setForm({
+        title: "",
+        description: "",
+        priority: "medium",
+        status: "pending",
+        due_date: "",
+      });
+      setErrors({});
+      setLoading(false);
+    }
+  }, [open]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
+    setErrors((p) => ({ ...p, [name]: null }));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.title || form.title.trim().length === 0) {
+      e.title = "Title is required";
+    }
+    if (!["low", "medium", "high"].includes(form.priority)) {
+      e.priority = "Invalid priority";
+    }
+    if (!["pending", "in_progress", "completed"].includes(form.status)) {
+      e.status = "Invalid status";
+    }
+    // due_date is optional; if present, basic ISO date check
+    if (form.due_date && isNaN(Date.parse(form.due_date))) {
+      e.due_date = "Invalid date";
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+      const payload = {
+        event_id: eventId,
+        title: form.title,
+        description: form.description || null,
+        priority: form.priority,
+        status: form.status,
+        due_date: form.due_date || null,
+      };
+
+      const res = await fetch(`${APP_URL}/create/task`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => null);
+        throw new Error(text || `Failed to create task (status ${res.status})`);
+      }
+
+      const task = await res.json();
+      onSuccess?.(task);
+      setOpen(false);
+    } catch (err) {
+      console.error("CreateTaskModal error:", err);
+      // Basic error handling; you can expand to show toast/snack
+      alert("Failed to create task. See console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="!max-w-md bg-neutral-950 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            Create Task
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 mt-2">
+          <div>
+            <Label>Title *</Label>
+            <Input
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              placeholder="eg. Prepare venue layout"
+              className="bg-neutral-900 border-neutral-800"
+            />
+            {errors.title && (
+              <p className="text-xs text-rose-400 mt-1">{errors.title}</p>
+            )}
+          </div>
+
+          <div>
+            <Label>Description</Label>
+            <Textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Optional details..."
+              className="bg-neutral-900 border-neutral-800 min-h-[80px]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Priority *</Label>
+              <select
+                name="priority"
+                value={form.priority}
+                onChange={handleChange}
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+              {errors.priority && (
+                <p className="text-xs text-rose-400 mt-1">{errors.priority}</p>
+              )}
+            </div>
+
+            <div>
+              <Label>Status *</Label>
+              <select
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2"
+              >
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+              {errors.status && (
+                <p className="text-xs text-rose-400 mt-1">{errors.status}</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <Label>Due Date</Label>
+            <Input
+              name="due_date"
+              type="date"
+              value={form.due_date}
+              onChange={handleChange}
+              className="bg-neutral-900 border-neutral-800"
+            />
+            {errors.due_date && (
+              <p className="text-xs text-rose-400 mt-1">{errors.due_date}</p>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <div className="flex gap-3 justify-end w-full">
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="text-gray-300"
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="bg-blue-700 hover:bg-blue-600"
+            >
+              {loading ? "Creating..." : "Create Task"}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function EventTasksTable() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -42,6 +265,9 @@ export default function EventTasksTable() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // modal state
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
 
   const columnHelper = createColumnHelper();
 
@@ -66,7 +292,10 @@ export default function EventTasksTable() {
         if (!eventRes.ok) throw new Error("Failed to fetch event details.");
         const eventData = await eventRes.json();
         setEventTitle(eventData.title || "");
-        setEventDescription(eventData.description || "");
+        // prefer eventData.description or eventData.detail?.description depending on backend
+        setEventDescription(
+          eventData.description || eventData.detail?.description || ""
+        );
 
         const taskRes = await fetch(`${APP_URL}/events/${id}/tasks`, {
           headers: {
@@ -187,6 +416,17 @@ export default function EventTasksTable() {
             type="text"
             placeholder="Search Tasks"
             className="flex-1 bg-transparent text-sm text-gray-300 outline-none placeholder-gray-500"
+            onChange={(e) => {
+              const q = e.target.value.toLowerCase();
+              // simple client-side filter on title (non-destructive)
+              if (!q) {
+                // reload original set from API might be desired; for now we'll keep original array
+                return;
+              }
+              setTasks((prev) =>
+                prev.filter((t) => (t.title || "").toLowerCase().includes(q))
+              );
+            }}
           />
         </div>
 
@@ -197,6 +437,17 @@ export default function EventTasksTable() {
           <Filter className="w-4 h-4" />
           Filter
         </Button>
+
+        {/* Add Task button */}
+        <div className="ml-auto">
+          <Button
+            onClick={() => setTaskModalOpen(true)}
+            className="flex items-center gap-2 rounded-full px-4 py-2 bg-green-700 hover:bg-green-600"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Add Task
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-2xl w-5/6 bg-[#121212] border border-neutral-800 self-center shadow-md overflow-hidden">
@@ -254,6 +505,25 @@ export default function EventTasksTable() {
           </TableBody>
         </Table>
       </div>
+
+      <CreateTaskModal
+        open={taskModalOpen}
+        setOpen={setTaskModalOpen}
+        eventId={id}
+        onSuccess={(task) => {
+          const normalized = {
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            priority: task.priority,
+            status: task.status,
+            due_date: task.due_date,
+            assigned_by: task.assigned_by ?? [],
+            created_at: task.created_at,
+          };
+          setTasks((prev) => [normalized, ...prev]);
+        }}
+      />
     </div>
   );
 }

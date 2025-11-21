@@ -8,7 +8,7 @@ const ProtectedRoute = () => {
 
   if (loading) return <Loader />;
 
-  return isValidUser ? <Outlet /> : <Navigate to="/forbidden" replace />;
+  return isValidUser ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;

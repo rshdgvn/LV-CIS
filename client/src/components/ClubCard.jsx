@@ -86,7 +86,7 @@ function ClubCard({
   return (
     <div
       onClick={onEnter}
-      className={`w-80 rounded-xl overflow-hidden border border-gray-800 bg-${bg_color} backdrop-blur-sm shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)] hover:scale-[1.03] transition-all duration-300 ease-out flex flex-col cursor-pointer`}
+      className={`w-80 rounded-xl overflow-hidden border bg-slate-900 border-gray-800 bg-${bg_color} backdrop-blur-sm shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)] hover:scale-[1.03] transition-all duration-300 ease-out flex flex-col cursor-pointer`}
     >
       <div
         className="relative h-28 bg-cover bg-center flex items-center justify-center"

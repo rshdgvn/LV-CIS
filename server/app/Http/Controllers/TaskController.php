@@ -117,24 +117,26 @@ class TaskController extends Controller
         }
 
         $tasks = $tasks->map(function ($task) {
-            $assignedBy = $task->assignments->map(function ($assignment) {
+            $assignedUsers = $task->assignments->map(function ($assignment) {
                 $user = $assignment->clubMembership->user;
                 if (!$user) return null;
 
-                return trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+                return [
+                    'name'   => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                    'avatar' => $user->avatar ?? null, // add avatar here
+                ];
             })->filter()->values();
 
             return [
-                'id' => $task->id,
-                'title' => $task->title,
-                'priority' => $task->priority,
-                'status' => $task->status,
-                'due_date' => $task->due_date,
+                'id'         => $task->id,
+                'title'      => $task->title,
+                'priority'   => $task->priority,
+                'status'     => $task->status,
+                'due_date'   => $task->due_date,
                 'created_at' => optional($task->created_at)->format('Y-m-d'),
-                'assigned_by' => $assignedBy,
+                'assigned_by' => $assignedUsers, 
             ];
         });
-
 
         return response()->json($tasks);
     }

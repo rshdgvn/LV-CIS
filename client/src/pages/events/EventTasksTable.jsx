@@ -18,12 +18,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,15 +49,6 @@ function normalizeTasks(data) {
   return [];
 }
 
-/**
- * CreateTaskModal - standalone modal component used to create a single task
- *
- * Props:
- * - open (boolean) controlled open state
- * - setOpen (fn) setOpen callback
- * - eventId (number|string) required: id of the event to attach the task to
- * - onSuccess (fn) callback(task) called after successful creation
- */
 function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -66,7 +63,6 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
 
   useEffect(() => {
     if (!open) {
-      // reset when closed
       setForm({
         title: "",
         description: "",
@@ -87,19 +83,14 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
 
   const validate = () => {
     const e = {};
-    if (!form.title || form.title.trim().length === 0) {
-      e.title = "Title is required";
-    }
-    if (!["low", "medium", "high"].includes(form.priority)) {
+    if (!form.title.trim()) e.title = "Title is required";
+    if (!["low", "medium", "high"].includes(form.priority))
       e.priority = "Invalid priority";
-    }
-    if (!["pending", "in_progress", "completed"].includes(form.status)) {
+    if (!["pending", "in_progress", "completed"].includes(form.status))
       e.status = "Invalid status";
-    }
-    // due_date is optional; if present, basic ISO date check
-    if (form.due_date && isNaN(Date.parse(form.due_date))) {
+    if (form.due_date && isNaN(Date.parse(form.due_date)))
       e.due_date = "Invalid date";
-    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -130,16 +121,15 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
 
       if (!res.ok) {
         const text = await res.text().catch(() => null);
-        throw new Error(text || `Failed to create task (status ${res.status})`);
+        throw new Error(text || `Failed to create task`);
       }
 
       const task = await res.json();
       onSuccess?.(task);
       setOpen(false);
     } catch (err) {
-      console.error("CreateTaskModal error:", err);
-      // Basic error handling; you can expand to show toast/snack
-      alert("Failed to create task. See console for details.");
+      console.error(err);
+      alert("Failed to create task");
     } finally {
       setLoading(false);
     }
@@ -161,7 +151,6 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
               name="title"
               value={form.title}
               onChange={handleChange}
-              placeholder="eg. Prepare venue layout"
               className="bg-neutral-900 border-neutral-800"
             />
             {errors.title && (
@@ -175,7 +164,6 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
               name="description"
               value={form.description}
               onChange={handleChange}
-              placeholder="Optional details..."
               className="bg-neutral-900 border-neutral-800 min-h-[80px]"
             />
           </div>
@@ -193,9 +181,6 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
-              {errors.priority && (
-                <p className="text-xs text-rose-400 mt-1">{errors.priority}</p>
-              )}
             </div>
 
             <div>
@@ -210,9 +195,6 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
                 <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
               </select>
-              {errors.status && (
-                <p className="text-xs text-rose-400 mt-1">{errors.status}</p>
-              )}
             </div>
           </div>
 
@@ -225,9 +207,6 @@ function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
               onChange={handleChange}
               className="bg-neutral-900 border-neutral-800"
             />
-            {errors.due_date && (
-              <p className="text-xs text-rose-400 mt-1">{errors.due_date}</p>
-            )}
           </div>
         </div>
 
@@ -266,7 +245,6 @@ export default function EventTasksTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // modal state
   const [taskModalOpen, setTaskModalOpen] = useState(false);
 
   const columnHelper = createColumnHelper();
@@ -275,12 +253,6 @@ export default function EventTasksTable() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
-
-        if (!id || !token) {
-          setLoading(false);
-          return;
-        }
 
         const eventRes = await fetch(`${APP_URL}/events/${id}`, {
           headers: {
@@ -289,13 +261,11 @@ export default function EventTasksTable() {
           },
         });
 
-        if (!eventRes.ok) throw new Error("Failed to fetch event details.");
+        if (!eventRes.ok) throw new Error("Failed to fetch event");
         const eventData = await eventRes.json();
+
         setEventTitle(eventData.title || "");
-        // prefer eventData.description or eventData.detail?.description depending on backend
-        setEventDescription(
-          eventData.description || eventData.detail?.description || ""
-        );
+        setEventDescription(eventData.description || "");
 
         const taskRes = await fetch(`${APP_URL}/events/${id}/tasks`, {
           headers: {
@@ -304,11 +274,10 @@ export default function EventTasksTable() {
           },
         });
 
-        if (!taskRes.ok) throw new Error("Failed to fetch tasks.");
+        if (!taskRes.ok) throw new Error("Failed to fetch tasks");
         const taskData = await taskRes.json();
 
-        const normalized = normalizeTasks(taskData);
-        setTasks(normalized);
+        setTasks(normalizeTasks(taskData));
       } catch (err) {
         console.error(err);
         setError("Failed to load event tasks.");
@@ -325,26 +294,43 @@ export default function EventTasksTable() {
       columnHelper.accessor("title", {
         header: "Tasks",
         cell: (info) => (
-          <div className="font-medium text-gray-100 text-center">
+          <div className="font-medium text-white text-center">
             {info.getValue() ?? "Untitled"}
           </div>
         ),
       }),
       columnHelper.accessor("assigned_by", {
-        header: "Assigned",
+        header: "Assigned By",
         cell: (info) => {
-          const val = info.getValue();
+          const users = info.getValue() || [];
           return (
-            <span className="text-gray-400 text-sm text-center block">
-              {Array.isArray(val) ? val.join(", ") : val || "N/A"}
-            </span>
+            <div className="flex justify-center">
+              <div className="flex -space-x-3">
+                {users.length ? (
+                  users.map((u, i) => (
+                    <img
+                      key={i}
+                      src={
+                        u.avatar ||
+                        `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
+                          `${u.name}`
+                        )}`
+                      }
+                      className="w-10 h-10 rounded-full border-2 border-neutral-900 object-cover"
+                    />
+                  ))
+                ) : (
+                  <span className="text-gray-500 text-sm">—</span>
+                )}
+              </div>
+            </div>
           );
         },
       }),
       columnHelper.accessor("due_date", {
         header: "Due Date",
         cell: (info) => (
-          <span className="text-gray-300 text-center block">
+          <span className="text-white text-center block">
             {info.getValue()
               ? new Date(info.getValue()).toLocaleDateString()
               : "—"}
@@ -357,13 +343,29 @@ export default function EventTasksTable() {
           const status = info.getValue();
           return (
             <div className="flex justify-center">
-              <span
-                className={`${getTaskStatusColor(
-                  status
-                )} text-white text-xs px-3 py-1 rounded-full font-medium`}
+              <Select
+                value={status}
+                onValueChange={(value) => handleStatusChange(id, value)}
               >
-                {formatTaskStatus(status)}
-              </span>
+                <SelectTrigger
+                  className={`bg-blue-700
+      h-7! w-24 rounded-lg ${
+        status == "completed" ? "text-[10px]" : "text-xs"
+      } font-medium 
+      flex items-center justify-between px-2
+      text-white ${getTaskStatusColor(status)}
+      border-none shadow-sm
+    `}
+                >
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+
+                <SelectContent className="text-xs">
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in_progress">Ongoing</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           );
         },
@@ -382,7 +384,6 @@ export default function EventTasksTable() {
   const blankRows = Math.max(totalRows - tasks.length, 0);
 
   if (loading) return <SkeletonEventTasksTable />;
-
   if (error)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
@@ -395,20 +396,17 @@ export default function EventTasksTable() {
       <div className="flex">
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-50 p-2 rounded-md bg-neutral-800/60 hover:bg-neutral-950/60 transition"
+          className="absolute top-4 left-4 z-50 p-2 rounded-md bg-neutral-800/60 hover:bg-neutral-950/60"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         <div className="flex flex-col mb-10 ml-14 gap-3">
-          <h1 className="text-4xl font-semibold text-white">
-            {eventTitle || "Event Tasks"}
-          </h1>
+          <h1 className="text-4xl font-semibold">{eventTitle}</h1>
           <p className="text-gray-400">{eventDescription}</p>
         </div>
       </div>
 
-      {/* Search + Filter Bar */}
       <div className="flex items-center gap-3 mb-6 w-5/6 self-center">
         <div className="flex items-center gap-2 bg-[#121212] rounded-full px-4 py-2 w-xl border border-neutral-800">
           <Search className="text-gray-400 w-5 h-5" />
@@ -418,11 +416,7 @@ export default function EventTasksTable() {
             className="flex-1 bg-transparent text-sm text-gray-300 outline-none placeholder-gray-500"
             onChange={(e) => {
               const q = e.target.value.toLowerCase();
-              // simple client-side filter on title (non-destructive)
-              if (!q) {
-                // reload original set from API might be desired; for now we'll keep original array
-                return;
-              }
+              if (!q) return;
               setTasks((prev) =>
                 prev.filter((t) => (t.title || "").toLowerCase().includes(q))
               );
@@ -430,19 +424,15 @@ export default function EventTasksTable() {
           />
         </div>
 
-        <Button
-          variant="secondary"
-          className="bg-[#121212] border border-neutral-800 hover:bg-neutral-800 text-gray-300 text-sm rounded-full px-5 py-2 flex items-center gap-2 shadow-sm"
-        >
+        <Button className="bg-[#121212] border border-neutral-800 hover:bg-neutral-800 text-gray-300 text-sm rounded-full px-5 py-2 flex items-center gap-2">
           <Filter className="w-4 h-4" />
           Filter
         </Button>
 
-        {/* Add Task button */}
         <div className="ml-auto">
           <Button
             onClick={() => setTaskModalOpen(true)}
-            className="flex items-center gap-2 rounded-full px-4 py-2 bg-green-700 hover:bg-green-600"
+            className="flex items-center text-white gap-2 rounded-lg px-4 py-2 bg-blue-950 hover:bg-blue-900"
           >
             <PlusCircle className="w-4 h-4" />
             Add Task
@@ -451,14 +441,14 @@ export default function EventTasksTable() {
       </div>
 
       <div className="rounded-2xl w-5/6 bg-[#121212] border border-neutral-800 self-center shadow-md overflow-hidden">
-        <Table>
+        <Table className="table-fixed w-full">
           <TableHeader className="bg-[#1a1a1a]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-gray-400 text-sm py-4 px-6 text-center"
+                    className="text-white text-sm py-4 px-6 text-center w-1/4"
                   >
                     {header.isPlaceholder
                       ? null
@@ -474,14 +464,11 @@ export default function EventTasksTable() {
 
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className="hover:bg-neutral-800/50 transition"
-              >
+              <TableRow key={row.id} className="hover:bg-neutral-800/50">
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle"
+                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle w-1/4"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
@@ -490,14 +477,11 @@ export default function EventTasksTable() {
             ))}
 
             {Array.from({ length: blankRows }).map((_, i) => (
-              <TableRow
-                key={`blank-${i}`}
-                className="hover:bg-neutral-800/10 transition"
-              >
+              <TableRow key={`blank-${i}`} className="hover:bg-neutral-800/10">
                 {columns.map((_, j) => (
                   <TableCell
-                    key={`blank-cell-${i}-${j}`}
-                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle"
+                    key={`blank-${i}-${j}`}
+                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle w-1/4"
                   ></TableCell>
                 ))}
               </TableRow>
@@ -519,7 +503,6 @@ export default function EventTasksTable() {
             status: task.status,
             due_date: task.due_date,
             assigned_by: task.assigned_by ?? [],
-            created_at: task.created_at,
           };
           setTasks((prev) => [normalized, ...prev]);
         }}

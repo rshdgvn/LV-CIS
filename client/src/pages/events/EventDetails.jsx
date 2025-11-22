@@ -13,6 +13,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { formatTaskStatus } from "@/utils/formatTaskStatus";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 import UpdateEventModal from "@/components/events/UpdateEventModal";
 import { Button } from "@/components/ui/button";
@@ -169,20 +176,64 @@ function EventDetails() {
               <ul className="space-y-3">
                 {tasks.map((task, i) => (
                   <li key={i} className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold">{task.title}</p>
-                      <p className="text-gray-400 text-sm">
-                        Assigned by: {task.assigned_by || "N/A"}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      {task.assigned_by?.length > 0 && (
+                        <>
+                          <img
+                            src={
+                              task.assigned_by.avatar ||
+                              `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
+                                `${task.assigned_by.name}`
+                              )}`
+                            }
+                            alt="avatar"
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+
+                          <div>
+                            <p className="font-semibold">
+                              {task.assigned_by[0].name}
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                              {task.title}
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {task.assigned_by?.length === 0 && (
+                        <div>
+                          <p className="font-semibold">{task.title}</p>
+                          <p className="text-gray-400 text-sm">
+                            No assigned user
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    <span
-                      className={`${getTaskStatusColor(
-                        task.status
-                      )} text-white text-[13px] px-4 py-[3px] rounded-full font-medium shadow-sm`}
+                    <Select
+                      value={task.status}
+                      onValueChange={(value) =>
+                        handleStatusChange(task.id, value)
+                      }
                     >
-                      {formatTaskStatus(task.status)}
-                    </span>
+                      <SelectTrigger
+                        className={`bg-blue-700
+      h-7! w-24 rounded-lg ${task.status == "completed" ? 'text-[10px]' : 'text-xs'} font-medium 
+      flex items-center justify-between px-2
+      text-white ${getTaskStatusColor(task.status)}
+      border-none shadow-sm
+    `}
+                      >
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+
+                      <SelectContent className="text-xs">
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">Ongoing</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </li>
                 ))}
               </ul>

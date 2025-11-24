@@ -71,11 +71,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/tasks', [TaskController::class, 'getAllTasks']);
     Route::get('/task/{id}', [TaskController::class, 'getTaskById']);
+    Route::post('/tasks/{taskId}/assign', [TaskController::class, 'assignTaskByEmail']);
     Route::post('/create/task', [TaskController::class, 'createTaskForEvent']);
     Route::put('/update/task/{id}', [TaskController::class, 'updateTaskById']);
     Route::delete('/delete/task/{id}', [TaskController::class, 'deleteTaskById']);
 
     Route::get('/events/{eventId}/tasks', [TaskController::class, 'getTasksByEvent']);
+
 
     Route::get('/attendance-sessions', [AttendanceSessionController::class, 'index']);
     Route::get('/attendance-sessions/{id}', [AttendanceSessionController::class, 'show']);

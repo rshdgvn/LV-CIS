@@ -27,21 +27,18 @@ class EventTaskSeeder extends Seeder
                 [
                     'title' => 'Prepare logistics for ' . $event->title,
                     'description' => 'Coordinate with suppliers, arrange materials, and prepare transportation.',
-                    'priority' => 'high',
                     'status' => 'completed',
                     'due_date' => $eventDate->copy()->subDays(3),
                 ],
                 [
                     'title' => 'Design marketing materials for ' . $event->title,
                     'description' => 'Create posters and social media content for event promotion.',
-                    'priority' => 'medium',
                     'status' => 'in_progress',
                     'due_date' => $eventDate->copy()->subDays(5),
                 ],
                 [
                     'title' => 'Confirm attendance list for ' . $event->title,
                     'description' => 'Gather RSVPs and finalize participant count.',
-                    'priority' => 'medium',
                     'status' => 'pending',
                     'due_date' => $eventDate->copy()->subDays(1),
                 ],

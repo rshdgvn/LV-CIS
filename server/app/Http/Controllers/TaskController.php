@@ -74,7 +74,24 @@ class TaskController extends Controller
             }
         }
 
-        return response()->json($task->load(['assignments.clubMembership.user']), 201);
+        $task->load('assignments.clubMembership.user');
+
+        $assignedUsers = $task->assignments->map(function ($assignment) {
+            $user = $assignment->clubMembership->user;
+            if (!$user) return null;
+            return [
+                'name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                'avatar' => $user->avatar ?? null,
+            ];
+        })->filter()->values();
+
+        return response()->json([
+            'id' => $task->id,
+            'title' => $task->title,
+            'status' => $task->status,
+            'due_date' => $task->due_date,
+            'assigned_by' => $assignedUsers,
+        ], 200);
     }
 
 
@@ -225,10 +242,25 @@ class TaskController extends Controller
             }
         }
 
-        // return fresh object with assignments
-        $task->load('assignments.clubMembership.user', 'event.club');
 
-        return response()->json($task);
+        $task->load('assignments.clubMembership.user');
+
+        $assignedUsers = $task->assignments->map(function ($assignment) {
+            $user = $assignment->clubMembership->user;
+            if (!$user) return null;
+            return [
+                'name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                'avatar' => $user->avatar ?? null,
+            ];
+        })->filter()->values();
+
+        return response()->json([
+            'id' => $task->id,
+            'title' => $task->title,
+            'status' => $task->status,
+            'due_date' => $task->due_date,
+            'assigned_by' => $assignedUsers,
+        ], 200);
     }
 
 

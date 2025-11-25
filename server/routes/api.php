@@ -7,7 +7,7 @@ use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandingPageController;
-use App\Http\Controllers\MemberController;
+use App\Http\Controllers\ClubEventController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProfileController;
@@ -93,6 +93,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/user/profile', [ProfileController::class, 'update']);
     Route::post('/user/setup-profile', [ProfileController::class, 'setup']);
     Route::post('/user/change-password', [ProfileController::class, 'changePassword']);
+
+    Route::get('/clubs/{id}/events', [ClubEventController::class, 'index']);
 });
 
 

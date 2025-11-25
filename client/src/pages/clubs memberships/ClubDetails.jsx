@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import Layout from "@/components/app/layout";
 import { useAuth } from "@/contexts/AuthContext";
-import NavTabs from "@/components/NavTabs";
 import { useNavigate, useParams } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
@@ -27,6 +25,8 @@ export default function ClubDetails() {
   const nav = useNavigate();
 
   const [club, setClub] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [gallery, setGallery] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState(null);
@@ -64,6 +64,35 @@ export default function ClubDetails() {
     }
   };
 
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch(`${APP_URL}/clubs/${id}/events`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch events");
+
+      const data = await res.json();
+      setEvents(data.events || []);
+
+      console.log(data.events)
+      const galleryItems = [];
+      data.events.forEach((event) => {
+        event.photos.forEach((photo) =>
+          galleryItems.push({ type: "photo", url: photo })
+        );
+        event.videos.forEach((video) =>
+          galleryItems.push({ type: "video", url: video })
+        );
+      });
+      setGallery(galleryItems);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const cached = sessionStorage.getItem(`club_${id}`);
     if (cached) {
@@ -72,6 +101,7 @@ export default function ClubDetails() {
     }
     if (token && id) {
       fetchClubDetails();
+      fetchEvents();
     }
   }, [token, id]);
 
@@ -85,8 +115,6 @@ export default function ClubDetails() {
 
   const handleAddMember = async (formData) => {
     const { userId, email, role, officer_title } = formData;
-    console.log(formData, id);
-
     if (!id || !role || (!userId && !email)) {
       showAlert(
         "error",
@@ -163,7 +191,6 @@ export default function ClubDetails() {
 
       if (!res.ok) throw new Error(data.message || "Failed to update member");
 
-      console.log("Member updated:", data);
       showAlert("success", "Member Updated", "Member info updated!");
       fetchClubDetails();
     } catch (err) {
@@ -226,6 +253,7 @@ export default function ClubDetails() {
         <div className="p-6 text-red-400 text-center">{error}</div>
       ) : (
         <div className="min-h-screen p-6 text-white lg:flex lg:gap-6">
+          {/* Left side: Club Info & Members */}
           <div className="flex-1 space-y-6">
             <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center md:items-start gap-6">
               <img
@@ -283,17 +311,75 @@ export default function ClubDetails() {
             />
           </div>
 
-          <div className="w-full lg:w-1/3">
-            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 h-full">
+          {/* Right side: Activities & Gallery */}
+          <div className="min-h-screen lg:w-1/3 flex flex-col gap-6">
+            {/* Activities */}
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-semibold">Events & Photos</h3>
+                <h3 className="text-xl font-semibold">Activities</h3>
                 <button className="text-sm text-blue-400 hover:underline">
                   View all
                 </button>
               </div>
-              <p className="text-gray-400 text-sm">
-                Coming soon... (Events and Photos section)
-              </p>
+              {events.length === 0 ? (
+                <div className="text-gray-400 text-sm flex-1 flex items-center justify-center">
+                  No activities found.
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto space-y-4">
+                  {events.map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex items-center gap-4 bg-neutral-900 p-3 rounded-md"
+                    >
+                      <img
+                        src={
+                          event.cover_image || "https://via.placeholder.com/80"
+                        }
+                        alt={event.title}
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                      <p className="font-medium">{event.title}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Gallery */}
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex-1 flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-semibold">Gallery</h3>
+                <button className="text-sm text-blue-400 hover:underline">
+                  View all
+                </button>
+              </div>
+              {gallery.length === 0 ? (
+                <div className="text-gray-400 text-sm flex-1 flex items-center justify-center">
+                  No photos or videos yet.
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-4">
+                  {gallery.map((item, idx) =>
+                    item.type === "photo" ? (
+                      <img
+                        key={idx}
+                        src={item.url}
+                        alt="Event Photo"
+                        className="w-full h-32 object-cover rounded"
+                      />
+                    ) : (
+                      <video
+                        key={idx}
+                        controls
+                        className="w-full h-32 object-cover rounded"
+                      >
+                        <source src={item.url} type="video/mp4" />
+                      </video>
+                    )
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -30,6 +30,7 @@ import { SkeletonEventTasksTable } from "@/components/skeletons/SkeletonEventTas
 import CreateTaskModal from "@/components/events/CreateTaskModal";
 import ReadTaskModal from "@/components/events/ReadTaskModal";
 import UpdateTaskModal from "@/components/events/UpdateTaskModal";
+import { useToast } from "@/providers/ToastProvider"; // Import ToastProvider
 
 // Normalizing tasks from backend
 function normalizeTasks(data) {
@@ -44,6 +45,7 @@ export default function EventTasksTable() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { token } = useAuth();
+  const { addToast } = useToast(); // Initialize addToast function
 
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
@@ -77,10 +79,36 @@ export default function EventTasksTable() {
 
         // Update the tasks state to remove the deleted task
         setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+
+        addToast("Task deleted successfully!", "success"); // Show success toast
       } catch (err) {
         console.error(err);
-        alert("Failed to delete task.");
+        addToast("Failed to delete task.", "error"); // Show error toast
       }
+    }
+  };
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      // Update the task status locally first
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      );
+
+      // Make an API call to update the status on the backend
+      await fetch(`${APP_URL}/tasks/${taskId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      addToast("Task status updated successfully!", "success");
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to update task status.", "error");
     }
   };
 
@@ -117,6 +145,7 @@ export default function EventTasksTable() {
       } catch (err) {
         console.error(err);
         setError("Failed to load event tasks.");
+        addToast("Failed to load event tasks.", "error"); // Show error toast
       } finally {
         setLoading(false);
       }
@@ -140,7 +169,7 @@ export default function EventTasksTable() {
       setReadOpen(true);
     } catch (err) {
       console.error(err);
-      alert("Failed to load task.");
+      addToast("Failed to load task.", "error"); 
     }
   };
 
@@ -343,7 +372,10 @@ export default function EventTasksTable() {
         eventId={id}
         open={taskModalOpen}
         setOpen={setTaskModalOpen}
-        onSuccess={(task) => setTasks((prev) => [task, ...prev])}
+        onSuccess={(task) => {
+          setTasks((prev) => [task, ...prev]);
+          addToast("Task added successfully!", "success"); // Show success toast
+        }}
         members={members}
       />
 
@@ -355,7 +387,7 @@ export default function EventTasksTable() {
           setReadOpen(false);
           setUpdateOpen(true);
         }}
-        onDelete={handleDeleteTask} 
+        onDelete={handleDeleteTask}
       />
 
       <UpdateTaskModal
@@ -368,6 +400,7 @@ export default function EventTasksTable() {
             prev.map((t) => (t.id === updated.id ? updated : t))
           );
           setSelectedTask(updated);
+          addToast("Task updated successfully!", "success");
         }}
       />
     </div>

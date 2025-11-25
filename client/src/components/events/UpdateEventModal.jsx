@@ -153,7 +153,7 @@ export default function UpdateEventModal({ event, onSuccess }) {
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="flex items-center gap-2 text-blue-700 hover:text-blue-400"
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-400"
           >
             Edit Event
           </Button>

@@ -7,6 +7,7 @@ import {
   Share2,
   ArrowLeft,
   UserRound,
+  ClipboardCheck,
 } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
@@ -157,19 +158,18 @@ function EventDetails() {
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
             <div className="flex justify-between">
               <div className="flex gap-2 mb-3">
-                <UserRound className="h-7 w-7 text-red-400" />
+                <ClipboardCheck className="h-7 w-7 text-red-400" />
                 <h2 className="text-lg font-semibold mb-4 text-gray-400">
                   Tasks
                 </h2>
               </div>
 
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 text-white"
+              <p
+                className="flex justify-center text-white cursor-pointer hover:underline"
                 onClick={() => nav(`/events/${id}/tasks`)}
               >
-                View All
-              </Button>
+                View All Tasks
+              </p>
             </div>
             {tasks?.length > 0 ? (
               <ul className="space-y-3">

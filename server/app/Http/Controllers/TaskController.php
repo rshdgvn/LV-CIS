@@ -265,7 +265,7 @@ class TaskController extends Controller
 
 
     /**
-     * Delete a task by ID
+     * Get task by event ID
      */
     public function getTasksByEvent(Request $request, $eventId)
     {
@@ -344,5 +344,15 @@ class TaskController extends Controller
             'status' => $task->status,
             'message' => 'Status updated successfully'
         ], 200);
+    }
+
+    public function deleteTaskById($id)
+    {
+        $task = EventTask::with('event.club')->findOrFail($id);
+
+        $task->assignments()->delete();
+        $task->delete();
+
+        return response()->json(['message' => 'Task deleted successfully']);
     }
 }

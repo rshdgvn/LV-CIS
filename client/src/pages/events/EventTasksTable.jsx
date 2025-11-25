@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useMemo } from "react";
 import {
   flexRender,
@@ -7,9 +5,7 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
-
 import { ArrowLeft, Search, Filter, PlusCircle } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -26,14 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
-
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 import { SkeletonEventTasksTable } from "@/components/skeletons/SkeletonEventTasksTable";
-
 import CreateTaskModal from "@/components/events/CreateTaskModal";
 import ReadTaskModal from "@/components/events/ReadTaskModal";
 import UpdateTaskModal from "@/components/events/UpdateTaskModal";
@@ -56,7 +49,6 @@ export default function EventTasksTable() {
   const [eventDescription, setEventDescription] = useState("");
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -68,23 +60,27 @@ export default function EventTasksTable() {
 
   const columnHelper = createColumnHelper();
 
-  const handleStatusChange = async (taskId, newStatus) => {
-    try {
-      await fetch(`${APP_URL}/tasks/${taskId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+  // Handle task deletion
+  const handleDeleteTask = async (taskId) => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      try {
+        const response = await fetch(`${APP_URL}/delete/task/${taskId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update status");
+        if (!response.ok) {
+          throw new Error("Failed to delete task.");
+        }
+
+        // Update the tasks state to remove the deleted task
+        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+      } catch (err) {
+        console.error(err);
+        alert("Failed to delete task.");
+      }
     }
   };
 
@@ -141,7 +137,6 @@ export default function EventTasksTable() {
         ...data.task,
         assigned: data.assigned ?? [],
       });
-      console.log(data);
       setReadOpen(true);
     } catch (err) {
       console.error(err);
@@ -239,9 +234,6 @@ export default function EventTasksTable() {
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-
-  const totalRows = 8;
-  const blankRows = Math.max(totalRows - tasks.length, 0);
 
   if (loading) return <SkeletonEventTasksTable />;
   if (error)
@@ -343,15 +335,6 @@ export default function EventTasksTable() {
                 ))}
               </TableRow>
             ))}
-
-            {/* Blank rows */}
-            {Array.from({ length: blankRows }).map((_, i) => (
-              <TableRow key={`blank-${i}`} className="hover:bg-neutral-800/10">
-                {columns.map((_, j) => (
-                  <TableCell key={`blank-${i}-${j}`} className="h-14 px-6" />
-                ))}
-              </TableRow>
-            ))}
           </TableBody>
         </Table>
       </div>
@@ -372,6 +355,7 @@ export default function EventTasksTable() {
           setReadOpen(false);
           setUpdateOpen(true);
         }}
+        onDelete={handleDeleteTask} 
       />
 
       <UpdateTaskModal

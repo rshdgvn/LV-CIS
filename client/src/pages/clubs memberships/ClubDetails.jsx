@@ -53,6 +53,7 @@ export default function ClubDetails() {
       if (!res.ok) throw new Error("Failed to fetch club details");
 
       const data = await res.json();
+      console.log(data)
       setClub(data);
       sessionStorage.setItem(`club_${id}`, JSON.stringify(data));
     } catch (err) {
@@ -77,7 +78,6 @@ export default function ClubDetails() {
       const data = await res.json();
       setEvents(data.events || []);
 
-      console.log(data.events)
       const galleryItems = [];
       data.events.forEach((event) => {
         event.photos.forEach((photo) =>
@@ -275,20 +275,12 @@ export default function ClubDetails() {
 
                 {club.adviser && (
                   <div className="mt-5">
-                    <h3 className="font-semibold text-white text-lg mt-10">
+                    <h3 className="font-semibold text-white text-xl mt-10">
                       Adviser
                     </h3>
-                    <div className="flex items-center mt-3 bg-neutral-900 p-3 w-fit">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-white text-sm font-medium">
-                        {club.adviser.initialss ||
-                          club.adviser
-                            ?.split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                      </div>
-                      <div className="ml-3">
-                        <p className="font-medium">Mr. {club.adviser}</p>
+                    <div className="flex items-center mt-3 bg-neutral-900 w-fit">
+                      <div className="ml-2">
+                        <p className="font-normal">Mr. {club.adviser}</p>
                         <p className="text-xs text-gray-400">Adviser</p>
                       </div>
                     </div>

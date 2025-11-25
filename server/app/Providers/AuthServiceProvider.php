@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Models\ClubMembership;
+use App\Models\Event;
+use App\Models\EventTask;
 use App\Policies\ClubMembershipPolicy;
+use App\Policies\EventPolicy;
+use App\Policies\EventTaskPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -13,6 +17,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         ClubMembership::class => ClubMembershipPolicy::class,
+        Event::class => EventPolicy::class,
+        EventTask::class => EventTaskPolicy::class,
     ];
 
     public function register(): void

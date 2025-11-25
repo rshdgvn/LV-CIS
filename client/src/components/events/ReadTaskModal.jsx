@@ -1,4 +1,3 @@
-// components/events/ReadTaskModal.jsx
 import {
   Dialog,
   DialogContent,
@@ -9,12 +8,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 
-export default function ReadTaskModal({ open, setOpen, task, onEdit }) {
+export default function ReadTaskModal({
+  open,
+  setOpen,
+  task,
+  onEdit,
+  onDelete,
+}) {
   if (!task) return null;
 
-  useEffect(()=>{
-    console.log(task)
-  }, [])
+  useEffect(() => {
+    console.log(task);
+  }, [task]);
+
+  const handleDelete = () => {
+    onDelete(task.id);
+    setOpen(false); 
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -87,6 +97,13 @@ export default function ReadTaskModal({ open, setOpen, task, onEdit }) {
             }}
           >
             Update Task
+          </Button>
+
+          <Button
+            className="bg-red-700 hover:bg-red-600"
+            onClick={handleDelete} 
+          >
+            Delete Task
           </Button>
         </DialogFooter>
       </DialogContent>

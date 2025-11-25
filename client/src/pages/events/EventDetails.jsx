@@ -12,7 +12,6 @@ import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import { formatTaskStatus } from "@/utils/formatTaskStatus";
 import {
   Select,
   SelectContent,
@@ -72,9 +71,9 @@ function EventDetails() {
       if (!res.ok) throw new Error("Failed to fetch tasks.");
       const data = await res.json();
 
-      setTasks(data);
+      setTasks(data.tasks);
 
-      console.log("Fetched tasks:", data);
+      console.log("Fetched tasks:", data.tasks);
     } catch (err) {
       console.error(err);
       setTasks([]);
@@ -174,7 +173,7 @@ function EventDetails() {
             </div>
             {tasks?.length > 0 ? (
               <ul className="space-y-3">
-                {tasks.map((task, i) => (
+                {tasks.slice(0, 4).map((task, i) => (
                   <li key={i} className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       {task.assigned_by?.length > 0 && (
@@ -219,11 +218,13 @@ function EventDetails() {
                     >
                       <SelectTrigger
                         className={`bg-blue-700
-      h-7! w-24 rounded-lg ${task.status == "completed" ? 'text-[10px]' : 'text-xs'} font-medium 
-      flex items-center justify-between px-2
-      text-white ${getTaskStatusColor(task.status)}
-      border-none shadow-sm
-    `}
+                          h-7! w-24 rounded-lg ${
+                            task.status == "completed" ? "text-[10px]" : "text-xs"
+                          } font-medium 
+                          flex items-center justify-between px-2
+                          text-white ${getTaskStatusColor(task.status)}
+                          border-none shadow-sm
+                        `}
                       >
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>

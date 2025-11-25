@@ -71,6 +71,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/tasks', [TaskController::class, 'getAllTasks']);
     Route::get('/task/{id}', [TaskController::class, 'getTaskById']);
+    Route::get('/task/{id}', [TaskController::class, 'getTaskDetail']); 
+    Route::patch('/task/{id}', [TaskController::class, 'updateTaskById']); 
+
     Route::post('/tasks/{taskId}/assign', [TaskController::class, 'assignTaskByEmail']);
     Route::post('/create/task', [TaskController::class, 'createTaskForEvent']);
     Route::put('/update/task/{id}', [TaskController::class, 'updateTaskById']);

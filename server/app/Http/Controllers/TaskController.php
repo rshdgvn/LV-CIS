@@ -126,6 +126,56 @@ class TaskController extends Controller
     /**
      * Update an existing task
      */
+    /**
+     * Get detailed task by ID (task + assignments + event + available club members)
+     */
+    public function getTaskDetail($id)
+    {
+        $task = EventTask::with([
+            'event.club',
+            'assignments.clubMembership.user'
+        ])->find($id);
+
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
+
+        // Transform assignments into usable shape for frontend
+        $assigned = $task->assignments->map(function ($assignment) {
+            $m = $assignment->clubMembership;
+            $user = $m->user ?? null;
+            return [
+                'assignment_id' => $assignment->id,
+                'club_membership_id' => $m->id,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name'  => $user->last_name,
+                    'avatar'     => $user->avatar ?? null,
+                    'email'      => $user->email ?? null,
+                ] : null,
+                'assigned_at' => optional($assignment->assigned_at)->toDateTimeString(),
+            ];
+        });
+
+        // If event->club exists, return full membership list for that club
+        $availableMembers = [];
+        if ($task->event && $task->event->club) {
+            $availableMembers = ClubMembership::where('club_id', $task->event->club->id)
+                ->with('user:id,first_name,last_name,avatar,email')
+                ->get(['id', 'user_id', 'club_id']);
+        }
+
+        return response()->json([
+            'task' => $task,
+            'assigned' => $assigned,
+            'members' => $availableMembers,
+        ]);
+    }
+
+    /**
+     * Update an existing task and sync assigned_members (array of club_membership ids)
+     */
     public function updateTaskById(Request $request, $id)
     {
         $task = EventTask::find($id);
@@ -139,12 +189,48 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'status' => 'sometimes|required|in:pending,in_progress,completed',
             'due_date' => 'nullable|date',
+            'assigned_members' => 'nullable|array',
+            'assigned_members.*' => 'integer|exists:club_memberships,id',
         ]);
 
+        // Update basic fields
         $task->update($request->only(['title', 'description', 'status', 'due_date']));
+
+        // Sync assignments if assigned_members provided
+        if ($request->has('assigned_members')) {
+            $newMembershipIds = collect($request->assigned_members)->map(fn($v) => (int)$v)->unique()->values();
+
+            // existing assignment membership ids
+            $existing = EventTaskAssignment::where('event_task_id', $task->id)
+                ->pluck('club_membership_id')
+                ->map(fn($v) => (int)$v);
+
+            $toAdd = $newMembershipIds->diff($existing);
+            $toRemove = $existing->diff($newMembershipIds);
+
+            // Create new assignments
+            foreach ($toAdd as $membershipId) {
+                EventTaskAssignment::create([
+                    'event_task_id' => $task->id,
+                    'club_membership_id' => $membershipId,
+                    'assigned_at' => now(),
+                ]);
+            }
+
+            // Remove assignments no longer wanted
+            if ($toRemove->isNotEmpty()) {
+                EventTaskAssignment::where('event_task_id', $task->id)
+                    ->whereIn('club_membership_id', $toRemove->all())
+                    ->delete();
+            }
+        }
+
+        // return fresh object with assignments
+        $task->load('assignments.clubMembership.user', 'event.club');
 
         return response()->json($task);
     }
+
 
     /**
      * Delete a task by ID
@@ -191,8 +277,15 @@ class TaskController extends Controller
             ];
         });
 
-        $availableMembers = Event::find($eventId)->club->users;
+        $event = Event::with('club')->find($eventId);
 
-        return response()->json(["tasks" => $tasks, 'members' => $availableMembers]);
+        $availableMembers = ClubMembership::where('club_id', $event->club->id)
+            ->with('user:id,first_name,last_name,avatar')
+            ->get(['id', 'user_id', 'club_id']);
+
+        return response()->json([
+            "tasks"   => $tasks,
+            "members" => $availableMembers
+        ]);
     }
 }

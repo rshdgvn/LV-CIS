@@ -1,4 +1,6 @@
-import { useState } from "react";
+// components/events/UpdateTaskModal.jsx
+
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,15 +13,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "../DatePicker";
+
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function CreateTaskModal({
-  eventId,
+export default function UpdateTaskModal({
   open,
   setOpen,
-  onSuccess,
-  members = [],
+  task,
+  members,
+  onUpdated,
 }) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -27,17 +30,29 @@ export default function CreateTaskModal({
   const [form, setForm] = useState({
     title: "",
     description: "",
-    status: "pending",
+    status: "",
     due_date: "",
     assigned_members: [],
   });
+
+  useEffect(() => {
+    if (task) {
+      setForm({
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        due_date: task.due_date,
+        assigned_members: task.assigned?.map((a) => a.club_membership_id) || [],
+      });
+    }
+  }, [task]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAssignToggle = (id) => {
+  const toggleAssign = (id) => {
     setForm((prev) => {
       const exists = prev.assigned_members.includes(id);
       return {
@@ -51,71 +66,67 @@ export default function CreateTaskModal({
 
   const handleSubmit = async () => {
     setLoading(true);
+
     try {
-      const res = await fetch(`${APP_URL}/create/task`, {
-        method: "POST",
+      const res = await fetch(`${APP_URL}/task/${task.id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...form,
-          event_id: eventId,
-        }),
+        body: JSON.stringify(form),
       });
 
-      if (!res.ok) throw new Error("Failed to create task");
+      if (!res.ok) throw new Error("Failed to update task");
 
-      const task = await res.json();
-      console.log(task)
-      onSuccess?.(task);
+      const updated = await res.json();
+      onUpdated?.(updated);
       setOpen(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to create task");
+      alert("Update failed");
     } finally {
       setLoading(false);
     }
   };
 
+  if (!task) return null;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="bg-neutral-950 text-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Add Task</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Update Task</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-3">
-          {/* Title */}
           <div>
             <Label>Title</Label>
             <Input
+              className="bg-neutral-900"
               name="title"
               value={form.title}
               onChange={handleChange}
-              className="bg-neutral-900"
             />
           </div>
 
-          {/* Description */}
           <div>
             <Label>Description</Label>
             <Textarea
+              className="bg-neutral-900"
               name="description"
               value={form.description}
               onChange={handleChange}
-              className="bg-neutral-900"
             />
           </div>
 
-          {/* Status */}
           <div>
             <Label>Status</Label>
             <select
               name="status"
+              className="w-full bg-neutral-900 border rounded-md p-2"
               value={form.status}
               onChange={handleChange}
-              className="w-full bg-neutral-900 border rounded-md p-2"
             >
               <option value="pending">Pending</option>
               <option value="in_progress">In Progress</option>
@@ -123,15 +134,14 @@ export default function CreateTaskModal({
             </select>
           </div>
 
-          {/* Due Date */}
           <div>
             <Label>Due Date</Label>
             <DatePicker
               value={form.due_date}
-              onChange={(date) =>
+              onChange={(d) =>
                 setForm((prev) => ({
                   ...prev,
-                  due_date: date?.toISOString().split("T")[0],
+                  due_date: d?.toISOString().split("T")[0],
                 }))
               }
             />
@@ -140,25 +150,21 @@ export default function CreateTaskModal({
           <div>
             <Label>Assign Members</Label>
             <div className="bg-neutral-900 p-3 rounded-md border max-h-40 overflow-y-auto space-y-2">
-              {members.length === 0 ? (
-                <p className="text-sm text-neutral-400">
-                  No members available.
-                </p>
-              ) : (
-                members.map((m) => (
-                  <label
-                    key={m.id}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.assigned_members.includes(m.id)}
-                      onChange={() => handleAssignToggle(m.id)}
-                    />
-                    <span>{m.user.first_name} {m.user.last_name}</span>
-                  </label>
-                ))
-              )}
+              {members?.map((m) => (
+                <label
+                  key={m.id}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.assigned_members.includes(m.id)}
+                    onChange={() => toggleAssign(m.id)}
+                  />
+                  <span>
+                    {m.user.first_name} {m.user.last_name}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
         </div>
@@ -169,7 +175,7 @@ export default function CreateTaskModal({
             onClick={handleSubmit}
             className="bg-blue-700 hover:bg-blue-600"
           >
-            {loading ? "Creating..." : "Create Task"}
+            {loading ? "Updating..." : "Update Task"}
           </Button>
         </DialogFooter>
       </DialogContent>

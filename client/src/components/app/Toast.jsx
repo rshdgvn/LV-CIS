@@ -32,7 +32,7 @@ export default function Toast({
         stiffness: 500,
         damping: 30,
       }}
-      className={`flex items-center justify-between gap-3 ${bgColor} border ${borderColor} text-white p-3 rounded-xl shadow-md mb-4 max-w-md`}
+      className={`flex items-center justify-between gap-10 ${bgColor} border ${borderColor} text-white p-3 rounded-xl shadow-md mb-4 max-w-md`}
     >
       <div className="flex items-center gap-2">
         <Icon size={20} />

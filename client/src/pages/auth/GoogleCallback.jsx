@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
-import Loader from "./components/app/Loader";
-import { useToast } from "./providers/ToastProvider";
+import { useAuth } from "@/contexts/AuthContext";
+import Loader from "@/components/app/Loader";
+import { useToast } from "@/providers/ToastProvider";
 
 function GoogleCallback() {
   const navigate = useNavigate();

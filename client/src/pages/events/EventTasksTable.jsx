@@ -7,7 +7,9 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
+
 import { ArrowLeft, Search, Filter, PlusCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,214 +26,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
-import { formatTaskStatus } from "@/utils/formatTaskStatus";
+
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 import { SkeletonEventTasksTable } from "@/components/skeletons/SkeletonEventTasksTable";
 
+import CreateTaskModal from "@/components/events/CreateTaskModal";
+import ReadTaskModal from "@/components/events/ReadTaskModal";
+import UpdateTaskModal from "@/components/events/UpdateTaskModal";
+
+// Normalizing tasks from backend
 function normalizeTasks(data) {
   if (!data) return [];
   if (Array.isArray(data)) return data;
   if (Array.isArray(data.tasks)) return data.tasks;
   if (Array.isArray(data.data)) return data.data;
   return [];
-}
-
-function CreateTaskModal({ open, setOpen, eventId, onSuccess }) {
-  const { token } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    priority: "medium",
-    status: "pending",
-    due_date: "",
-  });
-  const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    if (!open) {
-      setForm({
-        title: "",
-        description: "",
-        priority: "medium",
-        status: "pending",
-        due_date: "",
-      });
-      setErrors({});
-      setLoading(false);
-    }
-  }, [open]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((p) => ({ ...p, [name]: value }));
-    setErrors((p) => ({ ...p, [name]: null }));
-  };
-
-  const validate = () => {
-    const e = {};
-    if (!form.title.trim()) e.title = "Title is required";
-    if (!["low", "medium", "high"].includes(form.priority))
-      e.priority = "Invalid priority";
-    if (!["pending", "in_progress", "completed"].includes(form.status))
-      e.status = "Invalid status";
-    if (form.due_date && isNaN(Date.parse(form.due_date)))
-      e.due_date = "Invalid date";
-
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validate()) return;
-
-    setLoading(true);
-    try {
-      const payload = {
-        event_id: eventId,
-        title: form.title,
-        description: form.description || null,
-        priority: form.priority,
-        status: form.status,
-        due_date: form.due_date || null,
-      };
-
-      const res = await fetch(`${APP_URL}/create/task`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => null);
-        throw new Error(text || `Failed to create task`);
-      }
-
-      const task = await res.json();
-      onSuccess?.(task);
-      setOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to create task");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="!max-w-md bg-neutral-950 text-white">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">
-            Create Task
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 mt-2">
-          <div>
-            <Label>Title *</Label>
-            <Input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              className="bg-neutral-900 border-neutral-800"
-            />
-            {errors.title && (
-              <p className="text-xs text-rose-400 mt-1">{errors.title}</p>
-            )}
-          </div>
-
-          <div>
-            <Label>Description</Label>
-            <Textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              className="bg-neutral-900 border-neutral-800 min-h-[80px]"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Priority *</Label>
-              <select
-                name="priority"
-                value={form.priority}
-                onChange={handleChange}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-
-            <div>
-              <Label>Status *</Label>
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2"
-              >
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <Label>Due Date</Label>
-            <Input
-              name="due_date"
-              type="date"
-              value={form.due_date}
-              onChange={handleChange}
-              className="bg-neutral-900 border-neutral-800"
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <div className="flex gap-3 justify-end w-full">
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="text-gray-300"
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="bg-blue-700 hover:bg-blue-600"
-            >
-              {loading ? "Creating..." : "Create Task"}
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 export default function EventTasksTable() {
@@ -242,12 +55,38 @@ export default function EventTasksTable() {
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [members, setMembers] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [readOpen, setReadOpen] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
+
+  const [selectedTask, setSelectedTask] = useState(null);
 
   const columnHelper = createColumnHelper();
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      await fetch(`${APP_URL}/tasks/${taskId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update status");
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -275,9 +114,10 @@ export default function EventTasksTable() {
         });
 
         if (!taskRes.ok) throw new Error("Failed to fetch tasks");
-        const taskData = await taskRes.json();
 
-        setTasks(normalizeTasks(taskData));
+        const data = await taskRes.json();
+        setTasks(normalizeTasks(data.tasks));
+        setMembers(data.members || []);
       } catch (err) {
         console.error(err);
         setError("Failed to load event tasks.");
@@ -289,6 +129,26 @@ export default function EventTasksTable() {
     fetchData();
   }, [id, token]);
 
+  const openReadModal = async (taskId) => {
+    try {
+      const res = await fetch(`${APP_URL}/task/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      setSelectedTask({
+        ...data.task,
+        assigned: data.assigned ?? [],
+      });
+      console.log(data);
+      setReadOpen(true);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load task.");
+    }
+  };
+
   const columns = useMemo(
     () => [
       columnHelper.accessor("title", {
@@ -299,6 +159,7 @@ export default function EventTasksTable() {
           </div>
         ),
       }),
+
       columnHelper.accessor("assigned_by", {
         header: "Assigned By",
         cell: (info) => {
@@ -327,6 +188,7 @@ export default function EventTasksTable() {
           );
         },
       }),
+
       columnHelper.accessor("due_date", {
         header: "Due Date",
         cell: (info) => (
@@ -337,27 +199,25 @@ export default function EventTasksTable() {
           </span>
         ),
       }),
+
       columnHelper.accessor("status", {
         header: "Status",
         cell: (info) => {
-          const status = info.getValue();
+          const task = info.row.original;
           return (
             <div className="flex justify-center">
               <Select
-                value={status}
-                onValueChange={(value) => handleStatusChange(id, value)}
+                value={task.status}
+                onValueChange={(value) => handleStatusChange(task.id, value)}
               >
                 <SelectTrigger
-                  className={`bg-blue-700
-      h-7! w-24 rounded-lg ${
-        status == "completed" ? "text-[10px]" : "text-xs"
-      } font-medium 
-      flex items-center justify-between px-2
-      text-white ${getTaskStatusColor(status)}
-      border-none shadow-sm
-    `}
+                  className={`bg-blue-700 h-7 w-24 rounded-lg ${
+                    task.status == "completed" ? "text-[10px]" : "text-xs"
+                  } font-medium flex items-center justify-between px-2 text-white ${getTaskStatusColor(
+                    task.status
+                  )} border-none shadow-sm`}
                 >
-                  <SelectValue placeholder="Select" />
+                  <SelectValue />
                 </SelectTrigger>
 
                 <SelectContent className="text-xs">
@@ -393,6 +253,7 @@ export default function EventTasksTable() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-8 flex flex-col">
+      {/* Back Button + Title */}
       <div className="flex">
         <button
           onClick={() => navigate(-1)}
@@ -407,6 +268,7 @@ export default function EventTasksTable() {
         </div>
       </div>
 
+      {/* Search / Filter / Add */}
       <div className="flex items-center gap-3 mb-6 w-5/6 self-center">
         <div className="flex items-center gap-2 bg-[#121212] rounded-full px-4 py-2 w-xl border border-neutral-800">
           <Search className="text-gray-400 w-5 h-5" />
@@ -417,6 +279,7 @@ export default function EventTasksTable() {
             onChange={(e) => {
               const q = e.target.value.toLowerCase();
               if (!q) return;
+
               setTasks((prev) =>
                 prev.filter((t) => (t.title || "").toLowerCase().includes(q))
               );
@@ -440,6 +303,7 @@ export default function EventTasksTable() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="rounded-2xl w-5/6 bg-[#121212] border border-neutral-800 self-center shadow-md overflow-hidden">
         <Table className="table-fixed w-full">
           <TableHeader className="bg-[#1a1a1a]">
@@ -464,7 +328,11 @@ export default function EventTasksTable() {
 
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} className="hover:bg-neutral-800/50">
+              <TableRow
+                key={row.id}
+                className="hover:bg-neutral-800/50 cursor-pointer"
+                onClick={() => openReadModal(row.original.id)}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
@@ -476,13 +344,11 @@ export default function EventTasksTable() {
               </TableRow>
             ))}
 
+            {/* Blank rows */}
             {Array.from({ length: blankRows }).map((_, i) => (
               <TableRow key={`blank-${i}`} className="hover:bg-neutral-800/10">
                 {columns.map((_, j) => (
-                  <TableCell
-                    key={`blank-${i}-${j}`}
-                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle w-1/4"
-                  ></TableCell>
+                  <TableCell key={`blank-${i}-${j}`} className="h-14 px-6" />
                 ))}
               </TableRow>
             ))}
@@ -491,20 +357,33 @@ export default function EventTasksTable() {
       </div>
 
       <CreateTaskModal
+        eventId={id}
         open={taskModalOpen}
         setOpen={setTaskModalOpen}
-        eventId={id}
-        onSuccess={(task) => {
-          const normalized = {
-            id: task.id,
-            title: task.title,
-            description: task.description,
-            priority: task.priority,
-            status: task.status,
-            due_date: task.due_date,
-            assigned_by: task.assigned_by ?? [],
-          };
-          setTasks((prev) => [normalized, ...prev]);
+        onSuccess={(task) => setTasks((prev) => [task, ...prev])}
+        members={members}
+      />
+
+      <ReadTaskModal
+        open={readOpen}
+        setOpen={setReadOpen}
+        task={selectedTask}
+        onEdit={() => {
+          setReadOpen(false);
+          setUpdateOpen(true);
+        }}
+      />
+
+      <UpdateTaskModal
+        open={updateOpen}
+        setOpen={setUpdateOpen}
+        task={selectedTask}
+        members={members}
+        onUpdated={(updated) => {
+          setTasks((prev) =>
+            prev.map((t) => (t.id === updated.id ? updated : t))
+          );
+          setSelectedTask(updated);
         }}
       />
     </div>

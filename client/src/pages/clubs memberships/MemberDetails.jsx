@@ -91,8 +91,8 @@ export default function MemberDetails() {
         <div className="flex flex-col items-center mb-8">
           <img
             src={
-              member.profile_image ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              member.avatar ||
+              `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
                 member.name
               )}&background=111&color=fff`
             }

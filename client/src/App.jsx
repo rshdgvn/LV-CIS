@@ -6,7 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Events from "./pages/events/Events";
 import Clubs from "./pages/clubs memberships/Clubs";
 import ClubDetails from "./pages/clubs memberships/ClubDetails";
-import GoogleCallback from "./GoogleCallback";
+import GoogleCallback from "./pages/auth/GoogleCallback";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./contexts/ProtectedRoute";
 import PendingClubs from "./pages/clubs memberships/PendingClubs";

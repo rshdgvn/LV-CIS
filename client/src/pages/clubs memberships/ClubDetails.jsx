@@ -231,7 +231,7 @@ export default function ClubDetails() {
               <img
                 src={
                   club.logo_url ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
                     club.name
                   )}&background=111&color=fff`
                 }

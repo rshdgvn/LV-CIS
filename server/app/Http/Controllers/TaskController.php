@@ -320,4 +320,29 @@ class TaskController extends Controller
             "members" => $availableMembers
         ]);
     }
+
+    /**
+     * Update only the status of a task
+     */
+    public function updateTaskStatus(Request $request, $id)
+    {
+        $task = EventTask::find($id);
+
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
+
+        $request->validate([
+            'status' => 'required|in:pending,in_progress,completed',
+        ]);
+
+        $task->status = $request->status;
+        $task->save();
+
+        return response()->json([
+            'id' => $task->id,
+            'status' => $task->status,
+            'message' => 'Status updated successfully'
+        ], 200);
+    }
 }

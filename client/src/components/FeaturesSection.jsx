@@ -5,22 +5,22 @@ import dashboard from "../assets/Dashboard.png"; // your existing image
 
 const features = [
   {
-    icon: <BarChart3 className="w-6 h-6 text-blue-400" />,
+    icon: BarChart3,
     title: "Dashboard and Analytics",
     description: "Your central hub for updates and performance metrics.",
   },
   {
-    icon: <Users className="w-6 h-6 text-blue-400" />,
+    icon: Users,
     title: "Attendance Management",
     description: "Track and manage attendance records with ease.",
   },
   {
-    icon: <GraduationCap className="w-6 h-6 text-blue-400" />,
+    icon: GraduationCap,
     title: "Clubs and Member Management",
     description: "Organize clubs, manage members, and monitor participation.",
   },
   {
-    icon: <CalendarCheck className="w-6 h-6 text-blue-400" />,
+    icon: CalendarCheck,
     title: "Events and Tasks",
     description:
       "Plan, assign, and track upcoming events and tasks efficiently.",
@@ -33,7 +33,7 @@ export default function FeaturesSection() {
   return (
     <section
       id="features"
-      className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white"
+      className="py-24 bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 border text-white"
     >
       <div className="max-w-7xl mx-auto px-6">
         <motion.div
@@ -43,8 +43,11 @@ export default function FeaturesSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent py-2">
-            System Features
+          <h2 className="text-5xl font-bold mb-4 bg-linear-to-r from-white via-neutral-300 to-white bg-clip-text text-transparent py-2">
+            System{" "}
+            <span className="bg-linear-to-r from-blue-400 via-blue-600 to-blue-500 bg-clip-text text-transparent py-2">
+              Features
+            </span>
           </h2>
           <p className="text-gray-400 max-w-3xl mx-auto text-lg">
             Discover the tools that make LVCIS efficient, intuitive, and
@@ -63,15 +66,32 @@ export default function FeaturesSection() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ delay: index * 0.2, duration: 0.6 }}
-                className={`flex items-start gap-4 p-5 rounded-xl text-left transition-all duration-300 ${
+                className={`flex items-start gap-4 p-5 rounded-xl text-left transition-all duration-300 cursor-pointer ${
                   activeIndex === index
                     ? "bg-blue-950/40 border border-blue-800 shadow-md"
                     : "hover:bg-blue-950/20 border border-transparent"
                 }`}
               >
-                <div className="flex-shrink-0 p-2 bg-blue-900/30 rounded-lg">
-                  {feature.icon}
+                <div
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-300 ease-in-out
+                  ${
+                    activeIndex === index
+                      ? "bg-blue-900/30 scale-105"
+                      : "bg-gray-100/10 scale-100"
+                  }
+                `}
+                >
+                  <feature.icon
+                    className={`w-6 h-6 transition-all duration-300 ease-in-out
+                    ${
+                      activeIndex === index
+                        ? "text-blue-400 opacity-100"
+                        : "text-gray-400 opacity-60"
+                    }
+                  `}
+                  />
                 </div>
+
                 <div>
                   <h3
                     className={`font-semibold text-lg mb-1 ${

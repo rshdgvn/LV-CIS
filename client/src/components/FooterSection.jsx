@@ -1,75 +1,66 @@
-"use client";
-
 import React from "react";
-import { Phone, MapPin, Facebook, Mail } from "lucide-react";
+import { Phone, MapPin, Facebook, Mail, Shield } from "lucide-react";
+import logo from "../assets/lvcc-logo.png";
+import LVCIS from "../assets/LVCIS.png";
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 text-gray-300 border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Grid Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
-          {/* Contact Us */}
+    <footer className="border-t border-white/5 bg-slate-900/50 py-12">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-2 mb-6">
+              <img src={logo} alt="La Verdad Club" className="h-8 w-8" />
+              <img src={LVCIS} alt="LVCIS Logo" className="h-5 w-auto" />
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed max-w-sm mb-6">
+              Empowering student organizations with efficient, secure, and
+              modern management tools. Join the digital transformation of campus
+              life today.
+            </p>
+            <div className="flex gap-4">
+              <a
+                href="#"
+                className="p-2 bg-white/5 rounded-lg hover:bg-blue-900 transition-colors text-gray-400 hover:text-white"
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="p-2 bg-white/5 rounded-lg hover:bg-blue-900 transition-colors text-gray-400 hover:text-white"
+              >
+                <Mail className="h-5 w-5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Links */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-3">
-              Contact Us
-            </h3>
-            <ul className="space-y-3">
-              <li className="flex justify-center md:justify-start items-center gap-2">
-                <Phone className="w-4 h-4 text-blue-500" />
-                <a
-                  href="tel:+63082150975"
-                  className="hover:text-white transition-colors"
-                >
-                  +63 908 215 0975
-                </a>
+            <h3 className="text-white font-semibold mb-6">Contact</h3>
+            <ul className="space-y-4 text-sm text-gray-400">
+              <li className="flex items-center gap-3">
+                <Phone className="h-4 w-4 text-blue-500" />
+                +63 908 215 0975
               </li>
-              <li className="flex justify-center md:justify-start items-start gap-2">
-                <MapPin className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
-                <span className="text-sm leading-snug">
-                  Mac Arthur Highway, Sampaloc, <br /> Apalit, Pampanga
+              <li className="flex items-start gap-3">
+                <MapPin className="h-4 w-4 text-blue-500 mt-1" />
+                <span>
+                  Mac Arthur Highway, Sampaloc,
+                  <br />
+                  Apalit, Pampanga
                 </span>
               </li>
             </ul>
           </div>
 
-          {/* About Us - Centered */}
-          <div className="flex flex-col items-center md:items-center text-center">
-            <h3 className="text-lg font-semibold text-white mb-3">Developers</h3>
-            <p className="text-gray-400 max-w-sm leading-relaxed">
-              Developed by BS Information System 3B students to promote
-              innovation and teamwork through technology.
+          <div>
+            <h3 className="text-white font-semibold mb-6">Developers</h3>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              Created by BS Information System 3B students. Dedicated to
+              innovation and excellence.
             </p>
           </div>
-
-          {/* Socials */}
-          <div className="md:text-right text-center">
-            <h3 className="text-lg font-semibold text-white mb-3">Socials</h3>
-            <div className="flex justify-center md:justify-end items-center gap-5">
-              <a
-                href="https://www.facebook.com/lvcc.apalit"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:scale-110 transition-transform text-blue-500"
-              >
-                <Facebook className="w-6 h-6" />
-              </a>
-              <a
-                href="mailto:rasheedgavinesponga@student.laverdad.edu.ph"
-                className="hover:scale-110 transition-transform text-rose-400"
-              >
-                <Mail className="w-6 h-6" />
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-slate-800 mt-10 pt-6">
-          <p className="text-center text-gray-400 text-sm">
-            © {new Date().getFullYear()} BS Information System - 3B. All rights
-            reserved.
-          </p>
         </div>
       </div>
     </footer>

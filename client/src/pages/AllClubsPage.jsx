@@ -56,7 +56,7 @@ export default function AllClubsPage() {
   }
 
   return (
-    <section className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 text-white relative pb-20">
+    <section className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white relative pb-20">
       {/* Fixed Back Button */}
       <button
         onClick={() => navigate(-1)}
@@ -66,14 +66,6 @@ export default function AllClubsPage() {
       </button>
 
       <div className="max-w-7xl mx-auto px-6 pt-24">
-        <motion.h1
-          className="text-5xl font-bold text-center mb-16 bg-gradient-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-        >
-          All Clubs
-        </motion.h1>
 
         {CATEGORY_KEYS.map(({ key, label }, index) => {
           const clubs = categories[key] ?? [];

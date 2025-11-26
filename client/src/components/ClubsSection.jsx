@@ -100,17 +100,17 @@ export default function ClubsThreeColumnRotator({ intervalMs = 5000 }) {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800">
+    <section className="py-20 bg-linear-to-b from-slate-950 via-slate-900 to-slate-800 border-t-1">
       <div className="max-w-7xl mx-auto px-6">
         {/* Animate section title on scroll */}
         <motion.h2
-          className="text-5xl font-bold mb-20 text-center bg-linear-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent"
+          className="text-5xl font-bold mb-20 text-center bg-linear-to-r from-white via-neutral-300 to-white bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          Meet Our Clubs
+          Meet Our <span className="text-blue-500">Clubs</span>
         </motion.h2>
 
         {/* Animate grid of clubs */}
@@ -190,7 +190,7 @@ export default function ClubsThreeColumnRotator({ intervalMs = 5000 }) {
           >
             <Button
               variant="outline"
-              className="mt-14 border-blue-700 text-white hover:bg-blue-800"
+              className="mt-14 border-blue-700 text-white hover:bg-blue-800 p-6 text-md cursor-pointer"
               onClick={() => nav("/all-clubs")}
             >
               View All Clubs

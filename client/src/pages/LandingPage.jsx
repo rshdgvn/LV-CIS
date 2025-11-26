@@ -65,27 +65,40 @@ function LandingPage() {
     <div className="w-full bg-slate-950 text-white overflow-x-hidden scroll-smooth">
       {/* NAVBAR */}
       <motion.header
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] md:w-[85%] transition-all duration-300 rounded-2xl border ${
+        className={`fixed left-1/2 -translate-x-1/2 z-50 w-full transition-all duration-300 border ${
           scrolled
-            ? "shadow-md backdrop-blur-lg py-3"
+            ? "shadow-md backdrop-blur-xl py-3"
             : "border-transparent py-4"
         }`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="flex items-center justify-between px-6 md:px-10">
-          {/* Logo */}
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-[0.15]"></div>
+          {/* Glow Effects */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-blue-600/10 blur-[100px] rounded-full mix-blend-screen animate-fade-in" />
+        </div>
+
+        <div
+          className="
+            px-6 md:px-10
+            flex items-center justify-between   
+            md:grid md:grid-cols-3 md:items-center 
+          "
+        >
+          {/* Left: Logo */}
           <a href="/" className="flex items-center gap-3">
             <img src={logo} alt="La Verdad Club" className="h-10 w-10" />
             <img src={LVCIS} alt="LVCIS Logo" className="h-5 w-auto" />
           </a>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex gap-8 text-gray-600 items-center text-sm font-medium">
+          {/* Center: Nav Menu */}
+          <nav className="hidden md:flex justify-center gap-8 text-white/50 items-center text-sm font-medium">
             <button
               onClick={() => scrollToSection("home")}
-              className={`transition-colors ${
+              className={`transition-colors cursor-pointer ${
                 active === "home"
                   ? "text-blue-600 font-semibold"
                   : "hover:text-blue-600"
@@ -95,7 +108,7 @@ function LandingPage() {
             </button>
             <button
               onClick={() => scrollToSection("features")}
-              className={`transition-colors ${
+              className={`transition-colors cursor-pointer ${
                 active === "features"
                   ? "text-blue-600 font-semibold"
                   : "hover:text-blue-600"
@@ -105,7 +118,7 @@ function LandingPage() {
             </button>
             <button
               onClick={() => scrollToSection("about")}
-              className={`transition-colors ${
+              className={`transition-colors cursor-pointer ${
                 active === "about"
                   ? "text-blue-600 font-semibold"
                   : "hover:text-blue-600"
@@ -115,7 +128,7 @@ function LandingPage() {
             </button>
             <button
               onClick={() => scrollToSection("clubs")}
-              className={`transition-colors ${
+              className={`transition-colors cursor-pointer ${
                 active === "clubs"
                   ? "text-blue-600 font-semibold"
                   : "hover:text-blue-600"
@@ -125,53 +138,54 @@ function LandingPage() {
             </button>
           </nav>
 
-          {/* Auth Button + Mobile Toggle */}
-          <div className="flex items-center gap-3">
+          {/* Right: Auth Buttons + Mobile */}
+          <div className="flex justify-end items-center gap-3">
             <div className="hidden md:flex gap-3">
               {isLoggedIn() ? (
                 <Button
                   variant="outline"
                   onClick={() => nav(admin ? "/admin/dashboard" : "/dashboard")}
-                  className="text-white transition"
+                  className="text-white transition cursor-pointer"
                 >
                   Dashboard
                 </Button>
               ) : (
                 <Button
                   variant="outline"
-                  className="text-white transition"
+                  className="text-white transition cursor-pointer"
                   onClick={() => nav("/login")}
                 >
                   Login
                 </Button>
               )}
               <Button
-                className="bg-blue-900 text-white hover:bg-blue-950"
+                className="bg-blue-900 text-white hover:bg-blue-950 cursor-pointer"
                 onClick={() => nav("/signup")}
               >
-                Get Started
+                Sign up
               </Button>
             </div>
-            {/* Mobile Menu Toggle */}
+
+            {/* Mobile Toggle */}
             <button
               onClick={() => setMobileOpen((s) => !s)}
               className="md:hidden p-2 rounded-lg"
               aria-label="Toggle menu"
             >
-              <Menu className="w-7 h-7 text-white hover:text-blue-400 transition" />
+              <Menu className="w-7 h-7 text-white hover:text-blue-400 transition cursor-pointer" />
             </button>
           </div>
         </div>
 
         {/* Mobile Nav Drawer */}
         {mobileOpen && (
-          <div className="md:hidden mt-3 px-6 pb-4 shadow-md backdrop-blur-lg">
+          <div className="md:hidden mt-3 px-6 pb-4 shadow-md">
             <div className="flex flex-col gap-3 text-gray-700">
               {["home", "features", "about", "clubs"].map((id) => (
                 <button
                   key={id}
                   onClick={() => scrollToSection(id)}
-                  className={`text-left py-2 px-2 rounded-md ${
+                  className={`text-left py-2 px-2 rounded-md cursor-pointer ${
                     active === id
                       ? "text-blue-600 font-semibold"
                       : "hover:text-blue-600"
@@ -188,14 +202,14 @@ function LandingPage() {
                     onClick={() =>
                       nav(admin ? "/admin/dashboard" : "/dashboard")
                     }
-                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white cursor-pointer"
                   >
                     Dashboard
                   </Button>
                 ) : (
                   <Button
                     variant="outline"
-                    className="w-full bg-blue-900 text-white hover:bg-blue-950"
+                    className="w-full bg-blue-900 text-white hover:bg-blue-950 cursor-pointer"
                     onClick={() => nav("/login")}
                   >
                     Login
@@ -203,10 +217,10 @@ function LandingPage() {
                 )}
               </div>
               <Button
-                className="bg-blue-900 text-white hover:bg-blue-950"
+                className="bg-blue-900 text-white hover:bg-blue-950 cursor-pointer"
                 onClick={() => nav("/signup")}
               >
-                Get Started
+                Sign up
               </Button>
             </div>
           </div>
@@ -221,7 +235,7 @@ function LandingPage() {
       >
         <div className="flex flex-col items-center justify-center mb-20 text-center flex-1">
           <motion.span
-            className="block bg-blue-900 text-white px-3 py-1 rounded-xl text-xs md:text-sm font-medium mb-5 opacity-90"
+            className="mt-8 inline-block px-4 py-1 rounded-full bg-blue-900/30 border border-blue-800/50 text-sm text-blue-200"
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -237,10 +251,10 @@ function LandingPage() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ delay: 0.5, duration: 0.8 }}
           >
-            <span className="block bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-400 bg-clip-text text-transparent py-2">
+            <span className="block bg-gradient-to-r from-white via-neutral-300 to-white bg-clip-text text-transparent py-2">
               Level Up Your Club
             </span>
-            <span className="bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-white via-neutral-300 to-white bg-clip-text text-transparent">
               Experience With{" "}
             </span>
             <span className="bg-gradient-to-r from-blue-400 via-blue-600 to-blue-500 bg-clip-text text-transparent py-2">
@@ -261,7 +275,7 @@ function LandingPage() {
           </motion.p>
 
           <motion.div
-            className="flex gap-3"
+            className="flex gap-5"
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -269,7 +283,7 @@ function LandingPage() {
           >
             <motion.div whileHover={{ scale: 1.05 }}>
               <Button
-                className="mt-6 bg-blue-900 text-white hover:bg-blue-950"
+                className="mt-6 bg-blue-900 text-white hover:bg-blue-950 p-6 text-md cursor-pointer"
                 onClick={() => nav("/signup")}
               >
                 Get Started
@@ -279,7 +293,7 @@ function LandingPage() {
             <motion.div whileHover={{ scale: 1.05 }}>
               <Button
                 variant="outline"
-                className="mt-6"
+                className="mt-6  p-6 text-md cursor-pointer"
                 onClick={() => scrollToSection("about")}
               >
                 Learn more →
@@ -295,46 +309,27 @@ function LandingPage() {
       </section>
 
       {/* ABOUT SECTION */}
-      <section
-        id="about"
-        className="min-h-screen flex flex-col items-center justify-center text-center px-6 text-white"
-      >
-        <motion.h2
-          className="text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-100 via-neutral-300 to-neutral-400 bg-clip-text text-transparent"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8 }}
-        >
-          About LVCIS
-        </motion.h2>
+      <section id="about" className="py-32 relative z-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="bg-linear-to-br from-white/6 to-transparent border border-white/5 rounded-3xl p-8 md:p-16 relative overflow-hidden">
+            {/* Decorative blurs */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-        <motion.p
-          className="mt-5 max-w-6xl text-gray-400 md:text-xl text-lg leading-relaxed"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-        >
-          La Verdad Club Integrated System (LVCIS) — an all-in-one digital
-          platform designed for La Verdad Christian College students and
-          organizations. LVCIS streamlines the way clubs operate by making it
-          simple to manage memberships, record attendance, organize events, and
-          share updates — all within a single, user-friendly system.
-        </motion.p>
+            <div className="relative z-10 text-center max-w-4xl mx-auto">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">
+                About <span className="text-blue-500">LVCIS</span>
+              </h2>
 
-        <motion.div
-          className="mt-7 flex flex-wrap justify-center gap-15"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-        >
-          <img
-            src={logo}
-            alt="LVCC Logo"
-            className="absolute w-20 h-20 object-contain rounded-lg shadow-md hover:scale-105 transition-transform opacity-30"
-          />
-        </motion.div>
+              <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-12">
+                La Verdad Club Integrated System (LVCIS) is an all-in-one
+                digital platform designed specifically for La Verdad Christian
+                College. We bridge the gap between students and organizations,
+                making it simple to manage memberships, automate attendance, and
+                foster a vibrant campus community.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* CLUBS */}

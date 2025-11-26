@@ -34,6 +34,7 @@ import { ToastProvider } from "./providers/ToastProvider";
 import GoogleLoginError from "./pages/errors/GoogleLoginError";
 import GoogleSignupSuccess from "./pages/auth/GoogleSignupSuccess";
 import PrivacyPolicy from "./pages/Privacy";
+import TermsOfService from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ function App() {
                   element={<GoogleSignupSuccess />}
                 />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
 
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

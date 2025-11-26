@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Shield, ChevronLeft, Users, FileText, Lock } from "lucide-react";
 import Footer from "@/components/FooterSection";
 
-const PrivacyPolicy = () => {
+const TermsOfService = () => {
   return (
     <div className="w-full min-h-screen bg-slate-950 text-gray-300 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden relative">
       {/* Background Decor (grid + glow) */}
@@ -34,9 +34,9 @@ const PrivacyPolicy = () => {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6 }}
           >
-            Privacy{" "}
+            Terms of{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">
-              Policy
+              Service
             </span>
           </motion.h1>
 
@@ -47,9 +47,9 @@ const PrivacyPolicy = () => {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ delay: 0.15, duration: 0.6 }}
           >
-            Transparency is at the core of LVCIS. We are committed to protecting
-            the data of every student and organization member within the La
-            Verdad Christian College ecosystem.
+            By using the La Verdad College Information System (LVCIS), you agree
+            to comply with these Terms of Service. Please read carefully to
+            understand your rights and responsibilities.
           </motion.p>
         </div>
       </header>
@@ -57,7 +57,7 @@ const PrivacyPolicy = () => {
       {/* Main content */}
       <main className="max-w-4xl mx-auto px-6 pb-28 relative z-10">
         <div className="space-y-8">
-          {/* Section: Information Collection */}
+          {/* Section 1: Acceptance */}
           <motion.section
             className="group bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-10 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-500"
             initial={{ opacity: 0, y: 14 }}
@@ -72,56 +72,20 @@ const PrivacyPolicy = () => {
 
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-white mb-3 flex items-center">
-                  1. Information Collection
+                  1. Acceptance of Terms
                   <div className="h-px bg-gray-800 flex-1 ml-5" />
                 </h2>
 
                 <p className="text-lvcis-muted mb-4 leading-relaxed text-gray-300">
-                  The Club Integrated System collects specific data points
-                  essential for seamless organizational management. We limit
-                  collection to what is strictly necessary:
+                  By accessing or using the Service, you agree to be bound by
+                  these Terms of Service. If you do not agree, you must stop
+                  using the Service immediately.
                 </p>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[
-                    {
-                      title: "Identity",
-                      desc: "Name, Avatar, Course & Year",
-                    },
-                    {
-                      title: "Security",
-                      desc: "Encrypted credentials & access logs",
-                    },
-                    {
-                      title: "Activity",
-                      desc: "Club roles, membership status",
-                    },
-                    {
-                      title: "Attendance",
-                      desc: "Event participation records",
-                    },
-                  ].map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start p-3 rounded-lg bg-white/5 border border-white/5 hover:border-blue-500/30 transition-colors"
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 mr-3 shrink-0"></div>
-                      <div>
-                        <strong className="block text-white text-sm mb-0.5">
-                          {item.title}
-                        </strong>
-                        <span className="text-xs text-gray-400">
-                          {item.desc}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </motion.section>
 
-          {/* Section: Data Usage */}
+          {/* Section 2: User Accounts */}
           <motion.section
             className="group bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-10 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-500"
             initial={{ opacity: 0, y: 14 }}
@@ -136,48 +100,20 @@ const PrivacyPolicy = () => {
 
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-white mb-3 flex items-center">
-                  2. Data Usage
+                  2. User Accounts
                   <div className="h-px bg-gray-800 flex-1 ml-5" />
                 </h2>
 
                 <p className="text-lvcis-muted mb-6 leading-relaxed text-gray-300">
-                  Every piece of data serves a functional purpose within the
-                  college ecosystem. We do not use your data for ad targeting or
-                  commercial profiling.
+                  When creating an account, you must provide accurate
+                  information, keep your credentials confidential, and be
+                  responsible for all actions taken under your account.
                 </p>
-
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {[
-                    {
-                      label: "Management",
-                      text: "Roster handling & officer assignments",
-                    },
-                    {
-                      label: "Grading",
-                      text: "Clearance validation via attendance",
-                    },
-                    { label: "Analytics", text: "Club performance reporting" },
-                    {
-                      label: "Notifications",
-                      text: "Event updates & announcements",
-                    },
-                  ].map((card, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-[#050810]/50 p-5 rounded-xl border border-white/5 hover:border-white/20 transition-all"
-                    >
-                      <h3 className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">
-                        {card.label}
-                      </h3>
-                      <p className="text-gray-400 text-sm">{card.text}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </motion.section>
 
-          {/* Split: Security & Sharing */}
+          {/* Section 3 & 4: Security & Sharing */}
           <motion.div
             className="grid md:grid-cols-2 gap-6"
             initial={{ opacity: 0, y: 14 }}
@@ -193,10 +129,8 @@ const PrivacyPolicy = () => {
                 3. Data Security
               </h3>
               <p className="text-sm text-gray-400 leading-relaxed">
-                We employ industry-standard encryption for data at rest and in
-                transit. Access controls are strictly enforced—only authorized
-                faculty advisers and system admins can access sensitive student
-                records.
+                We implement industry-standard encryption and access controls.
+                Only authorized personnel can access sensitive information.
               </p>
             </section>
 
@@ -208,43 +142,39 @@ const PrivacyPolicy = () => {
                 4. Information Sharing
               </h3>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Your trust is paramount. We{" "}
-                <span className="text-white font-semibold">never sell</span>{" "}
-                your data. Information is shared strictly internally within La
-                Verdad Christian College for academic validation and auditing
-                purposes.
+                Your information is never sold. Sharing occurs strictly
+                internally for academic and administrative purposes.
               </p>
             </section>
           </motion.div>
-        </div>
 
-        {/* Additional legal text (optional long-form) */}
-        <motion.section
-          className="mt-10 bg-white/[0.02] border border-white/5 rounded-3xl p-6 md:p-8 transition-all"
-          initial={{ opacity: 0, y: 14 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-        >
-          <h4 className="text-lg font-semibold text-white mb-3">
-            Contact & Requests
-          </h4>
-          <p className="text-sm text-gray-400 leading-relaxed mb-3">
-            For access, correction, or deletion requests, or to raise privacy
-            concerns, please contact our admin team at{" "}
-            <a
-              href="mailto:lvcis.app@gmail.com"
-              className="text-blue-400 hover:underline"
-            >
-              lvcis.app@gmail.com
-            </a>
-            .
-          </p>
-          <p className="text-sm text-gray-400">
-            We review requests in accordance with relevant local regulations and
-            will respond within a reasonable timeframe.
-          </p>
-        </motion.section>
+          {/* Section 5: Governing Law */}
+          <motion.section
+            className="mt-10 bg-white/[0.02] border border-white/5 rounded-3xl p-6 md:p-8 transition-all"
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+          >
+            <h4 className="text-lg font-semibold text-white mb-3">
+              5. Governing Law & Contact
+            </h4>
+            <p className="text-sm text-gray-400 leading-relaxed mb-3">
+              These Terms are governed by the laws of the Philippines. Any
+              disputes will fall under Philippine jurisdiction.
+            </p>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              For questions or concerns, contact us at{" "}
+              <a
+                href="mailto:lvcis.app@gmail.com"
+                className="text-blue-400 hover:underline"
+              >
+                lvcis.app@gmail.com
+              </a>
+              .
+            </p>
+          </motion.section>
+        </div>
 
         <div className="mt-20">
           <Footer />
@@ -254,4 +184,4 @@ const PrivacyPolicy = () => {
   );
 };
 
-export default PrivacyPolicy;
+export default TermsOfService;

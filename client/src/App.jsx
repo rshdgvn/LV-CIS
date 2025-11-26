@@ -33,6 +33,7 @@ import VerifyEmail from "./pages/auth/VerifyEmail";
 import { ToastProvider } from "./providers/ToastProvider";
 import GoogleLoginError from "./pages/errors/GoogleLoginError";
 import GoogleSignupSuccess from "./pages/auth/GoogleSignupSuccess";
+import PrivacyPolicy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -50,8 +51,11 @@ function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/google/callback" element={<GoogleCallback />} />
-                <Route path="/google/signup/success" element={<GoogleSignupSuccess />} />
-
+                <Route
+                  path="/google/signup/success"
+                  element={<GoogleSignupSuccess />}
+                />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
 
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

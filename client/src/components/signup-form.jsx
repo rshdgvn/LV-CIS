@@ -222,6 +222,23 @@ export function SignupForm({
           </form>
         </CardContent>
       </Card>
+      <div className="text-muted-foreground text-center text-xs *:[a]:underline *:[a]:underline-offset-4">
+        By clicking Create Account, you agree to our{" "}
+        <span
+          className="underline cursor-pointer"
+          onClick={() => nav("/terms")}
+        >
+          Terms of Service
+        </span>{" "}
+        and{" "}
+        <span
+          className="underline cursor-pointer"
+          onClick={() => nav("/privacy")}
+        >
+          Privacy Policy
+        </span>
+        .
+      </div>
     </div>
   );
 }

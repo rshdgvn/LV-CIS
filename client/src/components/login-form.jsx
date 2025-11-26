@@ -162,13 +162,19 @@ export function LoginForm({
 
       <div className="text-muted-foreground text-center text-xs *:[a]:underline *:[a]:underline-offset-4">
         By clicking Login, you agree to our{" "}
-        <a target="blank" href="https://policies.google.com/terms?hl=en-US">
+        <span
+          className="underline cursor-pointer"
+          onClick={() => nav("/terms")}
+        >
           Terms of Service
-        </a>{" "}
+        </span>{" "}
         and{" "}
-        <a target="blank" href="https://policies.google.com/privacy?hl=en-US">
+        <span
+          className="underline cursor-pointer"
+          onClick={() => nav("/privacy")}
+        >
           Privacy Policy
-        </a>
+        </span>
         .
       </div>
     </div>

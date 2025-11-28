@@ -169,7 +169,7 @@ export default function EventTasksTable() {
       setReadOpen(true);
     } catch (err) {
       console.error(err);
-      addToast("Failed to load task.", "error"); 
+      addToast("Failed to load task.", "error");
     }
   };
 
@@ -325,47 +325,55 @@ export default function EventTasksTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl w-5/6 bg-[#121212] border border-neutral-800 self-center shadow-md overflow-hidden">
-        <Table className="table-fixed w-full">
-          <TableHeader className="bg-[#1a1a1a]">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="text-white text-sm py-4 px-6 text-center w-1/4"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className="hover:bg-neutral-800/50 cursor-pointer"
-                onClick={() => openReadModal(row.original.id)}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="h-14 px-6 text-sm text-gray-200 text-center align-middle w-1/4"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="w-full sm:w-5/6 self-center overflow-x-auto">
+        <div className="min-w-[750px] bg-[#121212] border border-neutral-800 rounded-2xl shadow-md overflow-hidden">
+          <Table className="w-full table-fixed">
+            {" "}
+            {/* <-- THIS FIXES WIDTH */}
+            <TableHeader className="bg-[#1a1a1a]">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="text-white text-sm py-4 px-4 text-center w-1/4 
+             truncate whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="hover:bg-neutral-800/50 cursor-pointer"
+                  onClick={() => openReadModal(row.original.id)}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className="h-14 px-4 text-sm text-gray-200 text-center align-middle w-1/4
+             truncate whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <CreateTaskModal

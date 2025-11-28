@@ -26,7 +26,7 @@ export default function Attendances() {
     const fetchSessions = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${APP_URL}/attendance-sessions`, {
+        const res = await fetch(`${APP_URL}/attendance-sessions?club_id=2`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",

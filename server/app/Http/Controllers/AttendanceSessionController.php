@@ -18,12 +18,23 @@ class AttendanceSessionController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $clubIds = ClubMembership::where('user_id', $user->id)
-            ->where('status', 'approved') 
-            ->pluck('club_id');
+        $clubId = $request->query('club_id');
+
+        if (!$clubId) {
+            return response()->json(['error' => 'club_id is required'], 400);
+        }
+
+        $isMember = ClubMembership::where('user_id', $user->id)
+            ->where('club_id', $clubId)
+            ->where('status', 'approved')
+            ->exists();
+
+        if (!$isMember) {
+            return response()->json(['error' => 'You are not a member of this club'], 403);
+        }
 
         $sessions = AttendanceSession::with(['club', 'event'])
-            ->whereIn('club_id', $clubIds)
+            ->where('club_id', $clubId)
             ->orderBy('date', 'desc')
             ->get()
             ->map(function ($s) {
@@ -46,6 +57,7 @@ class AttendanceSessionController extends Controller
 
         return response()->json(['sessions' => $sessions]);
     }
+
 
     public function show($id)
     {

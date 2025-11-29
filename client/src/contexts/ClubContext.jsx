@@ -19,6 +19,7 @@ export function ClubProvider({ children }) {
       if (!res.ok) throw new Error("Failed to fetch user clubs");
       const data = await res.json();
       setClubs(data);
+      console.log('clubs', data)
     } catch (err) {
       console.error(err);
     } finally {

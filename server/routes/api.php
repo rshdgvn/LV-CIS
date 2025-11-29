@@ -85,6 +85,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/attendance-sessions', [AttendanceSessionController::class, 'index']);
     Route::get('/attendance-sessions/{id}', [AttendanceSessionController::class, 'show']);
+    Route::post('/attendance-sessions', [AttendanceSessionController::class, 'store']);
+    Route::put('/attendance-sessions/{id}', [AttendanceSessionController::class, 'update']);
+    Route::delete('/attendance-sessions/{id}', [AttendanceSessionController::class, 'destroy']);
+
+
 
     Route::get('/attendance-sessions/{sessionId}/attendance', [AttendanceController::class, 'index']);
     Route::patch('/attendance-sessions/{sessionId}/members/{userId}', [AttendanceController::class, 'updateStatus']);
@@ -96,8 +101,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/clubs/{id}/events', [ClubEventController::class, 'index']);
 });
-
-
 
 Route::get('/gmail/oauth/init', function () {
     $client = new Client();

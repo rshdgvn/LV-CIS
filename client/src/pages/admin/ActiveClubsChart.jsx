@@ -12,12 +12,14 @@ import {
 
 const data = [
   { name: "AIM", value: 58 },
-  { name: "SWSAP", value: 36 },
+  { name: "JWSAP", value: 36 },
   { name: "BAB", value: 42 },
   { name: "LVPT", value: 78 },
   { name: "CDL", value: 32 },
   { name: "LVDT", value: 64 },
-  { name: "JPIA", value: 50 },
+  { name: "CDVL", value: 50 },
+  { name: "TM", value: 50 },
+  { name: "LVFL", value: 50 },
 ];
 
 export default function ActiveClubsChart() {

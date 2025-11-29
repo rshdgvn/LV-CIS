@@ -44,6 +44,7 @@ export default function AttendanceDetails() {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      console.log(data);
       setSession(data);
     } catch (error) {
       console.error("Error fetching session details:", error);
@@ -155,7 +156,7 @@ export default function AttendanceDetails() {
                 <TableHeader>
                   <TableRow className="border-neutral-800 text-gray-400">
                     <TableHead className="text-left pl-6">Students</TableHead>
-                    <TableHead className="text-center">Course</TableHead>
+                    <TableHead className="text-center">Year Level</TableHead>
                     <TableHead className="text-center pr-6">Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -169,12 +170,17 @@ export default function AttendanceDetails() {
                           key={member.user_id}
                           className="border-neutral-900 hover:bg-neutral-900/50 transition"
                         >
-                          <TableCell className="flex items-center gap-3 pl-6">
-                            <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
-                              <span className="text-xs font-semibold">
-                                {member.name ? member.name.charAt(0) : "?"}
-                              </span>
-                            </div>
+                          <TableCell className="flex items-center gap-3">
+                            <img
+                              src={
+                                member.avatar ||
+                                `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
+                                  member.name
+                                )}&background=111&color=fff`
+                              }
+                              alt={member.name}
+                              className="w-6 h-6 rounded-full border border-gray-700 object-cover"
+                            />
                             <div className="text-gray-200">{member.name}</div>
                           </TableCell>
 

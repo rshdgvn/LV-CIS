@@ -35,6 +35,7 @@ import GoogleLoginError from "./pages/errors/GoogleLoginError";
 import GoogleSignupSuccess from "./pages/auth/GoogleSignupSuccess";
 import PrivacyPolicy from "./pages/Privacy";
 import TermsOfService from "./pages/Terms";
+import MemberAttendances from "./components/events/MemberAttendances";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ function App() {
                 >
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/attendance" element={<Attendances />} />
+
                   <Route path="/events" element={<Events />} />
                   <Route path="/clubs" element={<Clubs />} />
                   <Route path="/club/:id" element={<ClubDetails />} />
@@ -78,6 +80,10 @@ function App() {
                   <Route
                     path="/club/:clubId/members/:userId"
                     element={<MemberDetails />}
+                  />
+                  <Route
+                    path="/member-attendances/:userId/:clubId"
+                    element={<MemberAttendances />}
                   />
 
                   <Route path="/profile" element={<Profile />} />

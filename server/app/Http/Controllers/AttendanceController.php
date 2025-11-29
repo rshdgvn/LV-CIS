@@ -37,4 +37,18 @@ class AttendanceController extends Controller
             'attendance' => $attendance,
         ]);
     }
+    
+    public function memberAttendances($userId, $clubId)
+    {
+        // Fetch attendances for this user in the given club
+        $attendances = Attendance::with(['session'])
+            ->where('user_id', $userId)
+            ->whereHas('session', function ($query) use ($clubId) {
+                $query->where('club_id', $clubId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($attendances);
+    }
 }

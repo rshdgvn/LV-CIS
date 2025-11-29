@@ -35,6 +35,14 @@ export default function Footer() {
             </div>
           </div>
 
+          <div>
+            <h3 className="text-white font-semibold mb-6">Developers</h3>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              Created by BS Information System 3B students. Dedicated to
+              innovation and excellence.
+            </p>
+          </div>
+          
           {/* Links */}
           <div>
             <h3 className="text-white font-semibold mb-6">Contact</h3>
@@ -52,14 +60,6 @@ export default function Footer() {
                 </span>
               </li>
             </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-6">Developers</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Created by BS Information System 3B students. Dedicated to
-              innovation and excellence.
-            </p>
           </div>
         </div>
       </div>

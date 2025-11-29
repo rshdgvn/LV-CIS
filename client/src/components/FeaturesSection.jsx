@@ -33,7 +33,7 @@ export default function FeaturesSection() {
   return (
     <section
       id="features"
-      className="py-24 bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 border-2 text-white"
+      className="py-24 bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 border-y-2 text-white"
     >
       <div className="max-w-7xl mx-auto px-6">
         <motion.div

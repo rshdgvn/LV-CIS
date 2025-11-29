@@ -15,23 +15,23 @@ export default function Layout({ children }) {
       {/* Header */}
       <div
         className="fixed flex top-0 left-0 right-0 h-20 bg-neutral-900 border-b border-neutral-800 
-             items-center justify-between z-[60] md:invisible"
+             items-center justify-between z-60 md:invisible"
       >
         <a
           href="/"
-          className="flex items-center font-medium justify-center gap-4"
+          className="flex items-center font-medium justify-center gap-3 mx-5"
         >
           <img
             src={logo}
             alt="La Verdad Club"
-            className="object-contain h-12 w-12 ml-14"
+            className="object-contain h-12 w-12"
           />
           <span className="truncate text-lg font-semibold tracking-wide text-white">
             LVCIS
           </span>
         </a>
 
-        <SidebarTrigger className="mx-3 relative z-[70]" />
+        <SidebarTrigger className="mx-3 relative z-[70] cursor-pointer" />
       </div>
 
       <div className="relative flex-1">

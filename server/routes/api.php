@@ -89,8 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/attendance-sessions/{id}', [AttendanceSessionController::class, 'update']);
     Route::delete('/attendance-sessions/{id}', [AttendanceSessionController::class, 'destroy']);
 
-
-
+    Route::get('/members/{user}/club/{club}/attendances', [AttendanceController::class, 'memberAttendances']);
     Route::get('/attendance-sessions/{sessionId}/attendance', [AttendanceController::class, 'index']);
     Route::patch('/attendance-sessions/{sessionId}/members/{userId}', [AttendanceController::class, 'updateStatus']);
 

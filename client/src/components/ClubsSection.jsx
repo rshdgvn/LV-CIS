@@ -100,7 +100,7 @@ export default function ClubsThreeColumnRotator({ intervalMs = 5000 }) {
   }
 
   return (
-    <section className="py-20 bg-linear-to-b from-slate-950 via-slate-900 to-slate-800 border">
+    <section className="py-20 bg-linear-to-b from-slate-950 via-slate-900 to-slate-800 border-t">
       <div className="max-w-7xl mx-auto px-6">
         {/* Animate section title on scroll */}
         <motion.h2

@@ -170,11 +170,18 @@ export default function AttendanceDetails() {
                           key={member.user_id}
                           className="border-neutral-900 hover:bg-neutral-900/50 transition"
                         >
-                          <TableCell className="flex items-center gap-3">
+                          <TableCell
+                            className="flex items-center gap-3 cursor-pointer"
+                            onClick={() =>
+                              navigate(
+                                `/member-attendances/${member.user_id}/${session.club.id}`
+                              )
+                            }
+                          >
                             <img
                               src={
                                 member.avatar ||
-                                `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${encodeURIComponent(
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(
                                   member.name
                                 )}&background=111&color=fff`
                               }

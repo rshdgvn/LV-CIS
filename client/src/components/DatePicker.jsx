@@ -15,7 +15,6 @@ export function DatePicker({ label = "Select Date", value, onChange }) {
   const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState(value ? new Date(value) : undefined);
 
-  // Update date when value prop changes (useful for initial load or external updates)
   React.useEffect(() => {
     if (value) {
       setDate(new Date(value));

@@ -41,8 +41,15 @@ export default function UpdateAttendanceModal({
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleDateChange = (newDate) => {
-    setForm({ ...form, date: newDate });
+  const handleDateChange = (selectedDate) => {
+    if (!selectedDate) return;
+
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0");
+    console.log(day);
+
+    setForm({ ...form, date: `${year}-${month}-${day}` });
   };
 
   const submit = async (e) => {
@@ -94,7 +101,7 @@ export default function UpdateAttendanceModal({
           <div>
             <label className="text-sm text-neutral-400">Date</label>
             <DatePicker
-              value={form.date ? formatDate(form.date) : null}
+              value={form.date}
               onChange={handleDateChange}
               placeholder="Select date"
             />
@@ -105,10 +112,16 @@ export default function UpdateAttendanceModal({
               type="button"
               variant="secondary"
               onClick={() => setOpen(false)}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
-            <Button type="submit">Update</Button>
+            <Button
+              type="submit"
+              className="bg-blue-900 hover:bg-blue-950 cursor-pointer text-white"
+            >
+              Update
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

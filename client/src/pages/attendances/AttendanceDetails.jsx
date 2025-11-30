@@ -4,7 +4,13 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, ArrowLeft, CheckCircle2, Filter } from "lucide-react";
+import {
+  Calendar,
+  ArrowLeft,
+  CheckCircle2,
+  Filter,
+  BookMarked,
+} from "lucide-react";
 import { Check, User, Clock8 } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import {
@@ -24,6 +30,16 @@ import {
 } from "@/components/ui/select";
 import { formatStatus } from "@/utils/formatStatus";
 import { SkeletonAttendanceDetails } from "@/components/skeletons/SkeletonAttendanceDetails";
+import { formatDate } from "@/utils/formatDate";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export default function AttendanceDetails() {
   const { id } = useParams();
@@ -31,6 +47,9 @@ export default function AttendanceDetails() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Adjust as needed
 
   const fetchSession = async () => {
     try {
@@ -44,7 +63,6 @@ export default function AttendanceDetails() {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      console.log('s',data);
       setSession(data);
     } catch (error) {
       console.error("Error fetching session details:", error);
@@ -76,7 +94,6 @@ export default function AttendanceDetails() {
       );
 
       if (!res.ok) throw new Error("Failed to update status");
-
       setSession((prev) => ({
         ...prev,
         members: prev.members.map((m) =>
@@ -101,7 +118,10 @@ export default function AttendanceDetails() {
     const late =
       session?.members?.filter((m) => m.status?.toLowerCase() === "late")
         .length || 0;
-    return { present, absent, late };
+    const excuse =
+      session?.members?.filter((m) => m.status?.toLowerCase() === "excuse")
+        .length || 0;
+    return { present, absent, late, excuse };
   }, [session]);
 
   if (loading) return <SkeletonAttendanceDetails />;
@@ -111,151 +131,226 @@ export default function AttendanceDetails() {
       <div className="p-6 text-center text-red-400">Session not found.</div>
     );
 
+  // Pagination logic
+  const totalPages = Math.ceil((session.members?.length || 0) / itemsPerPage);
+  const paginatedMembers = session.members?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
-    <div className="p-6 bg-neutral-950 text-white flex flex-col gap-6">
+    <div className="p-6 text-white flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-md bg-neutral-800/60 hover:bg-neutral-950/60 transition"
+          className="absolute top-4 left-4 z-50 p-2 rounded-md bg-neutral-800/60 hover:bg-neutral-950/60"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-semibold">
+        <div className="flex flex-col ml-14 gap-3">
+          <h1 className="text-4xl font-semibold">
             {session.event?.title || session.title}
           </h1>
-          <p className="text-gray-400 text-md">Record today’s attendance</p>
+          <p className="text-gray-400">Record today’s attendance</p>
         </div>
       </div>
 
-      {/* Filter + Date Controls */}
-      {/* <div className="flex justify-end items-center gap-3">
-        <Button
-          variant="outline"
-          className="bg-neutral-900 border border-neutral-800 text-gray-300 hover:bg-neutral-800 rounded-full text-sm flex items-center gap-2 px-4 py-1.5"
-        >
-          <Filter className="w-4 h-4" />
-          Filter
-        </Button>
+      <div className="flex flex-col lg:flex-row gap-6 mx-4 lg:mx-10">
+        <div className="flex flex-col flex-1">
+          <div className="flex justify-end items-center gap-3">
+            <Button className="bg-neutral-900 border border-neutral-800 text-gray-200 hover:bg-neutral-800 rounded-full text-sm flex items-center gap-2 px-4 py-1.5">
+              <Filter className="w-4 h-4" />
+              Filter
+            </Button>
 
-        <div className="bg-[#121212] border border-neutral-800 rounded-full px-4 py-2 text-gray-300 text-sm flex items-center gap-2">
-          <Calendar size={14} />
-          {new Date(session.date).toLocaleDateString()}
-        </div>
-      </div> */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-full px-4 py-2 text-gray-300 text-sm flex items-center gap-2">
+              <Calendar size={14} />
+              {formatDate(session.date)}
+            </div>
+          </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 mx-4 lg:mx-20">
-        {/* Table section */}
-        <Card className="flex-1 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-sm mt-2 overflow-hidden">
-          <CardContent className="p-0">
-            {/* Make table scrollable on small screens */}
-            <div className="overflow-x-auto">
-              <Table className="min-w-[600px]">
-                <TableHeader>
-                  <TableRow className="border-neutral-800 text-gray-400">
-                    <TableHead className="text-left pl-6">Students</TableHead>
-                    <TableHead className="text-center">Year Level</TableHead>
-                    <TableHead className="text-center pr-6">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
+          <Card className="border border-neutral-800 rounded-2xl mt-3 p-0 bg-neutral-900">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table className="bg-neutral-800/50 rounded-2xl w-full table-fixed">
+                  <TableHeader>
+                    <TableRow className="text-center">
+                      <TableHead className="px-6 py-3 text-center w-1/3">
+                        Students
+                      </TableHead>
+                      <TableHead className="px-6 py-3 text-center w-1/3">
+                        Year Level
+                      </TableHead>
+                      <TableHead className="px-6 py-3 text-center w-1/3">
+                        Status
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
 
-                <TableBody>
-                  {session.members?.length > 0 ? (
-                    session.members.map((member) => {
-                      const s = formatStatus(member.status);
-                      return (
-                        <TableRow
-                          key={member.user_id}
-                          className="border-neutral-900 hover:bg-neutral-900/50 transition"
-                        >
-                          <TableCell
-                            className="flex items-center gap-3 cursor-pointer"
+                  <TableBody className="bg-neutral-900">
+                    {paginatedMembers?.length > 0 ? (
+                      paginatedMembers.map((member) => {
+                        const s = formatStatus(member.status);
+
+                        return (
+                          <TableRow
+                            key={member.user_id}
+                            className="border-neutral-800/70 border-y-2 p-1 hover:bg-neutral-800 transition cursor-pointer"
                             onClick={() =>
                               navigate(
                                 `/member-attendances/${member.user_id}/${session.club.id}`
                               )
                             }
                           >
-                            <img
-                              src={
-                                member.avatar ||
-                                `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                  member.name
-                                )}&background=111&color=fff`
-                              }
-                              alt={member.name}
-                              className="w-6 h-6 rounded-full border border-gray-700 object-cover"
-                            />
-                            <div className="text-gray-200">{member.name}</div>
-                          </TableCell>
-
-                          <TableCell className="text-center text-gray-300">
-                            {member.course || "N/A"}
-                          </TableCell>
-
-                          <TableCell className="text-center pr-6">
-                            <div className="flex justify-center items-center gap-2">
-                              <Select
-                                value={(member.status || "").toLowerCase()}
-                                onValueChange={(value) =>
-                                  updateStatus(member.user_id, value)
-                                }
-                              >
-                                <SelectTrigger
-                                  className={`w-[120px] justify-center text-sm rounded-full border ${s.bg} ${s.color}`}
-                                >
-                                  <SelectValue>{s.label}</SelectValue>
-                                </SelectTrigger>
-
-                                <SelectContent className="bg-[#121212] border border-neutral-800">
-                                  <SelectItem value="present">
-                                    Present
-                                  </SelectItem>
-                                  <SelectItem value="absent">Absent</SelectItem>
-                                  <SelectItem value="late">Late</SelectItem>
-                                  <SelectItem value="excuse">Excuse</SelectItem>
-                                </SelectContent>
-                              </Select>
-
-                              {savingId === member.user_id && (
-                                <CheckCircle2
-                                  size={16}
-                                  className="text-green-400 animate-pulse ml-1"
+                            <TableCell className="px-6 py-4 text-neutral-200 text-center">
+                              <div className="flex justify-center items-center gap-3">
+                                <img
+                                  src={
+                                    member.avatar ||
+                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                      member.name
+                                    )}&background=111&color=fff`
+                                  }
+                                  alt={member.name}
+                                  className="w-6 h-6 rounded-full border border-gray-700 object-cover"
                                 />
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={3}
-                        className="text-center py-6 text-gray-400 italic"
-                      >
-                        No members found for this session.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                                <span>{member.name}</span>
+                              </div>
+                            </TableCell>
 
-        {/* Summary cards on the right */}
-        <div className="flex flex-row lg:flex-col gap-4 w-full lg:w-[260px] mt-2">
-          {/* Present */}
-          <Card className="bg-[#111111] border-none rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
-            <div className="w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center">
-              <Check className="text-green-500 w-5 h-5" />
+                            <TableCell className="px-6 py-4 text-neutral-400 text-center">
+                              {member.course || "N/A"}
+                            </TableCell>
+
+                            <TableCell className="px-6 text-center">
+                              <div
+                                className="flex justify-center items-center gap-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Select
+                                  value={(member.status || "").toLowerCase()}
+                                  onValueChange={(value) =>
+                                    updateStatus(member.user_id, value)
+                                  }
+                                >
+                                  <SelectTrigger
+                                    className={`w-40 justify-center text-sm rounded-lg border ${s.bg} ${s.color}`}
+                                  >
+                                    <SelectValue placeholder="Mark Attendance">
+                                      {s.label}
+                                    </SelectValue>
+                                  </SelectTrigger>
+
+                                  <SelectContent className="bg-neutral-900 border border-neutral-700 text-neutral-200">
+                                    <SelectItem value="present">
+                                      Present
+                                    </SelectItem>
+                                    <SelectItem value="absent">
+                                      Absent
+                                    </SelectItem>
+                                    <SelectItem value="late">Late</SelectItem>
+                                    <SelectItem value="excuse">
+                                      Excuse
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+
+                                {savingId === member.user_id && (
+                                  <CheckCircle2
+                                    size={16}
+                                    className="text-green-400 animate-pulse ml-1"
+                                  />
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          className="text-center py-6 text-neutral-500 italic"
+                        >
+                          No members found for this session.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              <Pagination>
+                <PaginationContent>
+                  {/* Previous */}
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.max(p - 1, 1));
+                      }}
+                      className={
+                        currentPage === 1
+                          ? "opacity-50 pointer-events-none"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }).map((_, index) => {
+                    const pageNum = index + 1;
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          isActive={currentPage === pageNum}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(pageNum);
+                          }}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+
+                  {/* Next */}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.min(p + 1, totalPages));
+                      }}
+                      className={
+                        currentPage === totalPages
+                          ? "opacity-50 pointer-events-none"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
+          )}
+        </div>
+
+        {/* Stats cards */}
+        <div className="flex flex-col gap-4 w-full lg:w-64 mt-12">
+          <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
+            <Check className="text-green-500 w-7 h-7" />
             <div className="text-right">
-              <p className="text-md text-gray-300 font-medium">
-                Total Students Present
+              <p className=" text-gray-300 font-medium">
+                Total Student Present
               </p>
               <h3 className="text-2xl font-bold text-start text-white mt-1">
                 {stats.present}
@@ -263,32 +358,32 @@ export default function AttendanceDetails() {
             </div>
           </Card>
 
-          {/* Absent */}
-          <Card className="bg-[#111111] border-none rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
-            <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center">
-              <User className="text-red-500 w-5 h-5" />
-            </div>
+          <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
+            <User className="text-red-500 w-7 h-7" />
             <div className="text-right">
-              <p className="text-md text-gray-300 font-medium">
-                Total Students Absent
-              </p>
+              <p className=" text-gray-300 font-medium">Total Student Absent</p>
               <h3 className="text-2xl font-bold text-start text-white mt-1">
                 {stats.absent}
               </h3>
             </div>
           </Card>
 
-          {/* Late */}
-          <Card className="bg-[#111111] border-none rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
-            <div className="w-9 h-9 rounded-full bg-yellow-500/20 flex items-center justify-center">
-              <Clock8 className="text-yellow-400 w-5 h-5" />
-            </div>
+          <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
+            <Clock8 className="text-yellow-400 w-7 h-7" />
             <div className="text-right">
-              <p className="text-md text-gray-300 font-medium">
-                Total Students Late
-              </p>
+              <p className=" text-gray-300 font-medium">Total Student Late</p>
               <h3 className="text-2xl font-bold text-start text-white mt-1">
                 {stats.late}
+              </h3>
+            </div>
+          </Card>
+
+          <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
+            <BookMarked className="text-blue-500 w-7 h-7" />
+            <div className="text-right">
+              <p className=" text-gray-300 font-medium">Total Student Excuse</p>
+              <h3 className="text-2xl font-bold text-start text-white mt-1">
+                {stats.excuse}
               </h3>
             </div>
           </Card>

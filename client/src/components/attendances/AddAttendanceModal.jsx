@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { APP_URL } from "@/lib/config";
 import { DatePicker } from "../DatePicker";
 
-
 export default function AddAttendanceModal({
   open,
   setOpen,
@@ -30,8 +29,15 @@ export default function AddAttendanceModal({
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleDateChange = (newDate) => {
-    setForm({ ...form, date: newDate });
+  const handleDateChange = (selectedDate) => {
+    if (!selectedDate) return;
+
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0");
+    console.log(day)
+
+    setForm({ ...form, date: `${year}-${month}-${day}` });
   };
 
   const submit = async (e) => {
@@ -51,6 +57,7 @@ export default function AddAttendanceModal({
     });
 
     const data = await res.json();
+    console.log(data);
 
     if (res.ok) {
       onSuccess();
@@ -90,7 +97,7 @@ export default function AddAttendanceModal({
           <div>
             <label className="text-sm text-neutral-400">Date</label>
             <DatePicker
-              selected={form.date ? new Date(form.date) : null}
+              selected={form.dat}
               onChange={handleDateChange}
               placeholder="Select date"
             />
@@ -101,10 +108,16 @@ export default function AddAttendanceModal({
               type="button"
               variant="secondary"
               onClick={() => setOpen(false)}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
-            <Button type="submit">Create</Button>
+            <Button
+              type="submit"
+              className="bg-blue-900 hover:bg-blue-950 text-white cursor-pointer"
+            >
+              Create
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

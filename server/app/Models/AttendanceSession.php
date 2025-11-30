@@ -11,7 +11,6 @@ class AttendanceSession extends Model
 
     protected $fillable = [
         'club_id',
-        'event_id',
         'created_by',
         'title',
         'venue',

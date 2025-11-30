@@ -59,10 +59,8 @@ function App() {
                 />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
-
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-
                 <Route
                   element={
                     <Layout>
@@ -81,11 +79,6 @@ function App() {
                     path="/club/:clubId/members/:userId"
                     element={<MemberDetails />}
                   />
-                  <Route
-                    path="/member-attendances/:userId/:clubId"
-                    element={<MemberAttendances />}
-                  />
-
                   <Route path="/profile" element={<Profile />} />
 
                   <Route element={<OfficersRoute />}>
@@ -102,15 +95,18 @@ function App() {
                     />
                   </Route>
                 </Route>
-
                 <Route path="*" element={<NotFound />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="/forbidden" element={<Forbidden />} />
                 <Route path="/google/error" element={<GoogleLoginError />} />
-
                 <Route path="/events/:id" element={<EventDetails />} />
                 <Route path="/events/:id/tasks" element={<EventTasksTable />} />
                 <Route path="/attendance/:id" element={<AttendanceDetails />} />
+                <Route
+                  path="/member-attendances/:userId/:clubId"
+                  element={<MemberAttendances />}
+                />
+                F
               </Routes>
             </ToastProvider>
           </ClubProvider>

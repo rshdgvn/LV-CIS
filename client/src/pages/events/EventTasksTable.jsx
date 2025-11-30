@@ -325,7 +325,7 @@ export default function EventTasksTable() {
       </div>
 
       {/* Table */}
-      <div className="w-full sm:w-5/6 self-center overflow-x-auto">
+      <div className="w-xl sm:w-5/6 self-center overflow-x-auto">
         <div className="min-w-[750px] bg-[#121212] border border-neutral-800 rounded-2xl shadow-md overflow-hidden">
           <Table className="w-full table-fixed">
             {" "}

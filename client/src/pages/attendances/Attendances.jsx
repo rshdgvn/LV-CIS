@@ -33,7 +33,6 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import AddAttendanceModal from "@/components/attendances/AddAttendanceModal";
 import UpdateAttendanceModal from "@/components/attendances/UpdateAttendanceModal";
@@ -54,6 +53,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { formatClubCategory } from "@/utils/formatClubCategory";
 
 export default function Attendances() {
   const { clubs, loading: clubsLoading } = useClub();
@@ -178,7 +178,7 @@ export default function Attendances() {
 
               <Dialog open={switchOpen} onOpenChange={setSwitchOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-neutral-200 rounded-full px-5 py-2 flex items-center gap-2">
+                  <Button className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-neutral-200 rounded-full px-5 py-2 flex items-center gap-2 cursor-pointer">
                     <Users size={16} /> Switch Club
                   </Button>
                 </DialogTrigger>
@@ -198,7 +198,7 @@ export default function Attendances() {
                         key={club.id}
                         onClick={() => {
                           setSelectedClub(club);
-                          setSwitchOpen(false); 
+                          setSwitchOpen(false);
                         }}
                         className={`
             w-full flex items-center gap-4 p-3 rounded-xl transition-all border
@@ -225,7 +225,7 @@ export default function Attendances() {
                             {club.name}
                           </p>
                           <p className="text-neutral-400 text-sm">
-                            {club.category}
+                            {formatClubCategory(club.category)}
                           </p>
                         </div>
                       </button>
@@ -248,7 +248,7 @@ export default function Attendances() {
           </div>
         </div>
 
-        <div className="flex gap-10">
+        <div className="flex gap-10 md:flex-row flex-col">
           <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between mt-2">
               <div className="flex items-center gap-2 bg-neutral-900 rounded-full px-4 py-2 border border-neutral-800 w-full max-w-[350px]">
@@ -263,17 +263,17 @@ export default function Attendances() {
 
               <div className="flex items-center gap-3">
                 <Button
-                  onClick={() => setAddModalOpen(true)}
-                  className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-neutral-200 rounded-full px-5 py-2 flex items-center gap-2"
+                  variant="secondary"
+                  className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-neutral-200 rounded-full px-5 py-2 flex items-center gap-2 cursor-pointer"
                 >
-                  <Plus size={16} /> Add Session
+                  <Filter className="w-4 h-4" /> Filter
                 </Button>
 
                 <Button
-                  variant="secondary"
-                  className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-neutral-200 rounded-full px-5 py-2 flex items-center gap-2"
+                  onClick={() => setAddModalOpen(true)}
+                  className="bg-blue-950 border border-neutral-800 hover:bg-blue-900 text-neutral-200 rounded-lg px-5 py-2 flex items-center gap-2 cursor-pointer"
                 >
-                  <Filter className="w-4 h-4" /> Filter
+                  <Plus size={16} /> Add Session
                 </Button>
               </div>
             </div>
@@ -299,10 +299,10 @@ export default function Attendances() {
                     paginatedSessions.map((session) => (
                       <tr
                         key={session.id}
-                        className="border-neutral-800/70 border-y-2 hover:bg-neutral-800 transition relative"
+                        className="border-neutral-800/70 border-y-2 hover:bg-neutral-800 transition relative cursor-pointer"
                       >
                         <td
-                          className="px-6 py-4 text-neutral-200 text-center cursor-pointer"
+                          className="px-6 py-4 text-neutral-200 text-center"
                           onClick={() => nav(`/attendance/${session.id}`)}
                         >
                           {session.event?.title || session.title || "N/A"}

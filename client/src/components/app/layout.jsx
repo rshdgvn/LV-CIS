@@ -31,7 +31,7 @@ export default function Layout({ children }) {
           </span>
         </a>
 
-        <SidebarTrigger className="mx-3 relative z-[70] cursor-pointer" />
+        <SidebarTrigger className="mx-3 relative z-70 cursor-pointer" />
       </div>
 
       <div className="relative flex-1">

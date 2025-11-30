@@ -24,6 +24,7 @@ import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 import UpdateEventModal from "@/components/events/UpdateEventModal";
 import { Button } from "@/components/ui/button";
 import { SkeletonEventDetails } from "@/components/skeletons/SkeletonEventDetails";
+import { formatDate } from "@/utils/formatDate";
 
 function EventDetails() {
   const { id } = useParams();
@@ -128,7 +129,7 @@ function EventDetails() {
                     <span className="text-gray-400">Date</span>
                   </div>
                   <span className="block">
-                    {new Date(detail.event_date).toLocaleDateString()}
+                    {formatDate(detail.event_date)}
                   </span>
                 </div>
                 <div className="flex-col">

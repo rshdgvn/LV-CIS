@@ -56,8 +56,7 @@ class AttendanceController extends Controller
 
             if ($validated['status'] === 'present') {
                 $membership->update(['activity_status' => 'active']);
-            }
-            elseif (
+            } elseif (
                 count($lastThreeStatuses) === 3 &&
                 collect($lastThreeStatuses)->every(fn($s) => $s === 'absent')
             ) {
@@ -75,7 +74,13 @@ class AttendanceController extends Controller
 
     public function memberAttendances($userId, $clubId)
     {
-        $attendances = Attendance::with('session')
+        $attendances = Attendance::with([
+            'session',
+            'session.event',
+            'session.club',
+            'user',
+            'user.member',
+        ])
             ->where('user_id', $userId)
             ->whereHas('session', function ($query) use ($clubId) {
                 $query->where('club_id', $clubId);
@@ -83,6 +88,27 @@ class AttendanceController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json($attendances);
+        $membership = ClubMembership::where('user_id', $userId)
+            ->where('club_id', $clubId)
+            ->first();
+
+        $stats = [
+            'present' => $attendances->where('status', 'present')->count(),
+            'absent'  => $attendances->where('status', 'absent')->count(),
+            'late'    => $attendances->where('status', 'late')->count(),
+            'excuse'  => $attendances->where('status', 'excuse')->count(),
+        ];
+
+        return response()->json([
+            'attendances' => $attendances,
+            'stats'       => $stats,  
+            'user' => [
+                'id'         => $membership?->user->id,
+                'avatar'     => $membership?->user->avatar,
+                'name'       => trim(($membership?->user->first_name ?? '') . ' ' . ($membership?->user->last_name ?? '')),
+                'role'       => $membership?->role,
+            ],
+            'club' => $membership?->club,
+        ]);
     }
 }

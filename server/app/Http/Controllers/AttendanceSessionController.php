@@ -113,7 +113,8 @@ class AttendanceSessionController extends Controller
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'avatar' => $user->avatar,
                 'course' => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
-                'status' => $attendance->status ? $attendance->status : null,
+                'status' => $attendance?->status ?? null,
+
             ];
         });
 
@@ -179,7 +180,7 @@ class AttendanceSessionController extends Controller
             'date' => $request->date,
             'is_open' => true,
         ]);
-
+        
         return response()->json([
             'message' => 'Attendance session created successfully',
             'session' => $session
@@ -219,7 +220,7 @@ class AttendanceSessionController extends Controller
         $session->update([
             'title' => $request->title ?? $session->title,
             'venue' => $request->venue ?? $session->venue,
-            'date' => $request->date ?? $session->date,
+            'date' => date('Y-m-d', strtotime($request->date)) ?? date('Y-m-d', strtotime($request->date)),
             'is_open' => $request->has('is_open') ? $request->is_open : $session->is_open,
         ]);
 

@@ -113,7 +113,7 @@ class AttendanceSessionController extends Controller
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'avatar' => $user->avatar,
                 'course' => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
-                'status' => null,
+                'status' => $attendance->status ? $attendance->status : null,
             ];
         });
 

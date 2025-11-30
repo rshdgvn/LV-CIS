@@ -15,7 +15,15 @@ class Club extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'club_memberships')
-            ->withPivot('role', 'officer_title', 'status', 'joined_at')
+            ->withPivot('role', 'officer_title', 'status', 'joined_at', 'activity_status')
+            ->withTimestamps();
+    }
+
+    public function approvedUsers()
+    {
+        return $this->belongsToMany(User::class, 'club_memberships')
+            ->wherePivot('status', 'approved') 
+            ->withPivot('role', 'officer_title', 'status', 'joined_at', 'activity_status')
             ->withTimestamps();
     }
 
@@ -32,7 +40,7 @@ class Club extends Model
 
         return asset('storage/' . $this->logo);
     }
-    
+
     public function events()
     {
         return $this->hasMany(Event::class);

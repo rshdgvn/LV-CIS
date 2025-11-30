@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class ClubMembership extends Model
 {
-    protected $fillable = ['club_id', 'user_id', 'role', 'officer_title', 'requested_role', 'status', 'joined_at'];
+    protected $fillable = [
+        'club_id',
+        'user_id',
+        'role',
+        'officer_title',
+        'requested_role',
+        'status',
+        'joined_at',
+        'activity_status', 
+    ];
+
 
     public function club()
     {
@@ -18,4 +28,3 @@ class ClubMembership extends Model
         return $this->belongsTo(User::class);
     }
 }
-    

@@ -58,6 +58,7 @@ import {
 export default function Attendances() {
   const { clubs, loading: clubsLoading } = useClub();
   const [sessions, setSessions] = useState([]);
+  const [analytics, setAnalytics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedClub, setSelectedClub] = useState(null);
@@ -68,18 +69,15 @@ export default function Attendances() {
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
 
-  // PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
-  // Load default club
   useEffect(() => {
     if (!clubs || clubs.length === 0) return;
     const club = clubs.find((c) => c.category === "academics") || clubs[0];
     setSelectedClub(club);
   }, [clubs]);
 
-  // Fetch sessions
   const fetchSessions = async () => {
     if (!selectedClub) return;
     setLoading(true);
@@ -100,6 +98,7 @@ export default function Attendances() {
 
       const data = await res.json();
       setSessions(data.sessions || []);
+      setAnalytics(data.analytics || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -109,6 +108,7 @@ export default function Attendances() {
 
   useEffect(() => {
     fetchSessions();
+    console.log(sessions);
   }, [selectedClub]);
 
   const filteredSessions = sessions.filter((session) => {
@@ -116,19 +116,16 @@ export default function Attendances() {
     return title.toLowerCase().includes(search.toLowerCase());
   });
 
-  // PAGINATION SLICE
   const totalPages = Math.ceil(filteredSessions.length / itemsPerPage);
   const paginatedSessions = filteredSessions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Reset page when search/filter updates
   useEffect(() => {
     setCurrentPage(1);
   }, [search, sessions]);
 
-  // Delete
   const handleDelete = async (sessionId) => {
     if (!confirm("Are you sure you want to delete this session?")) return;
 
@@ -176,7 +173,7 @@ export default function Attendances() {
 
             <div>
               <h1 className="text-3xl font-semibold mb-3">
-                Association of ICT Majors
+                {selectedClub.name}
               </h1>
 
               <Dialog open={switchOpen} onOpenChange={setSwitchOpen}>
@@ -186,38 +183,65 @@ export default function Attendances() {
                   </Button>
                 </DialogTrigger>
 
-                <DialogContent className="sm:max-w-[400px]">
-                  <DialogHeader>
-                    <DialogTitle>Select Club</DialogTitle>
-                  </DialogHeader>
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-neutral-900">
+                  <div className="sticky top-0 bg-neutral-900 border-b border-neutral-800 px-6 py-4 z-10">
+                    <DialogHeader>
+                      <DialogTitle className="text-lg font-semibold">
+                        Select Club
+                      </DialogTitle>
+                    </DialogHeader>
+                  </div>
 
-                  <RadioGroup
-                    value={selectedClub?.id}
-                    onValueChange={(id) => {
-                      const c = clubs.find((club) => club.id === Number(id));
-                      setSelectedClub(c);
-                    }}
-                    className="flex flex-col gap-2 mt-4"
-                  >
+                  <div className="max-h-96 overflow-y-auto px-6 py-4 space-y-3 bg-neutral-900">
                     {clubs.map((club) => (
-                      <div
+                      <button
                         key={club.id}
-                        className="flex items-center justify-between p-2 rounded-lg border border-neutral-700 hover:bg-neutral-800 cursor-pointer"
+                        onClick={() => {
+                          setSelectedClub(club);
+                          setSwitchOpen(false); 
+                        }}
+                        className={`
+            w-full flex items-center gap-4 p-3 rounded-xl transition-all border
+            ${
+              selectedClub?.id === club.id
+                ? "border-blue-500 bg-blue-500/10 shadow-lg"
+                : "border-neutral-800 hover:bg-neutral-800/70"
+            }
+          `}
                       >
-                        <div>
-                          <p className="text-white font-medium">{club.name}</p>
+                        <img
+                          src={
+                            club.logo_url ||
+                            `https://ui-avatars.com/api/?background=0D1117&color=fff&name=${encodeURIComponent(
+                              club.name
+                            )}`
+                          }
+                          alt={club.name}
+                          className="w-12 h-12 rounded-xl object-cover border border-neutral-700"
+                        />
+
+                        <div className="flex flex-col items-start">
+                          <p className="text-white font-medium text-base">
+                            {club.name}
+                          </p>
                           <p className="text-neutral-400 text-sm">
                             {club.category}
                           </p>
                         </div>
-                        <RadioGroupItem value={club.id} />
-                      </div>
+                      </button>
                     ))}
-                  </RadioGroup>
+                  </div>
 
-                  <DialogFooter>
-                    <Button onClick={() => setSwitchOpen(false)}>Close</Button>
-                  </DialogFooter>
+                  <div className="sticky bottom-0 bg-neutral-900 border-t border-neutral-800 px-6 py-3">
+                    <DialogFooter>
+                      <Button
+                        onClick={() => setSwitchOpen(false)}
+                        className="w-full bg-neutral-800 hover:bg-neutral-700 text-neutral-200"
+                      >
+                        Close
+                      </Button>
+                    </DialogFooter>
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
@@ -403,7 +427,7 @@ export default function Attendances() {
               <div className="text-right">
                 <p className=" text-gray-300 font-medium">Total Club Members</p>
                 <h3 className="text-2xl font-bold text-start text-white mt-1">
-                  12
+                  {analytics.total_members}
                 </h3>
               </div>
             </Card>
@@ -413,7 +437,7 @@ export default function Attendances() {
               <div className="text-right">
                 <p className=" text-gray-300 font-medium">Active Members</p>
                 <h3 className="text-2xl font-bold text-start text-white mt-1">
-                  10
+                  {analytics.active_members}
                 </h3>
               </div>
             </Card>
@@ -423,7 +447,7 @@ export default function Attendances() {
               <div className="text-right">
                 <p className=" text-gray-300 font-medium">Inactive Members</p>
                 <h3 className="text-2xl font-bold text-start text-white mt-1">
-                  2
+                  {analytics.inactive_members}
                 </h3>
               </div>
             </Card>

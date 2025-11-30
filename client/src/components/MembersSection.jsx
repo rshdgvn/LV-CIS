@@ -154,6 +154,7 @@ export default function MembersSection({
   };
 
   useEffect(() => {
+    console.log(members)
     if (applicantMode) fetchApplicants();
   }, [applicantMode]);
 
@@ -163,13 +164,25 @@ export default function MembersSection({
     return () => clearTimeout(timer);
   }, [alert]);
 
+  const filteredMembers = useMemo(() => {
+    if (!activeFilter || activeFilter === "All") return members;
+
+    if (activeFilter === "Active")
+      return members.filter((m) => m.pivot?.activity_status === "active");
+
+    if (activeFilter === "Inactive")
+      return members.filter((m) => m.pivot?.activity_status === "inactive");
+
+    return members;
+  }, [members, activeFilter]);
+
   const regularMembers = useMemo(() => {
-    const officers = members.filter(
+    const officers = filteredMembers.filter(
       (m) => m.pivot?.role === "officer" || m.pivot?.officer_title
     );
-    const regulars = members.filter((m) => m.pivot?.role === "member");
+    const regulars = filteredMembers.filter((m) => m.pivot?.role === "member");
     return [...officers, ...regulars];
-  }, [members]);
+  }, [filteredMembers]);
 
   const indexOfLast = currentPage * membersPerPage;
   const indexOfFirst = indexOfLast - membersPerPage;
@@ -376,7 +389,16 @@ export default function MembersSection({
                     </button>
                   </div>
                 ) : (
-                  <p className="text-green-400 text-xs">Active</p>
+                  // ⭐ ADDED RED TEXT FOR INACTIVE STATUS
+                  <p
+                    className={`text-xs capitalize ${
+                      member.pivot?.activity_status === "inactive"
+                        ? "text-red-400"
+                        : "text-green-400"
+                    }`}
+                  >
+                    {member.pivot?.activity_status}
+                  </p>
                 )}
               </div>
             ))}
@@ -400,7 +422,6 @@ export default function MembersSection({
                       />
                     </PaginationItem>
 
-                    {/* Dynamic Page Links */}
                     {Array.from({ length: totalPages }).map((_, index) => {
                       const pageNum = index + 1;
                       return (
@@ -460,7 +481,6 @@ export default function MembersSection({
             <div className="grid gap-4 py-4">
               {modalMode === "add" && (
                 <>
-                  {/* Add By Selection */}
                   <div className="grid gap-2">
                     <Label htmlFor="addBy">Add Member By</Label>
                     <select
@@ -481,7 +501,6 @@ export default function MembersSection({
                     </select>
                   </div>
 
-                  {/* Input Field for Either User ID or Email */}
                   <div className="grid gap-2">
                     <Label htmlFor="userInput">
                       {formData.addBy === "email" ? "Email" : "User ID"}
@@ -512,7 +531,6 @@ export default function MembersSection({
                 </>
               )}
 
-              {/* Role Selector */}
               <div className="grid gap-2">
                 <Label htmlFor="role">Role</Label>
                 <select
@@ -528,7 +546,6 @@ export default function MembersSection({
                 </select>
               </div>
 
-              {/* Officer Title */}
               {formData.role === "officer" && (
                 <div className="grid gap-2">
                   <Label htmlFor="officer_title">Officer Title</Label>

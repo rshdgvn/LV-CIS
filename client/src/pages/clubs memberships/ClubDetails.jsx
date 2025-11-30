@@ -53,7 +53,6 @@ export default function ClubDetails() {
       if (!res.ok) throw new Error("Failed to fetch club details");
 
       const data = await res.json();
-      console.log(data)
       setClub(data);
       sessionStorage.setItem(`club_${id}`, JSON.stringify(data));
     } catch (err) {

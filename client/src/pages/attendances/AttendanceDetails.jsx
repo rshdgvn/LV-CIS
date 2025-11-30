@@ -44,7 +44,7 @@ export default function AttendanceDetails() {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      console.log(data);
+      console.log('s',data);
       setSession(data);
     } catch (error) {
       console.error("Error fetching session details:", error);

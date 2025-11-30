@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#1B1919", // your OKLCH converted hex
+        primary: "#1B1919", 
       },
     },
   },

@@ -12,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { APP_URL } from "@/lib/config";
+import { DatePicker } from "../DatePicker";
+import { formatDate } from "@/utils/formatDate";
 
 export default function UpdateAttendanceModal({
   open,
@@ -27,7 +29,7 @@ export default function UpdateAttendanceModal({
 
   useEffect(() => {
     if (session) {
-      console.log(session)
+      console.log(session);
       setForm({
         title: session.title || "",
         venue: session.venue || "",
@@ -38,6 +40,10 @@ export default function UpdateAttendanceModal({
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleDateChange = (newDate) => {
+    setForm({ ...form, date: newDate });
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -87,12 +93,10 @@ export default function UpdateAttendanceModal({
 
           <div>
             <label className="text-sm text-neutral-400">Date</label>
-            <Input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              required
+            <DatePicker
+              value={form.date ? formatDate(form.date) : null}
+              onChange={handleDateChange}
+              placeholder="Select date"
             />
           </div>
 

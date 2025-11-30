@@ -10,9 +10,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-
 import { APP_URL } from "@/lib/config";
+import { DatePicker } from "../DatePicker";
+
 
 export default function AddAttendanceModal({
   open,
@@ -28,6 +28,10 @@ export default function AddAttendanceModal({
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleDateChange = (newDate) => {
+    setForm({ ...form, date: newDate });
   };
 
   const submit = async (e) => {
@@ -49,7 +53,7 @@ export default function AddAttendanceModal({
     const data = await res.json();
 
     if (res.ok) {
-      onSuccess(); 
+      onSuccess();
       setOpen(false);
       setForm({
         title: "",
@@ -60,6 +64,10 @@ export default function AddAttendanceModal({
       alert(data.error || "Error creating session");
     }
   };
+
+  useEffect(() => {
+    console.log(clubId);
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -81,12 +89,10 @@ export default function AddAttendanceModal({
 
           <div>
             <label className="text-sm text-neutral-400">Date</label>
-            <Input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              required
+            <DatePicker
+              selected={form.date ? new Date(form.date) : null}
+              onChange={handleDateChange}
+              placeholder="Select date"
             />
           </div>
 

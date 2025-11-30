@@ -55,23 +55,53 @@ class AttendanceSessionController extends Controller
                 ];
             });
 
-        return response()->json(['sessions' => $sessions]);
+        $totalMembers = $user->clubs()->where('club_id', $clubId)
+            ->first()
+            ->users()
+            ->wherePivot('status', 'approved')
+            ->count();
+
+        $activeMembers = $user->clubs()->where('club_id', $clubId)
+            ->first()
+            ->users()
+            ->wherePivot('status', 'approved')
+            ->wherePivot('activity_status', 'active')
+            ->count();
+
+        $inactiveMembers = $user->clubs()->where('club_id', $clubId)
+            ->first()
+            ->users()
+            ->wherePivot('status', 'approved')
+            ->wherePivot('activity_status', 'inactive')
+            ->count();
+
+        $analytics = [
+            'total_members' => $totalMembers,
+            'active_members' => $activeMembers,
+            'inactive_members' => $inactiveMembers
+        ];
+
+        return response()->json([
+            'sessions' => $sessions,
+            'analytics' => $analytics
+        ]);
     }
+
 
 
     public function show($id)
     {
-        $session = AttendanceSession::with(['club.users.member', 'event'])->find($id);
+        $session = AttendanceSession::with(['club.approvedUsers.member', 'event'])->find($id);
 
         if (!$session) {
             return response()->json(['message' => 'Session not found'], 404);
         }
 
-        if (!$session->club || !$session->club->users) {
+        if (!$session->club || !$session->club->approvedUsers) {
             return response()->json(['message' => 'No club or members found'], 404);
         }
 
-        $users = $session->club->users->map(function ($user) use ($session) {
+        $users = $session->club->approvedUsers->map(function ($user) use ($session) {
             $attendance = Attendance::where('attendance_session_id', $session->id)
                 ->where('user_id', $user->id)
                 ->first();
@@ -82,8 +112,8 @@ class AttendanceSessionController extends Controller
                 'user_id' => $user->id,
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'avatar' => $user->avatar,
-                'course' => $member->course . ' ' . $member->year_level ?? 'N/A',
-                'status' => $attendance ? $attendance->status : 'Absent',
+                'course' => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
+                'status' => null,
             ];
         });
 
@@ -104,6 +134,7 @@ class AttendanceSessionController extends Controller
             'members' => $users,
         ]);
     }
+
 
     public function store(Request $request)
     {
@@ -169,7 +200,6 @@ class AttendanceSessionController extends Controller
             return response()->json(['error' => 'Session not found'], 404);
         }
 
-        // Check if user is a member of the club
         $isMember = ClubMembership::where('user_id', $user->id)
             ->where('club_id', $session->club_id)
             ->where('status', 'approved')

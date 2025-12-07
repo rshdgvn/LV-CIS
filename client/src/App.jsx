@@ -36,6 +36,7 @@ import GoogleSignupSuccess from "./pages/auth/GoogleSignupSuccess";
 import PrivacyPolicy from "./pages/Privacy";
 import TermsOfService from "./pages/Terms";
 import MemberAttendances from "./components/events/MemberAttendances";
+import Announcements from "./pages/system/Announcements";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ function App() {
                     element={<MemberDetails />}
                   />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/announcements" element={<Announcements />} />
 
                   <Route element={<OfficersRoute />}>
                     <Route

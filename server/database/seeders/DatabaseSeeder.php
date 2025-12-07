@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             EventTaskSeeder::class,
             EventTaskAssignmentSeeder::class,
             AttendanceSeeder::class,
+            AnnouncementSeeder::class,
         ]);
     }
 }

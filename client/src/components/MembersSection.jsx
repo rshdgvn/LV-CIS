@@ -314,7 +314,7 @@ export default function MembersSection({
                   <div>
                     <p className="font-medium text-sm">{`${user.first_name} ${user.last_name}`}</p>
                     <p className="text-xs text-gray-400">
-                      {user.student_id} | {user.course} | {user.year_level}
+                      {user.course} {user.year_level}
                     </p>
                   </div>
                 </div>

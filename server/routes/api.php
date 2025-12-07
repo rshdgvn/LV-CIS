@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSessionController;
 use App\Http\Controllers\AuthController;
@@ -99,6 +100,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/change-password', [ProfileController::class, 'changePassword']);
 
     Route::get('/clubs/{id}/events', [ClubEventController::class, 'index']);
+
+    Route::get('/announcements', [AnnouncementController::class, 'index']);
+    Route::post('/announcements', [AnnouncementController::class, 'store']);
+    Route::get('/announcements/{id}', [AnnouncementController::class, 'show']);
+    Route::patch('/announcements/{id}', [AnnouncementController::class, 'update']);
+    Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy']);
 });
 
 Route::get('/gmail/oauth/init', function () {

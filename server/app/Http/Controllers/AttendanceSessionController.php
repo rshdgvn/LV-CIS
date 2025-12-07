@@ -220,7 +220,7 @@ class AttendanceSessionController extends Controller
         $session->update([
             'title' => $request->title ?? $session->title,
             'venue' => $request->venue ?? $session->venue,
-            'date' => date('Y-m-d', strtotime($request->date)) ?? date('Y-m-d', strtotime($request->date)),
+            'date' => $request->date ?? $request->date,
             'is_open' => $request->has('is_open') ? $request->is_open : $session->is_open,
         ]);
 

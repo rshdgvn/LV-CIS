@@ -241,14 +241,12 @@ export default function Announcements() {
   return (
     <div className="px-8 py-6 text-neutral-100 w-full min-h-screen">
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-6 border-b border-neutral-800">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-            Announcements
+          <h1 className="text-3xl font-semibold flex items-center gap-3">
+            <Megaphone className="w-8 h-8 text-blue-500" /> Announcements
           </h1>
-          <p className="text-neutral-400 mt-1">
-            Latest updates, events, and news for the community.
-          </p>
+          <p className="text-neutral-400 mt-1">Manage and view all updates</p>
         </div>
 
         <Button
@@ -256,9 +254,9 @@ export default function Announcements() {
             resetForm();
             setIsAddOpen(true);
           }}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-lg shadow-blue-900/20"
+          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
         >
-          <Plus size={18} className="mr-2" /> New Announcement
+          <Plus size={18} /> Post Announcement
         </Button>
       </div>
 
@@ -350,7 +348,7 @@ export default function Announcements() {
                 ${
                   isPast
                     ? "opacity-60 hover:opacity-100 grayscale-[0.3]"
-                    : "hover:border-neutral-700 hover:bg-neutral-900/40"
+                    : "hover:border-neutral-700 hover:bg-neutral-800"
                 }`}
               >
                 {/* 1. Date Box with YEAR */}

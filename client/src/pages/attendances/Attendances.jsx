@@ -145,7 +145,6 @@ export default function Attendances() {
     }
   };
 
-  if (!sessions) return <div>none</div>;
   if (loading || clubsLoading) return <SkeletonAttendances />;
 
   if (!selectedClub)

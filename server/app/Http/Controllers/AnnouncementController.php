@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
@@ -8,33 +8,39 @@ use Illuminate\Http\Request;
 
 class AnnouncementController extends Controller
 {
-    // GET all announcements
+    // GET list of announcements
     public function index()
     {
         return response()->json([
             'status' => true,
-            'data' => Announcement::latest()->get()
+            'data' => Announcement::orderBy('date', 'asc')->get()
         ], 200);
     }
 
-    // POST create
+    // POST create announcement
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|max:255',
-            'content' => 'nullable|string',
-            'status' => 'nullable|in:active,archived',
+            'title' => 'required|string|max:255',
+            'date' => 'required|date',
+            'time' => 'required',
+            'venue' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'nullable|in:active,archived'
         ]);
 
         $announcement = Announcement::create([
             'title' => $request->title,
-            'content' => $request->content,
+            'date' => $request->date,
+            'time' => $request->time,
+            'venue' => $request->venue,
+            'description' => $request->description,
             'status' => $request->status ?? 'active',
         ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'Announcement created successfully',
+            'message' => 'Announcement created successfully.',
             'data' => $announcement
         ], 201);
     }
@@ -47,7 +53,7 @@ class AnnouncementController extends Controller
         if (!$announcement) {
             return response()->json([
                 'status' => false,
-                'message' => 'Announcement not found'
+                'message' => 'Announcement not found.'
             ], 404);
         }
 
@@ -57,7 +63,7 @@ class AnnouncementController extends Controller
         ], 200);
     }
 
-    // PATCH update
+    // PATCH update announcement
     public function update(Request $request, $id)
     {
         $announcement = Announcement::find($id);
@@ -65,26 +71,29 @@ class AnnouncementController extends Controller
         if (!$announcement) {
             return response()->json([
                 'status' => false,
-                'message' => 'Announcement not found'
+                'message' => 'Announcement not found.'
             ], 404);
         }
 
         $request->validate([
-            'title' => 'sometimes|required|max:255',
-            'content' => 'nullable|string',
-            'status' => 'nullable|in:active,archived',
+            'title' => 'sometimes|required|string|max:255',
+            'date' => 'sometimes|required|date',
+            'time' => 'sometimes|required',
+            'venue' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'nullable|in:active,archived'
         ]);
 
         $announcement->update($request->all());
 
         return response()->json([
             'status' => true,
-            'message' => 'Announcement updated successfully',
+            'message' => 'Announcement updated successfully.',
             'data' => $announcement
         ], 200);
     }
 
-    // DELETE destroy
+    // DELETE announcement
     public function destroy($id)
     {
         $announcement = Announcement::find($id);
@@ -92,7 +101,7 @@ class AnnouncementController extends Controller
         if (!$announcement) {
             return response()->json([
                 'status' => false,
-                'message' => 'Announcement not found'
+                'message' => 'Announcement not found.'
             ], 404);
         }
 
@@ -100,7 +109,7 @@ class AnnouncementController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Announcement deleted successfully'
+            'message' => 'Announcement deleted successfully.'
         ], 200);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\AnnouncementController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSessionController;
 use App\Http\Controllers\AuthController;
@@ -112,7 +112,7 @@ Route::get('/gmail/oauth/init', function () {
     $client = new Client();
     $client->setClientId(config('gmail.client_id'));
     $client->setClientSecret(config('gmail.client_secret'));
-    $client->setRedirectUri(config('gmail.redirect_for_gmail'));
+$client->setRedirectUri(config('gmail.redirect_for_gmail'));
     $client->setAccessType('offline');
     $client->setPrompt('consent');
     $client->addScope(\Google\Service\Gmail::GMAIL_SEND);

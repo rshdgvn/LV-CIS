@@ -16,13 +16,13 @@ import { TimePicker } from "../TimePicker";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { X } from "lucide-react";
-
+import { X, Loader2 } from "lucide-react";
 
 export default function UpdateEventModal({ event, onSuccess }) {
   const { token } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({}); // Stores validation errors
   const { canManageClub } = usePermissions();
 
   const [form, setForm] = useState({
@@ -44,17 +44,17 @@ export default function UpdateEventModal({ event, onSuccess }) {
     duration: "",
   });
 
+  // Populate form when event data is available
   useEffect(() => {
-    console.log(canManageClub)
     if (event) {
       setForm({
         club_id: event.club_id || "",
         title: event.title || "",
         purpose: event.purpose || "",
         description: event.description || "",
-        cover_image: event.cover_image || null,
-        photos: event.photos || [],
-        videos: event.videos || [],
+        cover_image: event.cover_image || null, // Can be string (URL) or null
+        photos: event.photos || [], // Can contain strings (URLs)
+        videos: event.videos || [], // Can contain strings (URLs)
         status: event.status || "upcoming",
         event_date: event.detail?.event_date || "",
         event_time: event.detail?.event_time || "",
@@ -65,20 +65,43 @@ export default function UpdateEventModal({ event, onSuccess }) {
         event_mode: event.detail?.event_mode || "face_to_face",
         duration: event.detail?.duration || "",
       });
+      setErrors({});
     }
-  }, [event]);
+  }, [event, open]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: null }));
+    }
   };
 
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
+  const handleCoverChange = (e) => {
+    const file = e.target.files[0];
+    setForm((prev) => ({ ...prev, cover_image: file }));
+    if (errors.cover_image)
+      setErrors((prev) => ({ ...prev, cover_image: null }));
+  };
+
+  const handleAttachmentAdd = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+    const targetKey = isVideo ? "videos" : "photos";
+
     setForm((prev) => ({
       ...prev,
-      [name]:
-        name === "photos" || name === "videos" ? Array.from(files) : files[0],
+      [targetKey]: [...prev[targetKey], file],
+    }));
+  };
+
+  const removeAttachment = (index, type) => {
+    setForm((prev) => ({
+      ...prev,
+      [type]: prev[type].filter((_, i) => i !== index),
     }));
   };
 
@@ -89,35 +112,53 @@ export default function UpdateEventModal({ event, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({});
 
     try {
       const formData = new FormData();
-      formData.append("_method", "PATCH");
+      formData.append("_method", "PATCH"); // Vital for Laravel file updates
 
+      // Loop through form fields
       Object.entries(form).forEach(([key, value]) => {
-        if (key === "photos" || key === "videos") {
-          if (Array.isArray(value)) {
-            value.forEach((file) => {
-              if (file instanceof File) {
-                formData.append(`${key}[]`, file);
-              }
-            });
-          }
-        } else if (key === "cover_image") {
+        // Handle Photos
+        if (key === "photos") {
+          value.forEach((item) => {
+            if (item instanceof File) {
+              formData.append("photos[]", item); // New file
+            } else if (typeof item === "string") {
+              formData.append("existing_photos[]", item); // Existing URL
+            }
+          });
+        }
+        // Handle Videos
+        else if (key === "videos") {
+          value.forEach((item) => {
+            if (item instanceof File) {
+              formData.append("videos[]", item); // New file
+            } else if (typeof item === "string") {
+              formData.append("existing_videos[]", item); // Existing URL
+            }
+          });
+        }
+        // Handle Cover Image
+        else if (key === "cover_image") {
           if (value instanceof File) {
-            formData.append("cover_image", value);
+            formData.append("cover_image", value); // New file
           } else if (typeof value === "string" && value !== "") {
-            formData.append("existing_cover_image", value);
+            formData.append("existing_cover_image", value); // Existing URL
           }
-        } else if (value !== null && value !== undefined) {
+        }
+        // Handle Standard Fields
+        else if (value !== null && value !== undefined) {
           formData.append(key, value);
         }
       });
 
       const res = await fetch(`${APP_URL}/events/${event.id}`, {
-        method: "POST",
+        method: "POST", // Use POST with _method: PATCH
         headers: {
           Authorization: `Bearer ${token}`,
+          Accept: "application/json", // Forces JSON response for errors
         },
         body: formData,
       });
@@ -125,42 +166,45 @@ export default function UpdateEventModal({ event, onSuccess }) {
       const data = await res.json();
 
       if (!res.ok) {
-        console.error("Update failed:", data);
-        alert(
-          data.message ||
-            "Failed to update event. Please check all fields and try again."
-        );
-        return;
+        if (res.status === 422 && data.errors) {
+          setErrors(data.errors);
+          const errorMessages = Object.values(data.errors).flat().join("\n");
+          alert("Validation Failed:\n" + errorMessages);
+          throw new Error("Validation failed");
+        }
+        throw new Error(data.message || "Failed to update event");
       }
 
-      console.log("Updated event:", data);
       onSuccess?.(data.event);
       setOpen(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to update event. Please try again.");
+      if (err.message !== "Validation failed") {
+        alert(err.message || "Failed to update event.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const isAllow = canManageClub(event.club_id)
+  const isAllow = canManageClub(event?.club_id);
 
+  if (!event) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {isAllow && ( 
+      {isAllow && (
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-400"
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-400 border-blue-600/50 hover:bg-blue-900/10"
           >
             Edit Event
           </Button>
         </DialogTrigger>
       )}
 
-      <DialogContent className="!max-w-3xl max-h-[90vh] overflow-y-auto bg-neutral-950 text-white">
+      <DialogContent className="!max-w-3xl max-h-[90vh] overflow-y-auto bg-neutral-950 text-white border-neutral-800">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Edit Event</DialogTitle>
         </DialogHeader>
@@ -169,55 +213,100 @@ export default function UpdateEventModal({ event, onSuccess }) {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4"
         >
-          {/* LEFT SECTION */}
+          {/* --- LEFT SECTION --- */}
           <div className="space-y-4">
+            {/* Club ID */}
             <div>
-              <Label>Club ID</Label>
+              <Label className="text-neutral-400">
+                Club ID <span className="text-red-500">*</span>
+              </Label>
               <Input
                 name="club_id"
                 value={form.club_id}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 ${
+                  errors.club_id ? "border-red-500" : ""
+                }`}
               />
+              {errors.club_id && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.club_id[0]}
+                </span>
+              )}
             </div>
 
+            {/* Title */}
             <div>
-              <Label>Event Title</Label>
+              <Label className="text-neutral-400">
+                Event Title <span className="text-red-500">*</span>
+              </Label>
               <Input
                 name="title"
                 value={form.title}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 ${
+                  errors.title ? "border-red-500" : ""
+                }`}
               />
+              {errors.title && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.title[0]}
+                </span>
+              )}
             </div>
 
+            {/* Purpose */}
             <div>
-              <Label>Purpose</Label>
+              <Label className="text-neutral-400">Purpose</Label>
               <Textarea
                 name="purpose"
                 value={form.purpose}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 min-h-[80px] ${
+                  errors.purpose ? "border-red-500" : ""
+                }`}
               />
+              {errors.purpose && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.purpose[0]}
+                </span>
+              )}
             </div>
 
+            {/* Description */}
             <div>
-              <Label>Description</Label>
+              <Label className="text-neutral-400">Description</Label>
               <Textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 min-h-[100px] ${
+                  errors.description ? "border-red-500" : ""
+                }`}
               />
+              {errors.description && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.description[0]}
+                </span>
+              )}
             </div>
 
+            {/* Cover Page */}
             <div>
-              <Label>Cover Image</Label>
-              <label className="relative flex flex-col items-center justify-center h-40 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition mt-2 overflow-hidden">
-                {form.cover_image && typeof form.cover_image === "string" ? (
+              <Label className="text-neutral-400">Cover Image</Label>
+              <label
+                className={`relative flex flex-col items-center justify-center h-40 border-2 border-dashed border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-900 transition mt-2 overflow-hidden ${
+                  errors.cover_image ? "border-red-500" : ""
+                }`}
+              >
+                {form.cover_image ? (
                   <>
                     <img
-                      src={form.cover_image}
+                      src={
+                        typeof form.cover_image === "string"
+                          ? form.cover_image
+                          : URL.createObjectURL(form.cover_image)
+                      }
                       alt="Current Cover"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
@@ -227,206 +316,236 @@ export default function UpdateEventModal({ event, onSuccess }) {
                         e.stopPropagation();
                         removeCoverImage();
                       }}
-                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full p-1"
+                      className="absolute top-2 right-2 bg-black/60 hover:bg-red-600 rounded-full p-1 transition"
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
                   </>
-                ) : form.cover_image instanceof File ? (
-                  <img
-                    src={URL.createObjectURL(form.cover_image)}
-                    alt="Preview"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
                 ) : (
-                  <>
-                    <span className="text-3xl">+</span>
+                  <div className="flex flex-col items-center text-neutral-500">
+                    <span className="text-3xl font-light">+</span>
                     <span className="text-xs mt-1">Change Cover</span>
-                  </>
+                  </div>
                 )}
                 <input
                   type="file"
                   name="cover_image"
                   accept="image/*"
                   className="hidden"
-                  onChange={handleFileChange}
+                  onChange={handleCoverChange}
                 />
               </label>
+              {errors.cover_image && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.cover_image[0]}
+                </span>
+              )}
             </div>
-            {/* Attachments (Dynamic Photos & Videos) */}
+
+            {/* Attachments */}
             <div>
-              <Label>Attachments</Label>
+              <Label className="text-neutral-400">Attachments</Label>
               <div className="grid grid-cols-3 gap-3 mt-2">
-                {[
-                  ...(form.photos || []).filter(Boolean),
-                  ...(form.videos || []).filter(Boolean),
-                  null,
-                ].map((file, index, all) => {
-                  const isFromServer = typeof file === "string";
-                  const isVideo =
-                    (isFromServer && file?.endsWith(".mp4")) ||
-                    (file && file.type?.startsWith("video/"));
-                  const isImage =
-                    (isFromServer && !file?.endsWith(".mp4")) ||
-                    (file && file.type?.startsWith("image/"));
-
+                {/* 1. Photos */}
+                {form.photos.map((file, index) => {
+                  const src =
+                    typeof file === "string" ? file : URL.createObjectURL(file);
                   return (
-                    <label
-                      key={index}
-                      className="relative flex flex-col items-center justify-center h-24 border-2 border-neutral-700 rounded-xl cursor-pointer hover:bg-neutral-800 transition overflow-hidden"
+                    <div
+                      key={`p-${index}`}
+                      className="relative h-24 border border-neutral-700 rounded-lg overflow-hidden bg-neutral-900"
                     >
-                      {file ? (
-                        <>
-                          {isImage && (
-                            <img
-                              src={
-                                isFromServer ? file : URL.createObjectURL(file)
-                              }
-                              alt="Attachment Preview"
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                          )}
-                          {isVideo && (
-                            <video
-                              src={
-                                isFromServer ? file : URL.createObjectURL(file)
-                              }
-                              className="absolute inset-0 w-full h-full object-cover"
-                              muted
-                            />
-                          )}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setForm((prev) => ({
-                                ...prev,
-                                photos: (prev.photos || []).filter(
-                                  (p) =>
-                                    p !== file ||
-                                    (typeof p === "object" &&
-                                      p.name !== file?.name)
-                                ),
-                                videos: (prev.videos || []).filter(
-                                  (v) =>
-                                    v !== file ||
-                                    (typeof v === "object" &&
-                                      v.name !== file?.name)
-                                ),
-                              }));
-                            }}
-                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full p-1"
-                          >
-                            <X className="w-4 h-4 text-white" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-3xl">+</span>
-                          <span className="text-xs mt-1">Add Attachment</span>
-                        </>
-                      )}
-
-                      <input
-                        type="file"
-                        accept="image/*,video/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (!file) return;
-
-                          const isVideo = file.type.startsWith("video/");
-                          setForm((prev) => ({
-                            ...prev,
-                            photos: isVideo
-                              ? [...(prev.photos || [])]
-                              : [...(prev.photos || []), file],
-                            videos: isVideo
-                              ? [...(prev.videos || []), file]
-                              : [...(prev.videos || [])],
-                          }));
-                        }}
+                      <img
+                        src={src}
+                        alt="Preview"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
-                    </label>
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(index, "photos")}
+                        className="absolute top-1 right-1 bg-black/60 hover:bg-red-600 rounded-full p-1 transition"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
                   );
                 })}
+
+                {/* 2. Videos */}
+                {form.videos.map((file, index) => {
+                  const src =
+                    typeof file === "string" ? file : URL.createObjectURL(file);
+                  return (
+                    <div
+                      key={`v-${index}`}
+                      className="relative h-24 border border-neutral-700 rounded-lg overflow-hidden bg-neutral-900"
+                    >
+                      <video
+                        src={src}
+                        className="absolute inset-0 w-full h-full object-cover opacity-80"
+                      />
+                      <span className="absolute bottom-1 right-1 bg-black/60 text-[8px] px-1 rounded">
+                        VID
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(index, "videos")}
+                        className="absolute top-1 right-1 bg-black/60 hover:bg-red-600 rounded-full p-1 transition"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* 3. Add Button */}
+                <label className="flex flex-col items-center justify-center h-24 border border-dashed border-neutral-700 rounded-lg cursor-pointer hover:bg-neutral-900 transition text-neutral-500 hover:text-neutral-300">
+                  <span className="text-2xl">+</span>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={handleAttachmentAdd}
+                  />
+                </label>
               </div>
             </div>
           </div>
 
-          {/* RIGHT SECTION */}
+          {/* --- RIGHT SECTION --- */}
           <div className="space-y-4">
+            {/* Date */}
             <div>
-              <Label>Date</Label>
+              <Label className="text-neutral-400">
+                Date <span className="text-red-500">*</span>
+              </Label>
               <DatePicker
                 value={form.event_date}
-                onChange={(date) =>
+                onChange={(date) => {
                   setForm((prev) => ({
                     ...prev,
-                    event_date: date?.toISOString().split("T")[0],
-                  }))
-                }
+                    event_date: date ? date.toISOString().split("T")[0] : "",
+                  }));
+                  if (errors.event_date)
+                    setErrors((prev) => ({ ...prev, event_date: null }));
+                }}
               />
+              {errors.event_date && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.event_date[0]}
+                </span>
+              )}
             </div>
 
+            {/* Time */}
             <div>
-              <Label>Time</Label>
+              <Label className="text-neutral-400">
+                Time <span className="text-red-500">*</span>
+              </Label>
               <TimePicker
                 value={form.event_time}
-                onChange={(time) =>
-                  setForm((prev) => ({ ...prev, event_time: time }))
-                }
+                onChange={(time) => {
+                  setForm((prev) => ({ ...prev, event_time: time }));
+                  if (errors.event_time)
+                    setErrors((prev) => ({ ...prev, event_time: null }));
+                }}
               />
+              {errors.event_time && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.event_time[0]}
+                </span>
+              )}
             </div>
 
+            {/* Venue */}
             <div>
-              <Label>Venue</Label>
+              <Label className="text-neutral-400">
+                Venue <span className="text-red-500">*</span>
+              </Label>
               <Input
                 name="venue"
                 value={form.venue}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 ${
+                  errors.venue ? "border-red-500" : ""
+                }`}
               />
+              {errors.venue && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.venue[0]}
+                </span>
+              )}
             </div>
 
+            {/* Organizer */}
             <div>
-              <Label>Organizer</Label>
+              <Label className="text-neutral-400">
+                Organizer <span className="text-red-500">*</span>
+              </Label>
               <Input
                 name="organizer"
                 value={form.organizer}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 ${
+                  errors.organizer ? "border-red-500" : ""
+                }`}
               />
+              {errors.organizer && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.organizer[0]}
+                </span>
+              )}
             </div>
 
+            {/* Contact Person */}
             <div>
-              <Label>Contact Person</Label>
+              <Label className="text-neutral-400">
+                Contact Person <span className="text-red-500">*</span>
+              </Label>
               <Input
                 name="contact_person"
                 value={form.contact_person}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 ${
+                  errors.contact_person ? "border-red-500" : ""
+                }`}
               />
+              {errors.contact_person && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.contact_person[0]}
+                </span>
+              )}
             </div>
 
+            {/* Email */}
             <div>
-              <Label>Email</Label>
+              <Label className="text-neutral-400">
+                Contact Email <span className="text-red-500">*</span>
+              </Label>
               <Input
                 name="contact_email"
                 type="email"
                 value={form.contact_email}
                 onChange={handleChange}
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 ${
+                  errors.contact_email ? "border-red-500" : ""
+                }`}
               />
+              {errors.contact_email && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.contact_email[0]}
+                </span>
+              )}
             </div>
 
+            {/* Event Mode */}
             <div>
-              <Label>Event Mode</Label>
+              <Label className="text-neutral-400">Event Mode</Label>
               <select
                 name="event_mode"
                 value={form.event_mode}
                 onChange={handleChange}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2"
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2 text-sm text-neutral-200 focus:outline-none focus:border-blue-700"
               >
                 <option value="online">Online</option>
                 <option value="face_to_face">Face to Face</option>
@@ -434,13 +553,14 @@ export default function UpdateEventModal({ event, onSuccess }) {
               </select>
             </div>
 
+            {/* Status */}
             <div>
-              <Label>Status</Label>
+              <Label className="text-neutral-400">Status</Label>
               <select
                 name="status"
                 value={form.status}
                 onChange={handleChange}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2"
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2 text-sm text-neutral-200 focus:outline-none focus:border-blue-700"
               >
                 <option value="upcoming">Upcoming</option>
                 <option value="ongoing">Ongoing</option>
@@ -449,29 +569,49 @@ export default function UpdateEventModal({ event, onSuccess }) {
               </select>
             </div>
 
+            {/* Duration */}
             <div>
-              <Label>Duration</Label>
+              <Label className="text-neutral-400">
+                Duration <span className="text-red-500">*</span>
+              </Label>
               <Input
                 name="duration"
                 value={form.duration}
                 onChange={handleChange}
-                placeholder="e.g. 3 hours"
-                className="bg-neutral-900 border-neutral-800"
+                className={`bg-neutral-900 border-neutral-800 ${
+                  errors.duration ? "border-red-500" : ""
+                }`}
               />
+              {errors.duration && (
+                <span className="text-red-500 text-xs mt-1">
+                  {errors.duration[0]}
+                </span>
+              )}
             </div>
           </div>
         </form>
 
-        <DialogFooter className="mt-6">
-          <Button
-            variant="outline"
-            type="submit"
-            disabled={loading}
-            onClick={handleSubmit}
-            className="text-blue-700 hover:text-blue-500 cursor-pointer"
-          >
-            {loading ? "Updating..." : "Update"}
-          </Button>
+        <DialogFooter className="mt-6 border-t border-neutral-800 pt-4">
+          <div className="flex justify-end gap-3 w-full">
+            <Button
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              className="text-neutral-400 hover:text-white hover:bg-neutral-900"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              onClick={handleSubmit}
+              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              {loading ? "Updating..." : "Update Event"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -26,7 +26,7 @@ class EventController extends Controller
         $events = Event::with([
             'detail',
             'club:id,name',
-            'club.users:id,first_name,last_name,email' 
+            'club.users:id,first_name,last_name,email'
         ])
             ->latest()
             ->get();
@@ -144,11 +144,10 @@ class EventController extends Controller
                 'title' => 'required|string|max:255',
                 'purpose' => 'required|string',
                 'description' => 'required|string',
-                'cover_image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'photos.*' => 'sometimes|nullable|image|max:5120',
-                'videos.*' => 'nullable|file|mimetypes:video/mp4,video/quicktime|max:20480',
+                'cover_image' => 'sometimes|nullable', 
+                'photos.*' => 'sometimes|nullable',
+                'videos.*' => 'nullable',
                 'status' => 'required|string|in:upcoming,ongoing,completed',
-
                 'event_date' => 'required|date',
                 'event_time' => 'required|string',
                 'venue' => 'required|string|max:255',
@@ -170,29 +169,28 @@ class EventController extends Controller
                 $coverUrl = $request->input('existing_cover_image');
             }
 
-            $photoUrls = $event->photos ?? [];
-            if ($request->hasFile('photos')) {
-                $photoUrls = [];
-                foreach ($request->file('photos') as $photo) {
-                    $photoUrls[] = $this->cloudinary->upload($photo, 'events/photos');
-                }
-            } elseif ($request->filled('existing_photos')) {
-                $photoUrls = is_array($request->input('existing_photos'))
-                    ? $request->input('existing_photos')
-                    : json_decode($request->input('existing_photos'), true);
-            }
+            $existingPhotos = $request->input('existing_photos', []);
+            if (!is_array($existingPhotos)) $existingPhotos = [];
 
-            $videoUrls = $event->videos ?? [];
-            if ($request->hasFile('videos')) {
-                $videoUrls = [];
-                foreach ($request->file('videos') as $video) {
-                    $videoUrls[] = $this->cloudinary->upload($video, 'events/videos');
+            $newPhotoUrls = [];
+            if ($request->hasFile('photos')) {
+                foreach ($request->file('photos') as $photo) {
+                    $newPhotoUrls[] = $this->cloudinary->upload($photo, 'events/photos');
                 }
-            } elseif ($request->filled('existing_videos')) {
-                $videoUrls = is_array($request->input('existing_videos'))
-                    ? $request->input('existing_videos')
-                    : json_decode($request->input('existing_videos'), true);
             }
+            $photoUrls = array_merge($existingPhotos, $newPhotoUrls);
+
+
+            $existingVideos = $request->input('existing_videos', []);
+            if (!is_array($existingVideos)) $existingVideos = [];
+
+            $newVideoUrls = [];
+            if ($request->hasFile('videos')) {
+                foreach ($request->file('videos') as $video) {
+                    $newVideoUrls[] = $this->cloudinary->upload($video, 'events/videos');
+                }
+            }
+            $videoUrls = array_merge($existingVideos, $newVideoUrls);
 
 
             $event->update([
@@ -239,16 +237,10 @@ class EventController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
-            Log::error('Error updating event: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json([
-                'message' => 'Failed to update event.',
-                'error' => $e->getMessage(), // temporary for debugging
-            ], 500);
+            Log::error('Error updating event: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to update event.', 'error' => $e->getMessage()], 500);
         }
     }
-
 
     public function deleteEvent($id)
     {

@@ -26,7 +26,9 @@ class AnnouncementController extends Controller
             'time' => 'required',
             'venue' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'nullable|in:active,archived'
+            'status' => 'nullable|in:active,archived',
+            'target_type' => 'required|in:general,club',
+            'club_id' => 'nullable|exists:clubs,id'
         ]);
 
         $announcement = Announcement::create([
@@ -36,6 +38,8 @@ class AnnouncementController extends Controller
             'venue' => $request->venue,
             'description' => $request->description,
             'status' => $request->status ?? 'active',
+            'target_type' => $request->target_type,
+            'club_id' => $request->club_id
         ]);
 
         return response()->json([
@@ -44,6 +48,7 @@ class AnnouncementController extends Controller
             'data' => $announcement
         ], 201);
     }
+
 
     // GET single announcement
     public function show($id)
@@ -76,12 +81,14 @@ class AnnouncementController extends Controller
         }
 
         $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'date' => 'sometimes|required|date',
-            'time' => 'sometimes|required',
+            'title' => 'required|string|max:255',
+            'date' => 'required|date',
+            'time' => 'required',
             'venue' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'nullable|in:active,archived'
+            'status' => 'nullable|in:active,archived',
+            'target_type' => 'required|in:general,club',
+            'club_id' => 'nullable|exists:clubs,id'
         ]);
 
         $announcement->update($request->all());

@@ -4,42 +4,53 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Announcement;
+use App\Models\Club;
 
 class AnnouncementSeeder extends Seeder
 {
     public function run(): void
     {
-        Announcement::insert([
-            [
-                'title' => 'General Assembly 2025',
-                'date' => '2025-01-15',
+        $now = now();
+
+        $announcements = [];
+
+        // 10 General announcements
+        for ($i = 1; $i <= 10; $i++) {
+            $announcements[] = [
+                'title' => "General Announcement #$i",
+                'date' => $now->addDays($i)->format('Y-m-d'),
                 'time' => '09:00:00',
-                'venue' => 'University Gymnasium',
-                'description' => 'Annual assembly discussing organizational updates and upcoming events.',
+                'venue' => 'University Hall',
+                'description' => "This is general announcement number $i for all students.",
                 'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Leadership Seminar',
-                'date' => '2025-02-10',
-                'time' => '13:00:00',
-                'venue' => 'Multipurpose Hall',
-                'description' => 'A workshop focused on improving leadership and communication skills.',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Campus Clean-Up Drive',
-                'date' => '2025-03-05',
-                'time' => '07:30:00',
-                'venue' => 'Main Campus Grounds',
-                'description' => 'Environmental activity promoting sustainability among students.',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        ]);
+                'target_type' => 'general',
+                'club_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        // Get all clubs
+        $clubs = Club::all();
+
+        // 3 announcements per club
+        foreach ($clubs as $club) {
+            for ($i = 1; $i <= 3; $i++) {
+                $announcements[] = [
+                    'title' => "{$club->name} Announcement #$i",
+                    'date' => $now->addDays($i)->format('Y-m-d'),
+                    'time' => '13:00:00',
+                    'venue' => $club->name . ' Hall',
+                    'description' => "This is announcement #$i for the {$club->name} club.",
+                    'status' => 'active',
+                    'target_type' => 'club',
+                    'club_id' => $club->id,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        Announcement::insert($announcements);
     }
 }

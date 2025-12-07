@@ -15,6 +15,13 @@ class Announcement extends Model
         'time',
         'venue',
         'description',
-        'status'
+        'status',
+        'target_type',
+        'club_id'
     ];
+
+    public function club()
+    {
+        return $this->belongsTo(Club::class);
+    }
 }

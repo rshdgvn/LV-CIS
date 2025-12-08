@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 function AdminDashboard() {
   const { token } = useAuth();
   const [cards, setCards] = useState([]);
+  const nav = useNavigate();
 
   useEffect(() => {
     fetchDashboard();
@@ -27,14 +28,11 @@ function AdminDashboard() {
         },
       });
       const data = await res.json();
-      console.log(data);
       setCards(data.cards);
     } catch (err) {
       console.error("Dashboard error:", err);
     }
   };
-
-  const nav = useNavigate();
 
   return (
     <>
@@ -52,7 +50,7 @@ function AdminDashboard() {
 
       <DashboardCards cards={cards} />
 
-      <div className="flex flex-col lg:flex-row gap-5 mb-5 w-full">
+      <div className="flex flex-col lg:flex-row gap-5 my-5 w-full">
         <div className="flex-1">
           <ActiveClubsChart />
         </div>
@@ -61,12 +59,16 @@ function AdminDashboard() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-5 mb-8 w-full h-full min-h-96">
-        <div className="flex-1 cursor-pointer" onClick={() => nav("/calendar")}>
+
+      <div className="flex flex-col lg:flex-row gap-5 mb-8 w-full h-auto lg:h-[520px]">
+        <div
+          className="flex-1 cursor-pointer overflow-hidden rounded-lg h-[500px] lg:h-auto"
+          onClick={() => nav("/calendar")}
+        >
           <Calendar />
         </div>
 
-        <div className="w-lg bg-neutral-900">
+        <div className="w-full lg:w-96 bg-neutral-900 rounded-lg overflow-hidden h-[500px] lg:h-auto">
           <AnnouncementCard />
         </div>
       </div>

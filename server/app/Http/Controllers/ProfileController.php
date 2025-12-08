@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use App\Services\CloudinaryService; // make sure you have this service
+use App\Services\CloudinaryService; 
 
 class ProfileController extends Controller
 {
@@ -57,7 +57,6 @@ class ProfileController extends Controller
                 'avatar'     => 'nullable|file|image|max:2048',
             ]);
 
-            // ✅ Handle avatar upload via Cloudinary
             if ($request->hasFile('avatar')) {
                 $avatarFile = $request->file('avatar');
                 $avatarUrl  = $this->cloudinary->upload($avatarFile, 'avatars');

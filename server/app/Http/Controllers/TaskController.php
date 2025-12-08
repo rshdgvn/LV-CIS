@@ -283,43 +283,42 @@ class TaskController extends Controller
 
         $tasks = $query->get();
 
-        if ($tasks->isEmpty()) {
-            return response()->json([]);
-        }
-
-
         $tasks = $tasks->map(function ($task) {
-            $assignedUsers = $task->assignments->map(function ($assignment) {
-                $user = $assignment->clubMembership->user;
-                if (!$user) return null;
+            $assignedUsers = $task->assignments
+                ->map(function ($assignment) {
+                    $user = $assignment->clubMembership?->user;
+                    if (!$user) return null;
 
-                return [
-                    'name'   => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
-                    'avatar' => $user->avatar ?? null,
-                ];
-            })->filter()->values();
+                    return [
+                        'name'   => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                        'avatar' => $user->avatar ?? null,
+                    ];
+                })
+                ->filter()
+                ->values();
 
             return [
-                'id'         => $task->id,
-                'title'      => $task->title,
-                'status'     => $task->status,
-                'due_date'   => $task->due_date,
-                'created_at' => optional($task->created_at)->format('Y-m-d'),
+                'id'          => $task->id,
+                'title'       => $task->title,
+                'status'      => $task->status,
+                'due_date'    => $task->due_date,
+                'created_at'  => optional($task->created_at)->format('Y-m-d'),
                 'assigned_by' => $assignedUsers,
             ];
         });
 
-        $event = Event::with('club')->find($eventId);
+        $event = Event::with('club')->findOrFail($eventId);
 
-        $availableMembers = ClubMembership::where('club_id', $event->club->id)
+        $members = ClubMembership::where('club_id', $event->club->id)
             ->with('user:id,first_name,last_name,avatar')
             ->get(['id', 'user_id', 'club_id']);
 
         return response()->json([
             "tasks"   => $tasks,
-            "members" => $availableMembers
+            "members" => $members
         ]);
     }
+
 
     /**
      * Update only the status of a task
@@ -354,5 +353,60 @@ class TaskController extends Controller
         $task->delete();
 
         return response()->json(['message' => 'Task deleted successfully']);
+    }
+
+    /**
+     * Get tasks assigned to the logged-in user
+     */
+    public function getMyTasks(Request $request)
+    {
+        $user = $request->user();
+
+        // 1. Get all Club Membership IDs for the current user
+        $membershipIds = ClubMembership::where('user_id', $user->id)->pluck('id');
+
+        if ($membershipIds->isEmpty()) {
+            return response()->json(['tasks' => []]);
+        }
+
+        // 2. Query EventTasks that have an assignment matching one of the user's membership IDs
+        $tasks = EventTask::whereHas('assignments', function ($query) use ($membershipIds) {
+            $query->whereIn('club_membership_id', $membershipIds);
+        })
+            ->with([
+                'event:id,title', // Load event title for context
+                'assignments.clubMembership.user:id,first_name,last_name,avatar' // Load all people assigned to this task (for avatars)
+            ])
+            ->orderBy('due_date', 'asc') // Sort by nearest due date
+            ->get();
+
+        // 3. Format the data to match the Frontend structure
+        $formattedTasks = $tasks->map(function ($task) {
+
+            // Get all users assigned to this task (to display avatars)
+            $assignedUsers = $task->assignments->map(function ($assignment) {
+                $u = $assignment->clubMembership->user;
+                if (!$u) return null;
+                return [
+                    'name'   => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                    'avatar' => $u->avatar ?? null,
+                ];
+            })->filter()->values();
+
+            return [
+                'id'          => $task->id,
+                'title'       => $task->title,
+                'description' => $task->description,
+                'status'      => $task->status,
+                'due_date'    => $task->due_date,
+                'event'       => $task->event ? [
+                    'id'    => $task->event->id,
+                    'title' => $task->event->title
+                ] : null,
+                'assigned_by' => $assignedUsers, 
+            ];
+        });
+
+        return response()->json(['tasks' => $formattedTasks]);
     }
 }

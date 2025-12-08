@@ -48,46 +48,25 @@ export default function AttendanceOverviewChart() {
 
   useEffect(() => {
     fetchData();
-  }, [filter]); // Re-fetch whenever filter changes
+  }, [filter]);
 
   return (
-    <div className="bg-[#171717] border border-[#2a2a2a] mt-7 rounded-xl p-4 w-full h-[400px] flex flex-col">
+    <div className="bg-[#171717] border border-[#2a2a2a] mt-0 rounded-xl p-6 w-full h-[350px] flex flex-col">
       {/* HEADER WITH FILTER */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-white text-lg font-semibold">
-          Attendance Overview
-        </h2>
+        <h2 className="text-white text-lg font-medium">Attendance Overview</h2>
 
         {/* Filter Dropdown */}
         <div className="relative">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="bg-[#0f0f0f] text-gray-300 text-xs font-medium border border-[#333] rounded-lg px-3 py-1.5 outline-none focus:border-[#b084ff] transition-colors cursor-pointer appearance-none pr-8"
+            className="bg-[#0f0f0f] text-gray-300 text-xs font-medium border border-[#333] rounded-lg px-3 py-1.5 outline-none focus:border-[#7C3AED] transition-colors cursor-pointer appearance-none pr-8"
           >
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option> 
+            <option value="yearly">Yearly</option>
           </select>
-          
-          {/* Custom Arrow Icon */}
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg
-              width="10"
-              height="6"
-              viewBox="0 0 10 6"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1 1L5 5L9 1"
-                stroke="#666"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
         </div>
       </div>
 
@@ -95,7 +74,7 @@ export default function AttendanceOverviewChart() {
       <div className="flex-1 w-full min-h-0 relative">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-[#171717]/50 z-10 rounded-lg">
-            <Loader2 className="w-6 h-6 text-[#b084ff] animate-spin" />
+            <Loader2 className="w-6 h-6 text-[#7C3AED] animate-spin" />
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -103,39 +82,36 @@ export default function AttendanceOverviewChart() {
               data={data}
               margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
             >
+              {/* Very subtle grid lines */}
               <CartesianGrid
                 stroke="#333"
                 vertical={false}
                 strokeDasharray="3 3"
+                strokeOpacity={0.5}
               />
 
               <XAxis
                 dataKey="name"
-                tick={{ fill: "#9ca3af", fontSize: 12 }}
+                tick={{ fill: "#6B7280", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 dy={10}
               />
 
               <YAxis
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: "#6B7280", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
               />
 
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#0f0f0f",
-                  borderColor: "#333",
+                  backgroundColor: "#1F2937",
+                  borderColor: "transparent",
                   borderRadius: "8px",
                   color: "#fff",
                 }}
                 itemStyle={{ fontSize: "12px", textTransform: "capitalize" }}
-                cursor={{
-                  stroke: "#444",
-                  strokeWidth: 1,
-                  strokeDasharray: "4 4",
-                }}
               />
 
               <Legend
@@ -144,8 +120,9 @@ export default function AttendanceOverviewChart() {
                 iconType="circle"
                 wrapperStyle={{
                   fontSize: "12px",
-                  color: "#999",
-                  paddingTop: "0px",
+                  paddingBottom: "10px",
+                  right: 0,
+                  top: -40,
                 }}
               />
 
@@ -154,16 +131,10 @@ export default function AttendanceOverviewChart() {
                 name="Present"
                 type="monotone"
                 dataKey="present"
-                stroke="#22c55e"
+                stroke="#10B981" // Bright Green
                 strokeWidth={3}
-                dot={{
-                  r: 4,
-                  fill: "#171717",
-                  stroke: "#22c55e",
-                  strokeWidth: 2,
-                }}
-                activeDot={{ r: 6, fill: "#22c55e", strokeWidth: 0 }}
-                animationDuration={1500}
+                dot={false} // Remove dots for cleaner look
+                activeDot={{ r: 6, fill: "#10B981", strokeWidth: 0 }}
               />
 
               {/* 2. RED LINE (Absent) */}
@@ -171,16 +142,10 @@ export default function AttendanceOverviewChart() {
                 name="Absent"
                 type="monotone"
                 dataKey="absent"
-                stroke="#ef4444"
+                stroke="#EF4444" // Bright Red
                 strokeWidth={3}
-                dot={{
-                  r: 4,
-                  fill: "#171717",
-                  stroke: "#ef4444",
-                  strokeWidth: 2,
-                }}
-                activeDot={{ r: 6, fill: "#ef4444", strokeWidth: 0 }}
-                animationDuration={1500}
+                dot={false}
+                activeDot={{ r: 6, fill: "#EF4444", strokeWidth: 0 }}
               />
             </LineChart>
           </ResponsiveContainer>

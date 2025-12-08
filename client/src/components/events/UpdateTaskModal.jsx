@@ -173,7 +173,7 @@ export default function UpdateTaskModal({
           <Button
             disabled={loading}
             onClick={handleSubmit}
-            className="bg-blue-700 hover:bg-blue-600"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             {loading ? "Updating..." : "Update Task"}
           </Button>

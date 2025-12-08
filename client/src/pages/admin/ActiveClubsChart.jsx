@@ -46,7 +46,7 @@ export default function ActiveClubsChart() {
   };
 
   return (
-    <div className="bg-[#171717] border border-[#2a2a2a] mt-7 rounded-xl p-4 w-full h-[350px]">
+    <div className="bg-[#171717] border border-[#2a2a2a] rounded-xl p-4 w-full h-[350px]">
       <h2 className="text-white text-lg mb-4">Active Clubs Members</h2>
 
       <ResponsiveContainer width="100%" height="85%">

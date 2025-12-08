@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { SkeletonAttendances } from "@/components/skeletons/SkeletonAttendances";
+import { useAuth } from "@/contexts/AuthContext";
 
 // --- UTILITY: Theme Classes ---
 const themeClasses = {
@@ -51,6 +52,8 @@ const formatForInput = (dateString) => {
 };
 
 const Calendar = () => {
+  const { user } = useAuth();
+  const admin = user.role == "admin";
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -182,7 +185,6 @@ const Calendar = () => {
     }
   };
 
-  // --- RENDER HELPERS ---
   const daysInMonth = eachDayOfInterval({
     start: startOfWeek(startOfMonth(currentDate)),
     end: endOfWeek(endOfMonth(currentDate)),
@@ -193,7 +195,7 @@ const Calendar = () => {
   if (loading) return <SkeletonAttendances />;
 
   return (
-    <div className="min-h-screen text-white flex justify-center font-sans p-6">
+    <div className="min-h-screen text-white flex justify-center font-sans">
       <div className="w-full max-w-6xl">
         <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 shadow-2xl p-6">
           {/* HEADER */}
@@ -223,17 +225,17 @@ const Calendar = () => {
               </div>
             </div>
 
-            <Button
-              onClick={openAddModal}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow-lg shadow-blue-900/20 transition flex items-center gap-2"
-            >
-              <Plus size={18} /> Add Event
-            </Button>
+            {admin && (
+              <Button
+                onClick={openAddModal}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow-lg shadow-blue-900/20 transition flex items-center gap-2"
+              >
+                <Plus size={18} /> Add Event
+              </Button>
+            )}
           </div>
 
-          {/* CALENDAR GRID */}
           <div className="w-full border border-neutral-800 rounded-lg overflow-hidden">
-            {/* Weekday Headers */}
             <div className="grid grid-cols-7 bg-neutral-950/50 border-b border-neutral-800">
               {weekDays.map((day) => (
                 <div
@@ -380,7 +382,6 @@ const Calendar = () => {
                   />
                 </div>
               </div>
-
             </div>
 
             {/* Theme Selector */}

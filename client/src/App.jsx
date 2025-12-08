@@ -38,6 +38,7 @@ import TermsOfService from "./pages/Terms";
 import MemberAttendances from "./components/events/MemberAttendances";
 import Announcements from "./pages/system/Announcements";
 import CalendarPage from "./pages/system/CalendarPage";
+import UsersPage from "./pages/system/UserPage";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ function App() {
                   />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/announcements" element={<Announcements />} />
+                  <Route path="/users" element={<UsersPage />} />
 
                   <Route element={<OfficersRoute />}>
                     <Route
@@ -110,7 +112,6 @@ function App() {
                   path="/member-attendances/:userId/:clubId"
                   element={<MemberAttendances />}
                 />
-                F
               </Routes>
             </ToastProvider>
           </ClubProvider>

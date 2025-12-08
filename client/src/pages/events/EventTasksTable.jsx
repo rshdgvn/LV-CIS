@@ -30,7 +30,7 @@ import { SkeletonEventTasksTable } from "@/components/skeletons/SkeletonEventTas
 import CreateTaskModal from "@/components/events/CreateTaskModal";
 import ReadTaskModal from "@/components/events/ReadTaskModal";
 import UpdateTaskModal from "@/components/events/UpdateTaskModal";
-import { useToast } from "@/providers/ToastProvider"; // Import ToastProvider
+import { useToast } from "@/providers/ToastProvider"; 
 
 // Normalizing tasks from backend
 function normalizeTasks(data) {
@@ -142,10 +142,11 @@ export default function EventTasksTable() {
         const data = await taskRes.json();
         setTasks(normalizeTasks(data.tasks));
         setMembers(data.members || []);
+        console.log('t', data)
       } catch (err) {
         console.error(err);
         setError("Failed to load event tasks.");
-        addToast("Failed to load event tasks.", "error"); // Show error toast
+        addToast("Failed to load event tasks.", "error"); 
       } finally {
         setLoading(false);
       }
@@ -328,7 +329,6 @@ export default function EventTasksTable() {
       <div className="w-xl sm:w-5/6 self-center overflow-x-auto">
         <div className="min-w-[750px] bg-[#121212] border border-neutral-800 rounded-2xl shadow-md overflow-hidden">
           <Table className="w-full table-fixed">
-            {" "}
             {/* <-- THIS FIXES WIDTH */}
             <TableHeader className="bg-[#1a1a1a]">
               {table.getHeaderGroups().map((headerGroup) => (

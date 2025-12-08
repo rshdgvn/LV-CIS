@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ClubEventController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProfileController;
@@ -77,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/task/{id}', [TaskController::class, 'getTaskDetail']);
     Route::patch('/task/{id}', [TaskController::class, 'updateTaskById']);
     Route::patch('/tasks/{id}/status', [TaskController::class, 'updateTaskStatus']);
+    Route::get('/my/tasks', [TaskController::class, 'getMyTasks']);
 
     Route::post('/tasks/{taskId}/assign', [TaskController::class, 'assignTaskByEmail']);
     Route::post('/create/task', [TaskController::class, 'createTaskForEvent']);
@@ -112,12 +115,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/calendar-events', [CalendarEventController::class, 'index']);
     Route::post('/calendar-events', [CalendarEventController::class, 'store']);
     Route::get('/calendar-events/{id}', [CalendarEventController::class, 'show']);
-    Route::put('/calendar-events/{id}', [CalendarEventController::class, 'update']); 
+    Route::put('/calendar-events/{id}', [CalendarEventController::class, 'update']);
     Route::delete('/calendar-events/{id}', [CalendarEventController::class, 'destroy']);
 
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index']);
     Route::get('/admin/active-clubs-chart', [AdminDashboardController::class, 'fetchActiveClubMembers']);
     Route::get('/admin/attendance-chart', [AdminDashboardController::class, 'fetchAttendanceChart']);
+
+    Route::get('/dashboard/pending-applicants', [DashboardController::class, 'pendingApplicants']);
+    Route::get('/dashboard/upcoming-events', [DashboardController::class, 'upcomingEvents']);
+
+    Route::get('/users', [UserController::class, 'index']);
+    Route::get('/users/{user}', [UserController::class, 'show']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
+    Route::patch('/users/{user}', [UserController::class, 'update']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
 });
 
 Route::get('/gmail/oauth/init', function () {

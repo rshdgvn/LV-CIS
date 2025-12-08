@@ -15,7 +15,7 @@ const CalendarPage = () => {
         <ArrowLeft className="w-5 h-5" />
       </button>
       <div className="flex flex-col gap-2 mt-5 ml-24">
-        <div className="flex flex-row items-center gap-5">
+        <div className="flex flex-row items-center gap-5 mb-5">
           <div className="shrink-0 p-2 bg-blue-900/30 rounded-lg">
             <Calendar1Icon className="w-9 h-9 text-blue-400" />
           </div>

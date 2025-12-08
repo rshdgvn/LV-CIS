@@ -6,7 +6,6 @@ use Cloudinary\Cloudinary;
 use Exception;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
-use Illuminate\Support\Facades\File;
 
 class CloudinaryService
 {
@@ -25,30 +24,43 @@ class CloudinaryService
       $path = is_string($file) ? $file : $file->getRealPath();
 
       if (!$path || !file_exists($path)) {
-        throw new Exception("File not found at path: {$path}");
+        throw new Exception("File not found at: {$path}");
       }
 
-      $tempDir = sys_get_temp_dir();
-      $compressedPath = $tempDir . '/temp_' . uniqid() . '.jpg';
+      $mime = mime_content_type($path);
+      
+      if (str_starts_with($mime, 'image/')) {
 
-      $this->imageManager
-        ->read($path)
-        ->scaleDown(width: 1920)
-        ->save($compressedPath, quality: 75);
+        $tempPath = sys_get_temp_dir() . '/img_' . uniqid() . '.jpg';
 
-      $upload = $this->cloudinary->uploadApi()->upload($compressedPath, [
-        'folder' => $folder,
-        'overwrite' => true,
-        'resource_type' => 'image',
-      ]);
+        // compress image
+        $this->imageManager
+          ->read($path)
+          ->scaleDown(width: 1920)
+          ->save($tempPath, quality: 75);
 
-      if (file_exists($compressedPath)) {
-        unlink($compressedPath); 
+        $upload = $this->cloudinary->uploadApi()->upload($tempPath, [
+          'folder' => $folder,
+          'overwrite' => true,
+          'resource_type' => 'image',
+        ]);
+
+        unlink($tempPath);
+        return $upload['secure_url'] ?? null;
       }
 
-      return $upload['secure_url'] ?? null;
+      if (str_starts_with($mime, 'video/')) {
+        $upload = $this->cloudinary->uploadApi()->upload($path, [
+          'folder' => $folder,
+          'resource_type' => 'video',
+        ]);
+
+        return $upload['secure_url'] ?? null;
+      }
+
+      throw new Exception("Unsupported file type: {$mime}");
     } catch (Exception $e) {
-      logger()->error('Cloudinary upload failed: ' . $e->getMessage());
+      logger()->error('Cloudinary upload error: ' . $e->getMessage());
       return null;
     }
   }
@@ -59,7 +71,7 @@ class CloudinaryService
       $this->cloudinary->uploadApi()->destroy($publicId);
       return true;
     } catch (Exception $e) {
-      logger()->error('Cloudinary delete failed: ' . $e->getMessage());
+      logger()->error('Cloudinary delete error: ' . $e->getMessage());
       return false;
     }
   }

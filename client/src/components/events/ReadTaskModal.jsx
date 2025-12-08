@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { formatTaskStatus } from "@/utils/formatTaskStatus";
 
 export default function ReadTaskModal({
   open,
@@ -23,7 +24,7 @@ export default function ReadTaskModal({
 
   const handleDelete = () => {
     onDelete(task.id);
-    setOpen(false); 
+    setOpen(false);
   };
 
   return (
@@ -48,7 +49,7 @@ export default function ReadTaskModal({
 
           <div>
             <p className="text-neutral-400 text-sm">Status</p>
-            <p className="capitalize">{task.status}</p>
+            <p className="capitalize">{formatTaskStatus(task.status)}</p>
           </div>
 
           <div>
@@ -90,7 +91,7 @@ export default function ReadTaskModal({
 
         <DialogFooter>
           <Button
-            className="bg-blue-700 hover:bg-blue-600"
+            className="bg-blue-600 text-white hover:bg-blue-700"
             onClick={() => {
               setOpen(false);
               onEdit(task.id);
@@ -100,8 +101,8 @@ export default function ReadTaskModal({
           </Button>
 
           <Button
-            className="bg-red-700 hover:bg-red-600"
-            onClick={handleDelete} 
+            className="bg-red-600 hover:bg-red-700"
+            onClick={handleDelete}
           >
             Delete Task
           </Button>

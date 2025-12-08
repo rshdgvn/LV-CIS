@@ -49,8 +49,7 @@ const AnnouncementCard = () => {
         }
 
         const json = await res.json();
-        console.log(json);
-        setAnnouncements(json.data.slice(0, 5));
+        setAnnouncements(json.data);
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -63,16 +62,22 @@ const AnnouncementCard = () => {
   }, []);
 
   return (
-    <div className="w-full h-full p-6 rounded-xl shadow-sm border border-gray-800">
-      <div className="flex flex-row justify-between items-center mb-6">
+    // Added flex flex-col and h-full to ensure it fills the parent fixed height
+    <div className="w-full h-full p-6 rounded-xl shadow-sm border border-[#2a2a2a] bg-[#171717] flex flex-col">
+      {/* Header: shrink-0 prevents it from squishing when list grows */}
+      <div className="flex flex-row justify-between items-center mb-4 shrink-0">
         <h2 className="text-xl font-semibold text-white">Announcement</h2>
-        <button className="text-xs font-medium text-white bg-neutral-950 hover:bg-gray-600 px-3 py-1 rounded-lg transition-colors cursor-pointer" onClick={() => nav('/announcements')}>
+        <button
+          className="text-xs font-medium text-white bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 px-3 py-1 rounded-lg transition-colors cursor-pointer"
+          onClick={() => nav("/announcements")}
+        >
           View all
         </button>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {loading && <p className="text-gray-400 text-sm">Loading...</p>}
+      {/* List Container: flex-1 takes remaining space, overflow-y-auto enables scroll */}
+      <div className="flex flex-col gap-3 flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar">
+        {loading && <p className="text-gray-500 text-sm">Loading...</p>}
 
         {error && (
           <div className="flex items-center gap-2 text-red-400 text-sm">
@@ -88,13 +93,14 @@ const AnnouncementCard = () => {
           announcements.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col gap-1 p-3 bg-neutral-950 rounded-r-lg border-l-4 border-neutral-700 mx-4 my-2"
+              // Removed mx-4 to fit better in scroll container
+              className="flex flex-col gap-1 p-3 bg-[#0f0f0f] rounded-r-lg border-l-4 border-blue-600/70 border border-neutral-800/50 hover:bg-neutral-900 transition-colors"
             >
               <h3 className="font-semibold text-gray-200 text-sm">
                 {item.title}
               </h3>
 
-              <div className="flex items-center gap-4 text-xs text-gray-400 mt-1">
+              <div className="flex items-center gap-4 text-[11px] text-gray-500 mt-1">
                 <div className="flex items-center gap-1">
                   <Calendar size={12} />
                   <span>{formatDate(item.date)}</span>
@@ -107,7 +113,7 @@ const AnnouncementCard = () => {
               </div>
 
               {item.venue && (
-                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
                   <MapPin size={12} />
                   <span>{item.venue}</span>
                 </div>

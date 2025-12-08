@@ -7,7 +7,7 @@ import {
   House,
   User,
   Megaphone,
-  Users
+  Users,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "../nav-user";
@@ -17,7 +17,7 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarFooter,
-  SidebarRail
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -45,7 +45,7 @@ export function AppSidebar(props) {
       { title: "Events", url: "/events", icon: CalendarCheck },
       { title: "Profile", url: "/profile", icon: User },
       { title: "Annoucements", url: "/announcements", icon: Megaphone },
-      { title: "Users", url: "/users", icon: Users },
+      (admin && { title: "Users", url: "/users", icon: Users }),
     ],
   };
 

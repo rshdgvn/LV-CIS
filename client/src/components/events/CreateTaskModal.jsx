@@ -167,7 +167,7 @@ export default function CreateTaskModal({
           <Button
             disabled={loading}
             onClick={handleSubmit}
-            className="bg-blue-700 hover:bg-blue-600"
+            className="bg-blue-600  text-white hover:bg-blue-700"
           >
             {loading ? "Creating..." : "Create Task"}
           </Button>

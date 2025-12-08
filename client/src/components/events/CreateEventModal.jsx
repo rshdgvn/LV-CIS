@@ -11,17 +11,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, X, Loader2, AlertCircle } from "lucide-react";
+import { CalendarPlus, X, Loader2 } from "lucide-react";
 import { DatePicker } from "../DatePicker";
 import { TimePicker } from "../TimePicker";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClub } from "@/contexts/ClubContext";
 
 export default function CreateEventModal({ onSuccess }) {
   const { token } = useAuth();
+  // 2. Get clubs from context
+  const { clubs } = useClub();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({}); // Stores field-specific errors
+  const [errors, setErrors] = useState({});
+
+  // Filter clubs where user has permission (officer/adviser)
+  const managedClubs = clubs.filter((club) =>
+    ["officer", "adviser"].includes(club.pivot?.role)
+  );
 
   const initialFormState = {
     club_id: "",
@@ -55,7 +63,6 @@ export default function CreateEventModal({ onSuccess }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Clear error for this field immediately when user types
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
@@ -69,14 +76,9 @@ export default function CreateEventModal({ onSuccess }) {
   const handleAttachmentAdd = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const isVideo = file.type.startsWith("video/");
     const targetKey = isVideo ? "videos" : "photos";
-
-    setForm((prev) => ({
-      ...prev,
-      [targetKey]: [...prev[targetKey], file],
-    }));
+    setForm((prev) => ({ ...prev, [targetKey]: [...prev[targetKey], file] }));
   };
 
   const removeAttachment = (index, type) => {
@@ -97,36 +99,25 @@ export default function CreateEventModal({ onSuccess }) {
 
     try {
       const formData = new FormData();
-
-      // Append standard fields
       Object.entries(form).forEach(([key, value]) => {
         if (
           key !== "photos" &&
           key !== "videos" &&
           value !== null &&
           value !== undefined &&
-          value !== "" // Don't send empty strings for optional fields if any
+          value !== ""
         ) {
           formData.append(key, value);
         }
       });
-
-      // Append Photos
       form.photos.forEach((file) => formData.append("photos[]", file));
-
-      // Append Videos
       form.videos.forEach((file) => formData.append("videos[]", file));
-
-      // DEBUG: Log what we are sending
-      // for (let pair of formData.entries()) {
-      //   console.log(pair[0] + ', ' + pair[1]);
-      // }
 
       const res = await fetch(`${APP_URL}/events`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: "application/json", // CRITICAL: Forces Laravel to return JSON errors
+          Accept: "application/json",
         },
         body: formData,
       });
@@ -135,10 +126,7 @@ export default function CreateEventModal({ onSuccess }) {
 
       if (!res.ok) {
         if (res.status === 422) {
-          // Validation Error
           setErrors(data.errors);
-
-          // Create a readable error message for the alert
           const errorMessages = Object.values(data.errors).flat().join("\n");
           alert("Validation Failed:\n" + errorMessages);
           throw new Error("Please fix the highlighted errors.");
@@ -146,12 +134,10 @@ export default function CreateEventModal({ onSuccess }) {
         throw new Error(data.message || "Failed to create event");
       }
 
-      // Success
       onSuccess?.(data.event);
       handleOpenChange(false);
     } catch (err) {
       console.error(err);
-      // Only alert if it's NOT a validation error (since we already alerted the specific list above)
       if (err.message !== "Please fix the highlighted errors.") {
         alert(err.message || "Something went wrong.");
       }
@@ -180,20 +166,28 @@ export default function CreateEventModal({ onSuccess }) {
         >
           {/* --- LEFT SECTION --- */}
           <div className="space-y-4">
-            {/* Club ID */}
+            {/* Club Selection (Replaces ID Input) */}
             <div>
               <Label className="text-neutral-400">
-                Club ID <span className="text-red-500">*</span>
+                Select Club <span className="text-red-500">*</span>
               </Label>
-              <Input
+              <select
                 name="club_id"
                 value={form.club_id}
                 onChange={handleChange}
-                placeholder="Enter club ID"
-                className={`bg-neutral-900 border-neutral-800 ${
-                  errors.club_id ? "border-red-500 focus:ring-red-500" : ""
+                className={`w-full bg-neutral-900 border rounded-md p-2 text-sm text-neutral-200 focus:outline-none focus:border-blue-700 ${
+                  errors.club_id ? "border-red-500" : "border-neutral-800"
                 }`}
-              />
+              >
+                <option value="" disabled>
+                  Select a club...
+                </option>
+                {managedClubs.map((club) => (
+                  <option key={club.id} value={club.id}>
+                    {club.name}
+                  </option>
+                ))}
+              </select>
               {errors.club_id && (
                 <span className="text-red-500 text-xs mt-1">
                   {errors.club_id[0]}
@@ -264,7 +258,7 @@ export default function CreateEventModal({ onSuccess }) {
               )}
             </div>
 
-            {/* Cover Page */}
+            {/* Cover Page Logic (Kept same as provided) */}
             <div>
               <Label className="text-neutral-400">Cover Image</Label>
               <label
@@ -311,7 +305,7 @@ export default function CreateEventModal({ onSuccess }) {
               )}
             </div>
 
-            {/* Attachments */}
+            {/* Attachments Logic (Kept same as provided) */}
             <div>
               <Label className="text-neutral-400">Attachments</Label>
               <div className="grid grid-cols-3 gap-3 mt-2">
@@ -473,7 +467,7 @@ export default function CreateEventModal({ onSuccess }) {
               )}
             </div>
 
-            {/* Email */}
+            {/* Contact Email */}
             <div>
               <Label className="text-neutral-400">
                 Contact Email <span className="text-red-500">*</span>

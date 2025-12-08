@@ -193,7 +193,7 @@ const Calendar = () => {
   if (loading) return <SkeletonAttendances />;
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white flex justify-center font-sans p-6">
+    <div className="min-h-screen text-white flex justify-center font-sans p-6">
       <div className="w-full max-w-6xl">
         <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 shadow-2xl p-6">
           {/* HEADER */}
@@ -380,6 +380,7 @@ const Calendar = () => {
                   />
                 </div>
               </div>
+
             </div>
 
             {/* Theme Selector */}

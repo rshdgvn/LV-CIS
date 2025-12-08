@@ -326,7 +326,7 @@ export default function Clubs() {
             </div>
           )}
 
-          <div className="min-h-screen p-6 mt-7 text-white">
+          <div className="min-h-screen p-6 text-white">
             {error ? (
               <p className="text-red-400 text-center">{error}</p>
             ) : (

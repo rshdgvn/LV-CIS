@@ -79,14 +79,9 @@ export default function TaskList() {
           <h3 className="text-white font-semibold">My Tasks</h3>
           <p className="text-xs text-gray-500 mt-1">Assignments & To-Dos</p>
         </div>
-        <button className="text-xs bg-[#262626] text-white px-3 py-1.5 rounded-md hover:bg-[#333] flex items-center gap-1 transition-colors">
-          <Plus className="w-3 h-3" /> Add Task
-        </button>
       </div>
 
-      {/* LIST CONTAINER */}
       <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1 custom-scrollbar min-h-[200px]">
-        {/* LOADING STATE */}
         {loading && (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-500">
             <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
@@ -94,7 +89,6 @@ export default function TaskList() {
           </div>
         )}
 
-        {/* EMPTY STATE */}
         {!loading && tasks.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <p className="text-gray-400 text-sm font-medium">
@@ -104,7 +98,6 @@ export default function TaskList() {
           </div>
         )}
 
-        {/* TASK ITEMS */}
         {!loading &&
           tasks.map((task) => (
             <div
@@ -112,7 +105,6 @@ export default function TaskList() {
               className="group flex items-center justify-between p-3 bg-[#111] border border-[#262626] rounded-lg hover:border-[#444] transition-all cursor-pointer"
             >
               <div className="flex items-center gap-3 overflow-hidden">
-                {/* User/Assignee Avatars */}
                 <div className="flex -space-x-2 shrink-0">
                   {task.assigned_by && task.assigned_by.length > 0 ? (
                     task.assigned_by.slice(0, 3).map((assignee, idx) => (
@@ -135,7 +127,6 @@ export default function TaskList() {
                   )}
                 </div>
 
-                {/* Task Info */}
                 <div className="min-w-0">
                   <h4 className="text-sm font-medium text-white truncate group-hover:text-blue-400 transition-colors">
                     {task.title}
@@ -150,7 +141,6 @@ export default function TaskList() {
                         })}
                       </span>
                     )}
-                    {/* Optional: Show event name if available in your API */}
                     {task.event && (
                       <span className="truncate max-w-[100px] hidden sm:block">
                         • {task.event.title}
@@ -160,7 +150,6 @@ export default function TaskList() {
                 </div>
               </div>
 
-              {/* Status Badge */}
               <div
                 className={`px-2.5 py-1 rounded-full border text-[10px] font-medium flex items-center gap-1.5 ${getStatusColor(
                   task.status

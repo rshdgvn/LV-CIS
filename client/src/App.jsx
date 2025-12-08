@@ -84,7 +84,6 @@ function App() {
                   />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/announcements" element={<Announcements />} />
-                  <Route path="/users" element={<UsersPage />} />
 
                   <Route element={<OfficersRoute />}>
                     <Route
@@ -98,6 +97,7 @@ function App() {
                       path="/admin/dashboard"
                       element={<AdminDashboard />}
                     />
+                    <Route path="/users" element={<UsersPage />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />

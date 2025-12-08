@@ -535,7 +535,7 @@ export default function Profile() {
 
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
             >
               Change Password
             </Button>

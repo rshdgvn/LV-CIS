@@ -14,7 +14,7 @@ import {
   AlertCircle,
   ChevronRight,
   CheckCircle2,
-  History, // Added icon for status
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,14 +65,14 @@ const isPastDate = (dateString) => {
 
 export default function Announcements() {
   const { clubs } = useClub();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // --- FILTERS ---
-  const [categoryFilter, setCategoryFilter] = useState("all"); // Club vs General
-  const [statusFilter, setStatusFilter] = useState("all"); // Upcoming vs Concluded
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -96,8 +96,19 @@ export default function Announcements() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
+
       if (json.status) {
-        setAnnouncements(json.data);
+        const allData = json.data || [];
+
+        // --- FILTERING LOGIC ---
+        // Only show if: Admin OR General OR User belongs to Club
+        const filteredData = allData.filter((item) => {
+          if (user?.role === "admin") return true;
+          if (item.target_type === "general") return true;
+          return clubs.some((c) => Number(c.id) === Number(item.club_id));
+        });
+
+        setAnnouncements(filteredData);
       }
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
@@ -107,8 +118,10 @@ export default function Announcements() {
   };
 
   useEffect(() => {
-    fetchAnnouncements();
-  }, []);
+    if (user && clubs) {
+      fetchAnnouncements();
+    }
+  }, [user, clubs]); // Re-run when clubs or user load
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -234,9 +247,11 @@ export default function Announcements() {
       const isPastA = isPastDate(a.date);
       const isPastB = isPastDate(b.date);
       // Sort: Active first, then Concluded
-      if (isPastA === isPastB) return new Date(b.date) - new Date(a.date); // Date descending
+      if (isPastA === isPastB) return new Date(b.date) - new Date(a.date);
       return isPastA ? 1 : -1;
     });
+
+  const admin = user.role == "admin";
 
   return (
     <div className="px-8 py-6 text-neutral-100 w-full min-h-screen">
@@ -249,15 +264,17 @@ export default function Announcements() {
           <p className="text-neutral-400 mt-1">Manage and view all updates</p>
         </div>
 
-        <Button
-          onClick={() => {
-            resetForm();
-            setIsAddOpen(true);
-          }}
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-        >
-          <Plus size={18} /> Post Announcement
-        </Button>
+        {admin && (
+          <Button
+            onClick={() => {
+              resetForm();
+              setIsAddOpen(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+          >
+            <Plus size={18} /> Post Announcement
+          </Button>
+        )}
       </div>
 
       {/* CONTROLS BAR */}
@@ -331,7 +348,7 @@ export default function Announcements() {
           <div className="flex flex-col items-center justify-center py-20 bg-neutral-900/30 border border-dashed border-neutral-800 rounded-xl">
             <Megaphone className="w-12 h-12 mb-3 text-neutral-600" />
             <p className="text-neutral-400 font-medium">
-              No announcements found
+              No announcements found for your clubs.
             </p>
           </div>
         ) : (
@@ -431,7 +448,8 @@ export default function Announcements() {
                   </div>
                 </div>
 
-                {/* 3. Actions */}
+                {/* 3. Actions - Only show if user has permission (Admin or maybe Officer of that club) */}
+                {/* For now, simplified to allow actions, but backend should protect delete/update */}
                 <div className="flex items-center gap-2 sm:self-center self-end mt-2 sm:mt-0">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -450,7 +468,7 @@ export default function Announcements() {
                         onClick={() => openEditModal(item)}
                         className="text-neutral-300 focus:bg-neutral-800 focus:text-white cursor-pointer"
                       >
-                        <Edit className="mr-2 h-4 w-4" /> Edit Details
+                        <Edit className="mr-2 h-4 w-4" /> Edit Post
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleDelete(item.id)}

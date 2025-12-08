@@ -59,12 +59,8 @@ function AdminDashboard() {
         </div>
       </div>
 
-
-      <div className="flex flex-col lg:flex-row gap-5 mb-8 w-full h-auto lg:h-[520px]">
-        <div
-          className="flex-1 cursor-pointer overflow-hidden rounded-lg h-[500px] lg:h-auto"
-          onClick={() => nav("/calendar")}
-        >
+      <div className="flex flex-col lg:flex-row gap-5 mb-8 w-full h-auto lg:h-[875px]">
+        <div className="flex-1 cursor-pointer overflow-hidden rounded-lg h-[100px] lg:h-auto">
           <Calendar />
         </div>
 

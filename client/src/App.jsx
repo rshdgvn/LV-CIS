@@ -37,6 +37,7 @@ import PrivacyPolicy from "./pages/Privacy";
 import TermsOfService from "./pages/Terms";
 import MemberAttendances from "./components/events/MemberAttendances";
 import Announcements from "./pages/system/Announcements";
+import CalendarPage from "./pages/system/CalendarPage";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ function App() {
                 <Route path="/events/:id" element={<EventDetails />} />
                 <Route path="/events/:id/tasks" element={<EventTasksTable />} />
                 <Route path="/attendance/:id" element={<AttendanceDetails />} />
+                <Route path="/calendar" element={<CalendarPage />} />
                 <Route
                   path="/member-attendances/:userId/:clubId"
                   element={<MemberAttendances />}

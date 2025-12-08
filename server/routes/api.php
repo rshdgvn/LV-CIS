@@ -111,6 +111,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/calendar-events', [CalendarEventController::class, 'index']);
     Route::post('/calendar-events', [CalendarEventController::class, 'store']);
+    Route::get('/calendar-events/{id}', [CalendarEventController::class, 'show']);
+    Route::put('/calendar-events/{id}', [CalendarEventController::class, 'update']); 
+    Route::delete('/calendar-events/{id}', [CalendarEventController::class, 'destroy']);
 
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index']);
     Route::get('/admin/active-clubs-chart', [AdminDashboardController::class, 'fetchActiveClubMembers']);

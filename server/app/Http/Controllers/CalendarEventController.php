@@ -8,10 +8,9 @@ use Carbon\Carbon;
 
 class CalendarEventController extends Controller
 {
+    // GET all events (filtered by month)
     public function index(Request $request)
     {
-        // Fetch events only for the requested month to improve performance
-        // Expecting ?month=2025-12
         $query = CalendarEvent::query();
 
         if ($request->has('month')) {
@@ -25,6 +24,7 @@ class CalendarEventController extends Controller
         return response()->json($query->get());
     }
 
+    // CREATE a new event
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -37,5 +37,38 @@ class CalendarEventController extends Controller
         $event = CalendarEvent::create($validated);
 
         return response()->json($event, 201);
+    }
+
+    // GET a single event
+    public function show($id)
+    {
+        $event = CalendarEvent::findOrFail($id);
+        return response()->json($event);
+    }
+
+    // UPDATE an existing event
+    public function update(Request $request, $id)
+    {
+        $event = CalendarEvent::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'start_time' => 'sometimes|required|date',
+            'end_time' => 'nullable|date|after:start_time',
+            'theme' => 'nullable|string|in:blue,red,yellow,purple'
+        ]);
+
+        $event->update($validated);
+
+        return response()->json($event);
+    }
+
+    // DELETE an event
+    public function destroy($id)
+    {
+        $event = CalendarEvent::findOrFail($id);
+        $event->delete();
+
+        return response()->json(['message' => 'Event deleted successfully.']);
     }
 }

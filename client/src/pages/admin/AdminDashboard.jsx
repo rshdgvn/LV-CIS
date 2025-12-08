@@ -1,12 +1,41 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { Home } from "lucide-react";
 import DashboardCards from "./DashboardCards";
 import ActiveClubsChart from "./ActiveClubsChart";
 import AttendanceOverviewChart from "./AttendanceOverviewChart";
-import { SmallCalendar } from "@/components/SmallCalendar";
 import AnnouncementCard from "@/components/AnnouncementCard";
+import Calendar from "../system/Calendar";
+import { APP_URL } from "@/lib/config";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function AdminDashboard() {
+  const { token } = useAuth();
+  const [cards, setCards] = useState([]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await fetch(`${APP_URL}/admin/dashboard`, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      console.log(data);
+      setCards(data.cards);
+    } catch (err) {
+      console.error("Dashboard error:", err);
+    }
+  };
+
+  const nav = useNavigate();
+
   return (
     <>
       <div className="flex flex-col gap-2 my-8 mx-4">
@@ -21,7 +50,7 @@ function AdminDashboard() {
         </p>
       </div>
 
-      <DashboardCards />
+      <DashboardCards cards={cards} />
 
       <div className="flex flex-col lg:flex-row gap-5 mb-5 w-full">
         <div className="flex-1">
@@ -32,12 +61,12 @@ function AdminDashboard() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-5 mb-8 w-full h-full min-h-[400px]">
-        <div className="flex-1 rounded-xl p-4 border border-gray-800 bg-neutral-900">
-          <SmallCalendar className="w-full h-full" />
+      <div className="flex flex-col lg:flex-row gap-5 mb-8 w-full h-full min-h-96">
+        <div className="flex-1 cursor-pointer" onClick={() => nav("/calendar")}>
+          <Calendar />
         </div>
 
-        <div className="w-full lg:w-1/ bg-neutral-900">
+        <div className="w-lg bg-neutral-900">
           <AnnouncementCard />
         </div>
       </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MapPin, Calendar, Clock, AlertCircle } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export function formatDate(dateString) {
   const date = new Date(dateString);
@@ -28,6 +29,8 @@ const AnnouncementCard = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const nav = useNavigate();
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
@@ -60,10 +63,10 @@ const AnnouncementCard = () => {
   }, []);
 
   return (
-    <div className="w-full h-full rounded-xl p-6 shadow-sm border border-gray-800">
+    <div className="w-full h-full p-6 rounded-xl shadow-sm border border-gray-800">
       <div className="flex flex-row justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-white">Announcement</h2>
-        <button className="text-xs font-medium text-white bg-neutral-950 hover:bg-gray-600 px-3 py-1 rounded-lg transition-colors">
+        <button className="text-xs font-medium text-white bg-neutral-950 hover:bg-gray-600 px-3 py-1 rounded-lg transition-colors cursor-pointer" onClick={() => nav('/announcements')}>
           View all
         </button>
       </div>

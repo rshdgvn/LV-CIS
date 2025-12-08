@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSessionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
@@ -106,13 +108,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/announcements/{id}', [AnnouncementController::class, 'show']);
     Route::patch('/announcements/{id}', [AnnouncementController::class, 'update']);
     Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy']);
+
+    Route::get('/calendar-events', [CalendarEventController::class, 'index']);
+    Route::post('/calendar-events', [CalendarEventController::class, 'store']);
+
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index']);
+    Route::get('/admin/active-clubs-chart', [AdminDashboardController::class, 'fetchActiveClubMembers']);
+    Route::get('/admin/attendance-chart', [AdminDashboardController::class, 'fetchAttendanceChart']);
 });
 
 Route::get('/gmail/oauth/init', function () {
     $client = new Client();
     $client->setClientId(config('gmail.client_id'));
     $client->setClientSecret(config('gmail.client_secret'));
-$client->setRedirectUri(config('gmail.redirect_for_gmail'));
+    $client->setRedirectUri(config('gmail.redirect_for_gmail'));
     $client->setAccessType('offline');
     $client->setPrompt('consent');
     $client->addScope(\Google\Service\Gmail::GMAIL_SEND);

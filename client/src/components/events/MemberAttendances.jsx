@@ -143,10 +143,10 @@ export default function MemberAttendances() {
       <div className="flex flex-col lg:flex-row gap-6 mx-4 lg:mx-10">
         <div className="flex flex-col flex-1">
           <div className="flex justify-end items-center gap-3">
-            <Button className="bg-neutral-900 border border-neutral-800 text-gray-200 hover:bg-neutral-800 rounded-full text-sm flex items-center gap-2 px-4 py-1.5">
-              <Filter className="w-4 h-4" />
-              Filter
-            </Button>
+              <Button className="bg-neutral-900 border border-neutral-800 text-gray-200 hover:bg-neutral-800 rounded-full text-sm flex items-center gap-2 px-4 py-1.5">
+                <Filter className="w-4 h-4" />
+                Filter
+              </Button>
 
             {/* <div className="bg-neutral-900 border border-neutral-800 rounded-full px-4 py-2 text-gray-300 text-sm flex items-center gap-2">
               <Calendar size={14} />

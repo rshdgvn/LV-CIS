@@ -2,6 +2,7 @@ import React from "react";
 import { Loader2, User } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
 
 export default function YourClubsList() {
   const { clubs, loading } = useClub();
@@ -22,6 +23,8 @@ export default function YourClubsList() {
       .join("")
       .toUpperCase();
   };
+
+  const nav = useNavigate();
 
   return (
     <div className="bg-[#1A1A1A] rounded-xl border border-[#262626] p-6 h-full flex flex-col">
@@ -67,6 +70,7 @@ export default function YourClubsList() {
               <div
                 key={club.id}
                 className="bg-[#111] border border-[#262626] rounded-lg p-3 flex items-center justify-between group hover:border-[#444] transition-colors cursor-pointer"
+                onClick={() => nav(`/club/${club.id}`)}
               >
                 <div className="flex items-center gap-3">
                   {/* CLUB LOGO */}

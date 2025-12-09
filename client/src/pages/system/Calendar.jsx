@@ -195,8 +195,6 @@ const Calendar = () => {
 
   const nav = useNavigate();
 
-  if (loading) return <SkeletonAttendances />;
-
   return (
     <div className="min-h-screen text-white flex justify-center font-sans">
       <div className="w-full max-w-6xl">

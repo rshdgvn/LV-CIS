@@ -324,11 +324,6 @@ export default function EventTasksTable() {
           />
         </div>
 
-        <Button className="bg-[#121212] border border-neutral-800 hover:bg-neutral-800 text-gray-300 text-sm rounded-full px-5 py-2 flex items-center gap-2">
-          <Filter className="w-4 h-4" />
-          Filter
-        </Button>
-
         <div className="ml-auto">
           {hasPermission ? (
             <Button

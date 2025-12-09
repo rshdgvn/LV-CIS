@@ -11,6 +11,7 @@ import YourClubsList from "@/components/YourClubsList";
 import TaskList from "@/components/TaskList";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import Calendar from "./system/Calendar";
+import { Home } from "lucide-react";
 
 export default function DashboardPage() {
   const { token, user } = useAuth();
@@ -45,44 +46,48 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen p-8 font-sans text-white">
-      <div className="mb-8 flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          Dashboard
-        </h1>
-        <p className="text-gray-400 text-sm">
+      {/* Header */}
+      <div className="flex flex-col gap-2 mb-8 mx-4">
+        <div className="flex flex-row items-center gap-5">
+          <div className="shrink-0 p-2 bg-blue-900/30 rounded-lg">
+            <Home className="w-9 h-9 text-blue-400" />
+          </div>
+          <h1 className="text-4xl font-semibold">Dashboard</h1>
+        </div>
+        <p className="text-gray-400 my-2">
           Welcome back, {user.first_name}! Here's an overview of your club
           activities.
         </p>
       </div>
 
-      <div className="max-w-[1600px] mx-auto space-y-6">
+      <div className="max-w-[1600px] mx-auto space-y-8">
         {/* Top Cards */}
-        <DashboardCards cards={cards} />
+        {/* <DashboardCards cards={cards} /> */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto">
-          {/* Upcoming Events - Takes up 2 columns */}
-          <div className="lg:col-span-2 h-full min-h-[400px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="h-[400px]">
+            <YourClubsList />
+          </div>
+          <div className="h-[400px]">
+            <TaskList />
+          </div>
+        </div>
+
+        {/* Row 1: Events & Applicants */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Upcoming Events: Fixed Height to force scroll */}
+          <div className="lg:col-span-2 h-[500px]">
             <UpcomingEventsList />
           </div>
 
-          {/* Pending Applicants - Takes up 1 column */}
-          <div className="lg:col-span-1 h-full min-h-[400px]">
+          {/* Pending Applicants: Fixed Height */}
+          <div className="lg:col-span-1 h-[500px]">
             <PendingApplicantsList />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-auto">
-          <div className="h-full min-h-[350px]">
-            <YourClubsList />
-          </div>
-          <div className="h-full min-h-[350px]">
-            <TaskList />
-          </div>
-        </div>
         <div className="flex flex-col lg:flex-row gap-5 mb-8 w-full h-auto lg:h-[875px]">
-          <div
-            className="flex-1 cursor-pointer overflow-hidden rounded-lg h-[100px] lg:h-auto"
-          >
+          <div className="flex-1 cursor-pointer overflow-hidden rounded-lg h-[100px] lg:h-auto">
             <Calendar />
           </div>
 

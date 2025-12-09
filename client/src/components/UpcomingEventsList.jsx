@@ -25,7 +25,7 @@ export default function UpcomingEventsList() {
         });
         if (res.ok) {
           const json = await res.json();
-          console.log(json)
+          console.log(json);
           setEvents(json.data);
         }
       } catch (err) {
@@ -40,7 +40,7 @@ export default function UpcomingEventsList() {
 
   const formatDateParts = (dateString) => {
     if (!dateString) return { month: "---", day: "--" };
-    const parts = dateString.split(" "); 
+    const parts = dateString.split(" ");
     return {
       month: parts[0] || "",
       day: parts[1] ? parts[1].replace(",", "") : "",
@@ -75,7 +75,10 @@ export default function UpcomingEventsList() {
             Events from clubs you have joined
           </p>
         </div>
-        <p onClick={() => nav('/events')} className="text-xs bg-[#262626] hover:bg-[#333] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1 group cursor-pointer" >
+        <p
+          onClick={() => nav("/events")}
+          className="text-xs bg-[#262626] hover:bg-[#333] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1 group cursor-pointer"
+        >
           View All{" "}
           <ArrowRight
             size={12}
@@ -105,7 +108,8 @@ export default function UpcomingEventsList() {
             return (
               <div
                 key={event.id}
-                className="group relative flex items-center justify-between p-3 bg-[#111] hover:bg-[#161616] rounded-xl border border-[#262626] hover:border-[#444] transition-all duration-200"
+                className="group relative flex items-center justify-between p-3 bg-[#111] hover:bg-[#161616] rounded-xl border cursor-pointer border-[#262626] hover:border-[#444] transition-all duration-200"
+                onClick={() => nav(`/events/${event.id}`)}
               >
                 <div className="flex items-center gap-4 overflow-hidden">
                   {/* Date Box */}

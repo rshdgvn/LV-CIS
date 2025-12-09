@@ -20,8 +20,10 @@ import {
 import { Loader2, Eye, EyeOff, Upload, User as UserIcon } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/providers/ToastProvider"; // 1. Import useToast
 
 export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
+  const { addToast } = useToast(); // 2. Get addToast
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -80,16 +82,12 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
     setErrors({});
 
     const formData = new FormData();
-    // Required for Laravel to process file upload via POST as PATCH
     formData.append("_method", "PATCH");
 
     Object.keys(form).forEach((key) => {
-      // Skip password if empty
       if ((key === "password" || key === "password_confirmation") && !form[key])
         return;
-      // Skip avatar if null (no change)
       if (key === "avatar" && !form[key]) return;
-      // Skip student fields if admin
       if ((key === "course" || key === "year_level") && form.role !== "user")
         return;
 
@@ -98,7 +96,6 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
 
     try {
       const token = localStorage.getItem("token");
-      // Note: Use POST method because of file upload, but _method=PATCH handles it in Laravel
       const res = await fetch(`${APP_URL}/users/${user.id}`, {
         method: "POST",
         headers: {
@@ -113,19 +110,25 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
       if (!res.ok) {
         if (res.status === 422 && responseData.errors) {
           setErrors(responseData.errors);
+          // 3. Error Toast (Validation)
+          addToast("Please check the fields for errors.", "error");
         } else {
-          setErrors({
-            general: responseData.message || "Failed to update user.",
-          });
+          const msg = responseData.message || "Failed to update user.";
+          setErrors({ general: msg });
+          // 3. Error Toast (General)
+          addToast(msg, "error");
         }
         return;
       }
 
+      // 4. Success Toast
+      addToast("User updated successfully!", "success");
       setOpen(false);
       onSuccess?.();
     } catch (err) {
       setErrors({ general: "An unexpected error occurred." });
       console.error(err);
+      addToast("An unexpected error occurred.", "error");
     } finally {
       setLoading(false);
     }

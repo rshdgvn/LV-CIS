@@ -16,13 +16,22 @@ import {
   SelectTrigger,
   SelectValue,
   SelectGroup,
-  SelectLabel,
 } from "@/components/ui/select";
-import { Loader2, Eye, EyeOff, Upload, User as UserIcon } from "lucide-react";
+import {
+  Loader2,
+  Eye,
+  EyeOff,
+  Upload,
+  User as UserIcon,
+  ExternalLink,
+  Trash2,
+} from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/providers/ToastProvider"; // 1. Import useToast
 
 export default function AddUserModal({ open, setOpen, onSuccess }) {
+  const { addToast } = useToast(); // 2. Get addToast
   const initialForm = {
     first_name: "",
     last_name: "",
@@ -32,7 +41,7 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
     role: "user",
     course: "",
     year_level: "",
-    avatar: null, // File object
+    avatar: null,
   };
 
   const [form, setForm] = useState(initialForm);
@@ -57,16 +66,31 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
     }
   };
 
+  const handleRemoveAvatar = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setForm((prev) => ({ ...prev, avatar: null }));
+    setAvatarPreview(null);
+    const input = document.getElementById("avatar-upload");
+    if (input) input.value = "";
+  };
+
+  const handlePreviewAvatar = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (avatarPreview) {
+      window.open(avatarPreview, "_blank");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
 
-    // Use FormData for file upload
     const formData = new FormData();
     Object.keys(form).forEach((key) => {
       if (form[key] !== null && form[key] !== "") {
-        // Handle logic for conditional fields
         if (
           (key === "course" || key === "year_level") &&
           form.role !== "user"
@@ -84,7 +108,6 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
-          // Content-Type header not needed for FormData, browser sets it automatically with boundary
         },
         body: formData,
       });
@@ -94,14 +117,19 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
       if (!res.ok) {
         if (res.status === 422 && responseData.errors) {
           setErrors(responseData.errors);
+          // 3. Error Toast (Validation)
+          addToast("Please fix the errors in the form.", "error");
         } else {
-          setErrors({
-            general: responseData.message || "Failed to create user.",
-          });
+          const msg = responseData.message || "Failed to create user.";
+          setErrors({ general: msg });
+          // 3. Error Toast (General)
+          addToast(msg, "error");
         }
         return;
       }
 
+      // 4. Success Toast
+      addToast("User created successfully!", "success");
       setOpen(false);
       setForm(initialForm);
       setAvatarPreview(null);
@@ -109,6 +137,7 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
     } catch (err) {
       setErrors({ general: "An unexpected error occurred." });
       console.error(err);
+      addToast("An unexpected error occurred.", "error");
     } finally {
       setLoading(false);
     }
@@ -122,21 +151,44 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          {/* Avatar Upload */}
           <div className="flex justify-center mb-2">
-            <div className="relative group cursor-pointer">
+            <div className="relative group w-24 h-24">
               <Avatar className="w-24 h-24 border-2 border-neutral-700">
-                <AvatarImage src={avatarPreview} />
+                <AvatarImage src={avatarPreview} className="object-cover" />
                 <AvatarFallback className="bg-neutral-800">
                   <UserIcon className="w-10 h-10 text-neutral-500" />
                 </AvatarFallback>
               </Avatar>
-              <label
-                htmlFor="avatar-upload"
-                className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 rounded-full transition-opacity"
-              >
-                <Upload className="w-6 h-6 text-white" />
-              </label>
+
+              <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                {avatarPreview ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handlePreviewAvatar}
+                      className="p-1.5 bg-neutral-800/80 rounded-full hover:bg-blue-600 hover:text-white text-neutral-300 transition-colors"
+                      title="Preview"
+                    >
+                      <ExternalLink size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      className="p-1.5 bg-neutral-800/80 rounded-full hover:bg-red-600 hover:text-white text-neutral-300 transition-colors"
+                      title="Remove"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </>
+                ) : (
+                  <label
+                    htmlFor="avatar-upload"
+                    className="cursor-pointer p-2 rounded-full hover:bg-neutral-700 transition-colors"
+                  >
+                    <Upload className="w-6 h-6 text-white" />
+                  </label>
+                )}
+              </div>
               <input
                 id="avatar-upload"
                 type="file"
@@ -144,6 +196,15 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
                 className="hidden"
                 onChange={handleFileChange}
               />
+              {avatarPreview && (
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute bottom-0 right-0 p-1.5 bg-blue-600 rounded-full cursor-pointer hover:bg-blue-700 border-2 border-neutral-900 shadow-sm z-10"
+                  title="Change Image"
+                >
+                  <Upload size={12} className="text-white" />
+                </label>
+              )}
             </div>
           </div>
 

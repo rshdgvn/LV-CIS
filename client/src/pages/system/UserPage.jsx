@@ -11,17 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  MoreVertical,
-  Users,
-  Loader2,
-} from "lucide-react";
-import { APP_URL } from "@/lib/config"; // Assuming APP_URL is correctly defined
-import { useNavigate } from "react-router-dom";
+import { Search, Plus, Edit, Trash2, MoreVertical, Users } from "lucide-react";
+import { APP_URL } from "@/lib/config";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -36,19 +27,21 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { SkeletonAttendances } from "@/components/skeletons/SkeletonAttendances"; // Reusing your skeleton component
-import AddUserModal from "@/components/users/AddUserModal"; // You'll need to create this
-import UpdateUserModal from "@/components/users/UpdateUserModal"; // You'll need to create this
-import { Input } from "@/components/ui/input"; // Assuming you have this component
-import { Badge } from "@/components/ui/badge"; // Assuming you have this component
+import { SkeletonAttendances } from "@/components/skeletons/SkeletonAttendances";
+import AddUserModal from "@/components/users/AddUserModal";
+import UpdateUserModal from "@/components/users/UpdateUserModal";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/providers/ToastProvider";
+import { AlertDialogTemplate } from "@/components/AlertDialogTemplate"; // 1. Import Alert Dialog
 
-// Utility function to format role for display (optional)
 const formatRole = (role) => {
   if (!role) return "N/A";
   return role.charAt(0).toUpperCase() + role.slice(1);
 };
 
 export default function UsersPage() {
+  const { addToast } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -78,7 +71,7 @@ export default function UsersPage() {
       setUsers(data || []);
     } catch (err) {
       console.error("Failed to fetch users:", err);
-      // Optional: Show a toast/alert for the error
+      addToast("Failed to load users. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -105,12 +98,11 @@ export default function UsersPage() {
   );
 
   useEffect(() => {
-    setCurrentPage(1); // Reset page on search or data change
+    setCurrentPage(1);
   }, [search, users]);
 
+  // 2. Updated handleDelete (Removed window.confirm)
   const handleDelete = async (userId) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
-
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${APP_URL}/users/${userId}`, {
@@ -120,16 +112,15 @@ export default function UsersPage() {
 
       if (!res.ok) throw new Error(res.status);
 
-      // Optimistically remove the user or refetch the list
-      // For simplicity and safety, we'll refetch
+      addToast("User deleted successfully.", "success");
       fetchUsers();
     } catch (err) {
       console.error("Failed to delete user:", err);
-      alert("Failed to delete user");
+      addToast("Failed to delete user.", "error");
     }
   };
 
-  if (loading) return <SkeletonAttendances />; // Reusing your skeleton
+  if (loading) return <SkeletonAttendances />;
 
   return (
     <div className="px-8 py-6 text-neutral-100 w-full flex flex-col gap-6">
@@ -140,7 +131,6 @@ export default function UsersPage() {
 
       <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between">
-          {/* Search Input */}
           <div className="relative w-full max-w-[350px]">
             <Search className="w-5 h-5 text-neutral-500 absolute left-4 top-1/2 transform -translate-y-1/2" />
             <Input
@@ -151,7 +141,6 @@ export default function UsersPage() {
             />
           </div>
 
-          {/* Add User Button */}
           <Button
             onClick={() => setAddModalOpen(true)}
             className="bg-blue-600 border border-blue-600 hover:bg-blue-700 text-white rounded-lg px-5 py-2 flex items-center gap-2 cursor-pointer transition-colors duration-200"
@@ -160,7 +149,6 @@ export default function UsersPage() {
           </Button>
         </div>
 
-        {/* Users Table */}
         <Card className="border border-neutral-800 rounded-2xl p-0 shadow-lg">
           <Table className="bg-neutral-900 rounded-2xl w-full">
             <TableHeader className="bg-neutral-800">
@@ -239,12 +227,19 @@ export default function UsersPage() {
                             <Edit size={14} /> Edit
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(user.id)}
-                            className="cursor-pointer text-red-400 focus:text-red-500 flex items-center gap-2"
-                          >
-                            <Trash2 size={14} /> Delete
-                          </DropdownMenuItem>
+                          {/* 3. Replaced DropdownMenuItem with AlertDialogTemplate */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogTemplate
+                              title="Delete User?"
+                              description={`Are you sure you want to delete ${user.first_name} ${user.last_name}? This action cannot be undone.`}
+                              onConfirm={() => handleDelete(user.id)}
+                              button={
+                                <div className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-neutral-800 text-red-400 focus:bg-neutral-800 focus:text-red-500 w-full">
+                                  <Trash2 size={14} className="mr-2" /> Delete
+                                </div>
+                              }
+                            />
+                          </div>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -264,12 +259,10 @@ export default function UsersPage() {
           </Table>
         </Card>
 
-        {/* Pagination UI */}
         {totalPages > 1 && (
           <div className="flex justify-center mt-4">
             <Pagination>
               <PaginationContent>
-                {/* Previous */}
                 <PaginationItem>
                   <PaginationPrevious
                     href="#"
@@ -285,7 +278,6 @@ export default function UsersPage() {
                   />
                 </PaginationItem>
 
-                {/* Page Numbers */}
                 {Array.from({ length: totalPages }).map((_, index) => {
                   const pageNum = index + 1;
 
@@ -310,7 +302,6 @@ export default function UsersPage() {
                   );
                 })}
 
-                {/* Next */}
                 <PaginationItem>
                   <PaginationNext
                     href="#"

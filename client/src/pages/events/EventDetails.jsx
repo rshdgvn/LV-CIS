@@ -8,23 +8,21 @@ import {
   ArrowLeft,
   UserRound,
   ClipboardCheck,
+  Hourglass,
+  Globe,
 } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
 import { getTaskStatusColor } from "@/utils/getTaskStatusColor";
 import UpdateEventModal from "@/components/events/UpdateEventModal";
-import { Button } from "@/components/ui/button";
 import { SkeletonEventDetails } from "@/components/skeletons/SkeletonEventDetails";
 import { formatDate } from "@/utils/formatDate";
+import { Label } from "@/components/ui/label";
+import { formatTaskStatus } from "@/utils/formatTaskStatus";
+import { usePermissions } from "@/hooks/usePermissions";
 
 function EventDetails() {
   const { id } = useParams();
@@ -33,6 +31,7 @@ function EventDetails() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { canManageClub } = usePermissions();
   const nav = useNavigate();
 
   // Fetch event details
@@ -93,7 +92,7 @@ function EventDetails() {
 
   const detail = event.detail || {};
   const banner = event.cover_image;
-
+  const isAllow = canManageClub(event?.club_id);
   return (
     <div className="relative min-h-screen bg-neutral-950 text-white">
       <div
@@ -114,63 +113,85 @@ function EventDetails() {
       <div className="relative z-10 pt-72 pb-20 px-6 max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
-            <div className="flex flex-row justify-between mb-3">
-              <h1 className="text-3xl font-semibold mb-5 mx-5">
-                {event.title}
-              </h1>
+            {/* Title + Edit */}
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-semibold">{event.title}</h1>
               <UpdateEventModal event={event} onSuccess={fetchEvent} />
             </div>
 
-            <div className="flex flex-col gap-4 text-gray-300 text-sm mx-5">
-              <div className="flex flex-row justify-between">
-                <div className="flex-col items-center">
-                  <div className="flex gap-2 mb-3">
-                    <CalendarDays className="text-red-400 w-5 h-5" />
-                    <span className="text-gray-400">Date</span>
-                  </div>
-                  <span className="block">
-                    {formatDate(detail.event_date)}
-                  </span>
+            {/* Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-200 text-sm">
+              {/* Date */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <CalendarDays className="text-blue-500 w-6 h-6" />
+                  <span className="text-gray-400 font-medium">Date</span>
                 </div>
-                <div className="flex-col">
-                  <div className="flex gap-2 mb-3 text-start">
-                    <Clock className="text-red-400 w-5 h-5" />
-                    <span className="text-gray-400">Time</span>
-                  </div>
-                  <span>{detail.event_time}</span>
-                </div>
+                <span className="block font-semibold">
+                  {formatDate(detail.event_date)}
+                </span>
               </div>
 
-              <div className="flex-col items-center">
-                <div className="flex gap-2 mb-3">
-                  <MapPin className="text-red-400 w-5 h-5" />
-                  <span className="text-gray-400">Address</span>
+              {/* Mode */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Globe className="text-purple-400 w-6 h-6" />
+                  <span className="text-gray-400 font-medium">Mode</span>
                 </div>
-                <span>{detail.venue}</span>
+                <span className="block font-semibold">
+                  {detail.event_mode === "face_to_face"
+                    ? "In-Person"
+                    : "Online"}
+                </span>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3 mt-4 cursor-pointer mx-5 mt-7">
-              <Share2 className="text-gray-400 w-5 h-5" />
-              <span className="text-sm text-gray-400">Share with friends</span>
+              {/* Address */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <MapPin className="text-red-400 w-6 h-6" />
+                  <span className="text-gray-400 font-medium">Address</span>
+                </div>
+                <span className="block font-semibold">{detail.venue}</span>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Hourglass className="text-green-400 w-6 h-6" />
+                  <span className="text-gray-400 font-medium">Duration</span>
+                </div>
+                <span className="block font-semibold">
+                  {detail.duration || "N/A"}
+                </span>
+              </div>
+
+              {/* Time */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="text-orange-400 w-6 h-6" />
+                  <span className="text-gray-400 font-medium">Time</span>
+                </div>
+                <span className="block font-semibold">{detail.event_time}</span>
+              </div>
             </div>
           </div>
 
           <div className="bg-neutral-900/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-neutral-800">
             <div className="flex justify-between">
               <div className="flex gap-2 mb-3">
-                <ClipboardCheck className="h-7 w-7 text-red-400" />
+                <ClipboardCheck className="h-7 w-7 text-green-400" />
                 <h2 className="text-lg font-semibold mb-4 text-gray-400">
                   Tasks
                 </h2>
               </div>
-
-              <p
-                className="flex justify-center text-white cursor-pointer hover:underline"
-                onClick={() => nav(`/events/${id}/tasks`)}
-              >
-                View All Tasks
-              </p>
+              {isAllow && (
+                <p
+                  className="flex justify-center text-white cursor-pointer hover:underline"
+                  onClick={() => nav(`/events/${id}/tasks`)}
+                >
+                  View All Tasks
+                </p>
+              )}
             </div>
             {tasks?.length > 0 ? (
               <ul className="space-y-3">
@@ -217,24 +238,18 @@ function EventDetails() {
                         handleStatusChange(task.id, value)
                       }
                     >
-                      <SelectTrigger
+                      <Label
                         className={`bg-blue-700
                           h-7! w-24 rounded-lg ${
-                            task.status == "completed" ? "text-[10px]" : "text-xs"
+                            task.status == "completed" ? "text-sm" : "text-md"
                           } font-medium 
                           flex items-center justify-between px-2
                           text-white ${getTaskStatusColor(task.status)}
                           border-none shadow-sm
                         `}
                       >
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-
-                      <SelectContent className="text-xs">
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="in_progress">Ongoing</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
+                        {formatTaskStatus(task.status)}
+                      </Label>
                     </Select>
                   </li>
                 ))}
@@ -257,7 +272,6 @@ function EventDetails() {
 
               {event.purpose && (
                 <>
-                  <h3 className="text-xl font-semibold my-3">Purpose</h3>
                   <p className="text-gray-300 leading-relaxed">
                     {event.purpose}
                   </p>

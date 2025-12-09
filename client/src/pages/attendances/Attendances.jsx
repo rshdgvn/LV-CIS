@@ -169,7 +169,11 @@ export default function Attendances() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error(res.status);
+      if (!res.ok) {
+        const errorData = await res.json();
+        addToast(errorData.message, "error");
+        return;
+      }
 
       addToast("Session deleted successfully", "success");
       fetchSessions();

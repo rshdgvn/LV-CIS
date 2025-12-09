@@ -323,13 +323,43 @@ class TaskController extends Controller
     /**
      * Update only the status of a task
      */
+
+
     public function updateTaskStatus(Request $request, $id)
     {
-        $task = EventTask::find($id);
+        // 1. Fetch task with event to identify the Club
+        $task = EventTask::with('event')->find($id);
 
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+
+        $user = $request->user();
+
+        // --- AUTHORIZATION LOGIC ---
+
+        $isAdmin = $user->role === 'admin';
+
+        $membership = ClubMembership::where('user_id', $user->id)
+            ->where('club_id', $task->event->club_id)
+            ->where('status', 'approved')
+            ->first();
+
+        $isOfficer = $membership && in_array($membership->role, ['officer', 'adviser']);
+
+        $isAssigned = false;
+        if ($membership) {
+            $isAssigned = EventTaskAssignment::where('event_task_id', $task->id)
+                ->where('club_membership_id', $membership->id)
+                ->exists();
+        }
+
+        if (!$isAdmin && !$isOfficer && !$isAssigned) {
+            return response()->json([
+                'message' => 'Unauthorized. You must be an Admin, Officer, or the Assigned Member to update this.'
+            ], 403);
+        }
+
 
         $request->validate([
             'status' => 'required|in:pending,in_progress,completed',
@@ -403,7 +433,7 @@ class TaskController extends Controller
                     'id'    => $task->event->id,
                     'title' => $task->event->title
                 ] : null,
-                'assigned_by' => $assignedUsers, 
+                'assigned_by' => $assignedUsers,
             ];
         });
 

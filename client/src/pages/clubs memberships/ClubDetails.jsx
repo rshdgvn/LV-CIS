@@ -324,7 +324,7 @@ export default function ClubDetails() {
               </div>
 
               {/* Scrollable Container for Gallery */}
-              <div className="h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+              <div className="h-60 overflow-y-auto pr-1 custom-scrollbar">
                 {gallery.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-2 opacity-60">
                     <ImageIcon className="w-10 h-10 stroke-[1.5]" />

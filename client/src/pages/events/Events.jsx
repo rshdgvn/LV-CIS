@@ -2,27 +2,37 @@ import { useEffect, useState } from "react";
 import NProgress from "nprogress";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  CalendarCheck,
-  FilterIcon,
-  ChevronDown,
-  SquarePlus,
-} from "lucide-react";
+import { CalendarCheck, FilterIcon, ChevronDown } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import { SkeletonEventPage } from "@/components/skeletons/SkeletonEventPage";
 import { useNavigate } from "react-router-dom";
 import CreateEventModal from "@/components/events/CreateEventModal";
+import UpdateEventModal from "@/components/events/UpdateEventModal"; // Missing import added
+import { useToast } from "@/providers/ToastProvider";
 
 function Events() {
   const { token, user, isAdmin } = useAuth();
+  const { addToast } = useToast();
+  const nav = useNavigate();
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // --- 1. Initialize Filters from Session Storage ---
+  const [activeFilter, setActiveFilter] = useState(() => {
+    return sessionStorage.getItem("events_active_filter") || "all";
+  });
+
+  const [categoryFilter, setCategoryFilter] = useState(() => {
+    return sessionStorage.getItem("events_category_filter") || "all";
+  });
+
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
 
-  const nav = useNavigate();
+  // State for Editing
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const filterOptions = [
     { label: "All Events", value: "all" },
@@ -36,9 +46,15 @@ function Events() {
     { label: "Other Clubs", value: "otherclub" },
   ];
 
-  const handleFilterChange = (filter) => setActiveFilter(filter);
+  // --- 2. Persist Filters on Change ---
+  const handleFilterChange = (filter) => {
+    setActiveFilter(filter);
+    sessionStorage.setItem("events_active_filter", filter);
+  };
+
   const handleCategorySelect = (value) => {
     setCategoryFilter(value);
+    sessionStorage.setItem("events_category_filter", value);
     setShowCategoryMenu(false);
   };
 
@@ -59,12 +75,11 @@ function Events() {
       if (!res.ok) throw new Error("Failed to fetch events");
 
       const data = await res.json();
-      console.log("Fetched events:", data);
-
       setEvents(data);
     } catch (err) {
       console.error("Error fetching events:", err);
       setError("Failed to load events.");
+      addToast("Failed to load events.", "error");
     } finally {
       setLoading(false);
       NProgress.done();
@@ -75,10 +90,51 @@ function Events() {
     fetchEvents();
   }, []);
 
+  // --- ACTIONS ---
+
+  const handleDeleteEvent = async (eventId) => {
+    // Note: window.confirm removed because AlertDialogTemplate in Card handles the UI check
+    try {
+      NProgress.start();
+      const res = await fetch(`${APP_URL}/events/${eventId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to delete event");
+      }
+
+      setEvents((prev) => prev.filter((e) => e.id !== eventId));
+      addToast("Event deleted successfully", "success");
+    } catch (err) {
+      console.error(err);
+      addToast(err.message || "Failed to delete event", "error");
+    } finally {
+      NProgress.done();
+    }
+  };
+
+  const handleEditEvent = (event) => {
+    setEditingEvent(event);
+    setIsUpdateModalOpen(true);
+  };
+
+  const onUpdateSuccess = () => {
+    fetchEvents();
+    setIsUpdateModalOpen(false);
+    setEditingEvent(null);
+    addToast("Event updated successfully", "success");
+  };
+
   if (loading) return <SkeletonEventPage />;
-  if (error) return <p>{error}</p>;
+  if (error) return <p className="text-white p-4">{error}</p>;
 
   const filteredEvents = events.filter((event) => {
+    // Category Filter Logic
     if (categoryFilter === "yourclub") {
       if (!event.club?.users?.some((m) => Number(m.id) === Number(user?.id))) {
         return false;
@@ -89,6 +145,7 @@ function Events() {
       }
     }
 
+    // Status Filter Logic
     if (activeFilter === "upcoming") {
       return event.status === "upcoming" || event.status === "ongoing";
     } else if (activeFilter === "completed") {
@@ -111,6 +168,7 @@ function Events() {
           See all upcoming and past events organized by student clubs.
         </p>
       </div>
+
       <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
         {filterOptions.map((filter) => (
           <button
@@ -162,16 +220,44 @@ function Events() {
       </div>
 
       <div className="p-4 grid gap-4">
-        {filteredEvents.map((event) => (
-          <div
-            key={event.id}
-            onClick={() => nav(`/events/${event.id}`)}
-            className="cursor-pointer hover:scale-[1.01] transition-transform"
-          >
-            <EventCard event={event} />
-          </div>
-        ))}
+        {filteredEvents.length > 0 ? (
+          filteredEvents.map((event) => (
+            <div
+              key={event.id}
+              onClick={() => nav(`/events/${event.id}`)}
+              className="cursor-pointer hover:scale-[1.01] transition-transform"
+            >
+              <EventCard
+                event={event}
+                onEdit={handleEditEvent}
+                onDelete={handleDeleteEvent}
+                // Permission logic: Admin OR User is an Officer of the club
+                canManage={
+                  isAdmin ||
+                  event.club?.users?.some(
+                    (u) =>
+                      Number(u.id) === Number(user?.id) &&
+                      (u.pivot.role === "officer" || u.pivot.role === "adviser")
+                  )
+                }
+              />
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-500 text-center py-10 italic">
+            No events found matching your filters.
+          </p>
+        )}
       </div>
+
+      {editingEvent && (
+        <UpdateEventModal
+          event={editingEvent}
+          open={isUpdateModalOpen}
+          setOpen={setIsUpdateModalOpen}
+          onSuccess={onUpdateSuccess}
+        />
+      )}
     </>
   );
 }

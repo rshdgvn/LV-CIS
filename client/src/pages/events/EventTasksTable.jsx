@@ -5,7 +5,7 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ArrowLeft, Search, Filter, PlusCircle } from "lucide-react";
+import { ArrowLeft, Search, Filter, PlusCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -30,7 +30,8 @@ import { SkeletonEventTasksTable } from "@/components/skeletons/SkeletonEventTas
 import CreateTaskModal from "@/components/events/CreateTaskModal";
 import ReadTaskModal from "@/components/events/ReadTaskModal";
 import UpdateTaskModal from "@/components/events/UpdateTaskModal";
-import { useToast } from "@/providers/ToastProvider"; 
+import { useToast } from "@/providers/ToastProvider";
+import { usePermissions } from "@/hooks/usePermissions"; // 1. Import Permission Hook
 
 // Normalizing tasks from backend
 function normalizeTasks(data) {
@@ -45,10 +46,13 @@ export default function EventTasksTable() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { token } = useAuth();
-  const { addToast } = useToast(); // Initialize addToast function
+  const { addToast } = useToast();
+  const { canManageClub } = usePermissions(); // 2. Destructure hook
 
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
+  const [clubId, setClubId] = useState(null); // Store clubId
+
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,8 +66,16 @@ export default function EventTasksTable() {
 
   const columnHelper = createColumnHelper();
 
+  // 3. Permission Check Helper
+  const hasPermission = canManageClub(clubId);
+
   // Handle task deletion
   const handleDeleteTask = async (taskId) => {
+    if (!hasPermission) {
+      addToast("You do not have permission to delete tasks.", "error");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this task?")) {
       try {
         const response = await fetch(`${APP_URL}/delete/task/${taskId}`, {
@@ -77,25 +89,26 @@ export default function EventTasksTable() {
           throw new Error("Failed to delete task.");
         }
 
-        // Update the tasks state to remove the deleted task
         setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-
-        addToast("Task deleted successfully!", "success"); // Show success toast
+        addToast("Task deleted successfully!", "success");
       } catch (err) {
         console.error(err);
-        addToast("Failed to delete task.", "error"); // Show error toast
+        addToast("Failed to delete task.", "error");
       }
     }
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
+    if (!hasPermission) {
+      addToast("You do not have permission to update task status.", "error");
+      return;
+    }
+
     try {
-      // Update the task status locally first
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
       );
 
-      // Make an API call to update the status on the backend
       await fetch(`${APP_URL}/tasks/${taskId}/status`, {
         method: "PATCH",
         headers: {
@@ -129,6 +142,7 @@ export default function EventTasksTable() {
 
         setEventTitle(eventData.title || "");
         setEventDescription(eventData.description || "");
+        setClubId(eventData.club_id); // Save club ID for permission check
 
         const taskRes = await fetch(`${APP_URL}/events/${id}/tasks`, {
           headers: {
@@ -142,11 +156,10 @@ export default function EventTasksTable() {
         const data = await taskRes.json();
         setTasks(normalizeTasks(data.tasks));
         setMembers(data.members || []);
-        console.log('t', data)
       } catch (err) {
         console.error(err);
         setError("Failed to load event tasks.");
-        addToast("Failed to load event tasks.", "error"); 
+        addToast("Failed to load event tasks.", "error");
       } finally {
         setLoading(false);
       }
@@ -234,13 +247,16 @@ export default function EventTasksTable() {
               <Select
                 value={task.status}
                 onValueChange={(value) => handleStatusChange(task.id, value)}
+                disabled={!hasPermission} // Disable dropdown if no permission
               >
                 <SelectTrigger
                   className={`bg-blue-700 h-7 w-24 rounded-lg ${
                     task.status == "completed" ? "text-[10px]" : "text-xs"
                   } font-medium flex items-center justify-between px-2 text-white ${getTaskStatusColor(
                     task.status
-                  )} border-none shadow-sm`}
+                  )} border-none shadow-sm ${
+                    !hasPermission ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -256,7 +272,7 @@ export default function EventTasksTable() {
         },
       }),
     ],
-    []
+    [hasPermission] // Re-render table if permissions change
   );
 
   const table = useReactTable({
@@ -301,7 +317,6 @@ export default function EventTasksTable() {
             onChange={(e) => {
               const q = e.target.value.toLowerCase();
               if (!q) return;
-
               setTasks((prev) =>
                 prev.filter((t) => (t.title || "").toLowerCase().includes(q))
               );
@@ -315,13 +330,23 @@ export default function EventTasksTable() {
         </Button>
 
         <div className="ml-auto">
-          <Button
-            onClick={() => setTaskModalOpen(true)}
-            className="flex items-center text-white gap-2 rounded-lg px-4 py-2 bg-blue-950 hover:bg-blue-900"
-          >
-            <PlusCircle className="w-4 h-4" />
-            Add Task
-          </Button>
+          {hasPermission ? (
+            <Button
+              onClick={() => setTaskModalOpen(true)}
+              className="flex items-center text-white gap-2 rounded-lg px-4 py-2 bg-blue-950 hover:bg-blue-900"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Add Task
+            </Button>
+          ) : (
+            <Button
+              disabled
+              className="flex items-center text-gray-400 gap-2 rounded-lg px-4 py-2 bg-neutral-800 cursor-not-allowed opacity-50"
+            >
+              <Lock className="w-4 h-4" />
+              ReadOnly
+            </Button>
+          )}
         </div>
       </div>
 
@@ -329,7 +354,6 @@ export default function EventTasksTable() {
       <div className="w-xl sm:w-5/6 self-center overflow-x-auto">
         <div className="min-w-[750px] bg-[#121212] border border-neutral-800 rounded-2xl shadow-md overflow-hidden">
           <Table className="w-full table-fixed">
-            {/* <-- THIS FIXES WIDTH */}
             <TableHeader className="bg-[#1a1a1a]">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -351,26 +375,39 @@ export default function EventTasksTable() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="hover:bg-neutral-800/50 cursor-pointer"
-                  onClick={() => openReadModal(row.original.id)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="h-14 px-4 text-sm text-gray-200 text-center align-middle w-1/4
-             truncate whitespace-nowrap overflow-hidden text-ellipsis"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+              {table.getRowModel().rows.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-32 text-center"
+                  >
+                    <div className="flex flex-col items-center justify-center text-gray-500">
+                      <p className="text-sm">No tasks found for this event.</p>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="hover:bg-neutral-800/50 cursor-pointer"
+                    onClick={() => openReadModal(row.original.id)}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="h-14 px-4 text-sm text-gray-200 text-center align-middle w-1/4
+             truncate whitespace-nowrap overflow-hidden text-ellipsis"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
@@ -382,7 +419,7 @@ export default function EventTasksTable() {
         setOpen={setTaskModalOpen}
         onSuccess={(task) => {
           setTasks((prev) => [task, ...prev]);
-          addToast("Task added successfully!", "success"); // Show success toast
+          addToast("Task added successfully!", "success");
         }}
         members={members}
       />
@@ -392,10 +429,15 @@ export default function EventTasksTable() {
         setOpen={setReadOpen}
         task={selectedTask}
         onEdit={() => {
+          if (!hasPermission) {
+            addToast("You cannot edit tasks.", "error");
+            return;
+          }
           setReadOpen(false);
           setUpdateOpen(true);
         }}
         onDelete={handleDeleteTask}
+        canManage={hasPermission} 
       />
 
       <UpdateTaskModal

@@ -17,6 +17,7 @@ import { TimePicker } from "../TimePicker";
 import { APP_URL } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClub } from "@/contexts/ClubContext";
+import { useToast } from "@/providers/ToastProvider";
 
 export default function CreateEventModal({ onSuccess }) {
   const { token } = useAuth();
@@ -51,6 +52,7 @@ export default function CreateEventModal({ onSuccess }) {
   };
 
   const [form, setForm] = useState(initialFormState);
+  const { addToast } = useToast();
 
   const handleOpenChange = (isOpen) => {
     setOpen(isOpen);
@@ -128,7 +130,7 @@ export default function CreateEventModal({ onSuccess }) {
         if (res.status === 422) {
           setErrors(data.errors);
           const errorMessages = Object.values(data.errors).flat().join("\n");
-          alert("Validation Failed:\n" + errorMessages);
+          addToast("Validation Failed:\n" + errorMessages, "error");
           throw new Error("Please fix the highlighted errors.");
         }
         throw new Error(data.message || "Failed to create event");
@@ -136,6 +138,7 @@ export default function CreateEventModal({ onSuccess }) {
 
       onSuccess?.(data.event);
       handleOpenChange(false);
+      addToast("Event created successfully!", "success");
     } catch (err) {
       console.error(err);
       if (err.message !== "Please fix the highlighted errors.") {
@@ -515,7 +518,6 @@ export default function CreateEventModal({ onSuccess }) {
                 <option value="upcoming">Upcoming</option>
                 <option value="ongoing">Ongoing</option>
                 <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 

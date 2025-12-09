@@ -477,7 +477,6 @@ export default function UpdateEventModal({ event, onSuccess }) {
                 <option value="upcoming">Upcoming</option>
                 <option value="ongoing">Ongoing</option>
                 <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
               </select>
             </div>
             <div>

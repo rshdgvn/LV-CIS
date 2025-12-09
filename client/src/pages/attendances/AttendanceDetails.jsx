@@ -66,7 +66,9 @@ export default function AttendanceDetails() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || `HTTP ${res.status}`);
+        const errorData = await res.json();
+        addToast(errorData.message, "error");
+        return;
       }
 
       setSession(data);
@@ -103,7 +105,7 @@ export default function AttendanceDetails() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        addToast(errorData.message, 'error')
+        addToast(errorData.message, "error");
         return;
       }
 

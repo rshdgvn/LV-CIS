@@ -33,7 +33,6 @@ export function SignupForm({
   const nav = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [passwordValidationErrors, setPasswordValidationErrors] = useState([]);
-  const [isTypingPassword, setIsTypingPassword] = useState(false);
 
   // --- Password Validation Helper ---
   const validatePasswordStrength = (password) => {
@@ -160,16 +159,6 @@ export function SignupForm({
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-
-                {isTypingPassword && (
-                  <div className="flex items-start gap-2 mt-2 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 text-[11px] leading-tight">
-                    <Info size={14} className="shrink-0 mt-0.5" />
-                    <span>
-                      Password must be at least 8 chars, include uppercase,
-                      lowercase, number & symbol.
-                    </span>
-                  </div>
-                )}
 
                 {(errors.password || passwordValidationErrors.length > 0) && (
                   <div className="text-destructive text-xs mt-1 flex flex-col gap-0.5">

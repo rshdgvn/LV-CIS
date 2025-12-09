@@ -41,7 +41,7 @@ function ClubCard({
             button={
               <button
                 onClick={handleStopPropagation}
-                className="flex items-center gap-2 text-red-400 text-sm font-semibold hover:text-red-300 transition"
+                className="flex items-center gap-2 text-red-400 text-sm font-semibold hover:text-red-300 transition cursor-pointer"
               >
                 Cancel
               </button>

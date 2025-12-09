@@ -16,10 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
   SelectGroup,
-  SelectLabel,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, Upload, User as UserIcon } from "lucide-react";
 import { APP_URL } from "@/lib/config";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
   const [form, setForm] = useState({
@@ -30,16 +30,20 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
     course: "",
     year_level: "",
     password: "",
-    password_confirmation: "", // Added
+    password_confirmation: "",
+    avatar: null, // New file
   });
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
-      // FIX: Accessing user.member.course instead of user.course
       const member = user.member || {};
-
       setForm({
         first_name: user.first_name || "",
         last_name: user.last_name || "",
@@ -49,15 +53,24 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
         year_level: member.year_level ? String(member.year_level) : "",
         password: "",
         password_confirmation: "",
+        avatar: null,
       });
+      setCurrentAvatarUrl(user.avatar);
+      setAvatarPreview(null);
       setErrors({});
     }
   }, [user, open]);
 
   const handleInputChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: null }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm((prev) => ({ ...prev, avatar: file }));
+      setAvatarPreview(URL.createObjectURL(file));
     }
   };
 
@@ -66,30 +79,33 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
     setLoading(true);
     setErrors({});
 
-    const dataToSend = { ...form };
+    const formData = new FormData();
+    // Required for Laravel to process file upload via POST as PATCH
+    formData.append("_method", "PATCH");
 
-    // Remove empty password
-    if (!dataToSend.password) {
-      delete dataToSend.password;
-      delete dataToSend.password_confirmation;
-    }
+    Object.keys(form).forEach((key) => {
+      // Skip password if empty
+      if ((key === "password" || key === "password_confirmation") && !form[key])
+        return;
+      // Skip avatar if null (no change)
+      if (key === "avatar" && !form[key]) return;
+      // Skip student fields if admin
+      if ((key === "course" || key === "year_level") && form.role !== "user")
+        return;
 
-    // Clean up student fields if not user
-    if (dataToSend.role !== "user") {
-      delete dataToSend.course;
-      delete dataToSend.year_level;
-    }
+      formData.append(key, form[key]);
+    });
 
     try {
       const token = localStorage.getItem("token");
+      // Note: Use POST method because of file upload, but _method=PATCH handles it in Laravel
       const res = await fetch(`${APP_URL}/users/${user.id}`, {
-        method: "PUT",
+        method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
-        body: JSON.stringify(dataToSend),
+        body: formData,
       });
 
       const responseData = await res.json();
@@ -123,15 +139,39 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          {/* First Name */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="edit_first_name"
-              className="text-right text-neutral-400"
-            >
-              First Name
-            </Label>
-            <div className="col-span-3">
+          {/* Avatar Upload */}
+          <div className="flex justify-center mb-2">
+            <div className="relative group cursor-pointer">
+              <Avatar className="w-24 h-24 border-2 border-neutral-700">
+                <AvatarImage src={avatarPreview || currentAvatarUrl} />
+                <AvatarFallback className="bg-neutral-800">
+                  <UserIcon className="w-10 h-10 text-neutral-500" />
+                </AvatarFallback>
+              </Avatar>
+              <label
+                htmlFor="edit-avatar-upload"
+                className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 rounded-full transition-opacity"
+              >
+                <Upload className="w-6 h-6 text-white" />
+              </label>
+              <input
+                id="edit-avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label
+                htmlFor="edit_first_name"
+                className="text-neutral-400 mb-1.5 block"
+              >
+                First Name
+              </Label>
               <Input
                 id="edit_first_name"
                 value={form.first_name}
@@ -143,20 +183,18 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
                 }`}
               />
               {errors.first_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.first_name[0]}
+                </p>
               )}
             </div>
-          </div>
-
-          {/* Last Name */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="edit_last_name"
-              className="text-right text-neutral-400"
-            >
-              Last Name
-            </Label>
-            <div className="col-span-3">
+            <div>
+              <Label
+                htmlFor="edit_last_name"
+                className="text-neutral-400 mb-1.5 block"
+              >
+                Last Name
+              </Label>
               <Input
                 id="edit_last_name"
                 value={form.last_name}
@@ -166,201 +204,218 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
                 }`}
               />
               {errors.last_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.last_name[0]}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Email */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit_email" className="text-right text-neutral-400">
+          <div>
+            <Label
+              htmlFor="edit_email"
+              className="text-neutral-400 mb-1.5 block"
+            >
               Email
             </Label>
-            <div className="col-span-3">
-              <Input
-                id="edit_email"
-                type="email"
-                value={form.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className={`bg-neutral-800 border-neutral-700 ${
-                  errors.email ? "border-red-500" : ""
-                }`}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
+            <Input
+              id="edit_email"
+              type="email"
+              value={form.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              className={`bg-neutral-800 border-neutral-700 ${
+                errors.email ? "border-red-500" : ""
+              }`}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email[0]}</p>
+            )}
           </div>
 
-          {/* Password */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="edit_password"
-              className="text-right text-neutral-400"
-            >
-              Password
-            </Label>
-            <div className="col-span-3">
-              <Input
-                id="edit_password"
-                type="password"
-                value={form.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                className={`bg-neutral-800 border-neutral-700 ${
-                  errors.password ? "border-red-500" : ""
-                }`}
-                placeholder="(Leave blank to keep)"
-              />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="relative">
+              <Label
+                htmlFor="edit_password"
+                className="text-neutral-400 mb-1.5 block"
+              >
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="edit_password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) =>
+                    handleInputChange("password", e.target.value)
+                  }
+                  className={`bg-neutral-800 border-neutral-700 pr-10 ${
+                    errors.password ? "border-red-500" : ""
+                  }`}
+                  placeholder="(Leave blank)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.password[0]}
+                </p>
               )}
             </div>
-          </div>
-
-          {/* Confirm Password */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="edit_password_confirmation"
-              className="text-right text-xs text-neutral-400"
-            >
-              Confirm Password
-            </Label>
-            <div className="col-span-3">
-              <Input
-                id="edit_password_confirmation"
-                type="password"
-                value={form.password_confirmation}
-                onChange={(e) =>
-                  handleInputChange("password_confirmation", e.target.value)
-                }
-                className="bg-neutral-800 border-neutral-700"
-                placeholder="(Leave blank to keep)"
-              />
+            <div className="relative">
+              <Label
+                htmlFor="edit_password_confirmation"
+                className="text-neutral-400 mb-1.5 block"
+              >
+                Confirm
+              </Label>
+              <div className="relative">
+                <Input
+                  id="edit_password_confirmation"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={form.password_confirmation}
+                  onChange={(e) =>
+                    handleInputChange("password_confirmation", e.target.value)
+                  }
+                  className="bg-neutral-800 border-neutral-700 pr-10"
+                  placeholder="(Leave blank)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Role */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit_role" className="text-right text-neutral-400">
+          <div>
+            <Label
+              htmlFor="edit_role"
+              className="text-neutral-400 mb-1.5 block"
+            >
               Role
             </Label>
-            <div className="col-span-3">
-              <Select
-                onValueChange={(value) => handleInputChange("role", value)}
-                value={form.role}
+            <Select
+              onValueChange={(value) => handleInputChange("role", value)}
+              value={form.role}
+            >
+              <SelectTrigger
+                id="edit_role"
+                className="bg-neutral-800 border-neutral-700 text-neutral-100"
               >
-                <SelectTrigger
-                  id="edit_role"
-                  className="bg-neutral-800 border-neutral-700 text-neutral-100"
-                >
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.role && (
-                <p className="text-red-500 text-xs mt-1">{errors.role}</p>
-              )}
-            </div>
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.role && (
+              <p className="text-red-500 text-xs mt-1">{errors.role[0]}</p>
+            )}
           </div>
 
           {form.role === "user" && (
-            <>
-              <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label
                   htmlFor="edit_course"
-                  className="text-right text-neutral-400"
+                  className="text-neutral-400 mb-1.5 block"
                 >
                   Course
                 </Label>
-                <div className="col-span-3">
-                  <Select
-                    onValueChange={(value) =>
-                      handleInputChange("course", value)
-                    }
-                    value={form.course}
+                <Select
+                  onValueChange={(value) => handleInputChange("course", value)}
+                  value={form.course}
+                >
+                  <SelectTrigger
+                    id="edit_course"
+                    className={`bg-neutral-800 border-neutral-700 text-neutral-100 ${
+                      errors.course ? "border-red-500" : ""
+                    }`}
                   >
-                    <SelectTrigger
-                      id="edit_course"
-                      className={`bg-neutral-800 border-neutral-700 text-neutral-100 ${
-                        errors.course ? "border-red-500" : ""
-                      }`}
-                    >
-                      <SelectValue placeholder="Select Course" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
-                      <SelectGroup>
-                        <SelectLabel>Courses</SelectLabel>
-                        {["ACT", "BAB", "BSA", "BSAIS", "BSIS", "BSSW"].map(
-                          (course) => (
-                            <SelectItem key={course} value={course}>
-                              {course}
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {errors.course && (
-                    <p className="text-red-500 text-xs mt-1">{errors.course}</p>
-                  )}
-                </div>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
+                    <SelectGroup>
+                      {["ACT", "BAB", "BSA", "BSAIS", "BSIS", "BSSW"].map(
+                        (c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {errors.course && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.course[0]}
+                  </p>
+                )}
               </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
+              <div>
                 <Label
                   htmlFor="edit_year_level"
-                  className="text-right text-neutral-400"
+                  className="text-neutral-400 mb-1.5 block"
                 >
                   Year Level
                 </Label>
-                <div className="col-span-3">
-                  <Select
-                    onValueChange={(value) =>
-                      handleInputChange("year_level", value)
-                    }
-                    value={form.year_level}
+                <Select
+                  onValueChange={(value) =>
+                    handleInputChange("year_level", value)
+                  }
+                  value={form.year_level}
+                >
+                  <SelectTrigger
+                    id="edit_year_level"
+                    className={`bg-neutral-800 border-neutral-700 text-neutral-100 ${
+                      errors.year_level ? "border-red-500" : ""
+                    }`}
                   >
-                    <SelectTrigger
-                      id="edit_year_level"
-                      className={`bg-neutral-800 border-neutral-700 text-neutral-100 ${
-                        errors.year_level ? "border-red-500" : ""
-                      }`}
-                    >
-                      <SelectValue placeholder="Select Year" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
-                      {[1, 2, 3, 4].map((y) => (
-                        <SelectItem key={y} value={String(y)}>
-                          {y} Year
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.year_level && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.year_level}
-                    </p>
-                  )}
-                </div>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
+                    {[1, 2, 3, 4, 5].map((y) => (
+                      <SelectItem key={y} value={String(y)}>
+                        {y} Year
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.year_level && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.year_level[0]}
+                  </p>
+                )}
               </div>
-            </>
+            </div>
           )}
 
           {errors.general && (
-            <p className="text-red-500 text-sm col-span-4 text-center mt-2 bg-red-900/20 p-2 rounded">
+            <p className="text-red-500 text-sm text-center bg-red-900/20 p-2 rounded">
               {errors.general}
             </p>
           )}
 
-          <DialogFooter className="pt-4 mt-2 border-t border-neutral-800">
+          <DialogFooter className="pt-2 border-t border-neutral-800">
             <Button
               type="button"
               variant="ghost"
               onClick={() => setOpen(false)}
-              className="text-neutral-400 hover:text-neutral-100 mr-2"
+              className="text-neutral-400 hover:text-white mr-2"
             >
               Cancel
             </Button>

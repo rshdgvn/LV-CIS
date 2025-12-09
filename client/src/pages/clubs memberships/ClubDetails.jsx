@@ -5,11 +5,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import { CheckCircle2Icon, AlertCircleIcon } from "lucide-react";
+import { Calendar, Image as ImageIcon, PlayCircle } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import MembersSection from "@/components/MembersSection";
-import { AlertTemplate } from "@/components/AlertTemplate";
 import { SkeletonClubDetails } from "@/components/skeletons/SkeletonClubDetails";
+import { useToast } from "@/providers/ToastProvider";
 
 NProgress.configure({ showSpinner: false });
 
@@ -23,20 +23,16 @@ export default function ClubDetails() {
   const { token, user } = useAuth();
   const { id } = useParams();
   const nav = useNavigate();
+  const { addToast } = useToast();
 
   const [club, setClub] = useState(null);
   const [events, setEvents] = useState([]);
   const [gallery, setGallery] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [alert, setAlert] = useState(null);
   const [activeFilter, setActiveFilter] = useState("Active");
   const [manageMode, setManageMode] = useState(false);
   const filters = ["Active", "Inactive", "All"];
-
-  const showAlert = (type, title, description) => {
-    setAlert({ type, title, description });
-  };
 
   const fetchClubDetails = async () => {
     try {
@@ -58,6 +54,7 @@ export default function ClubDetails() {
     } catch (err) {
       console.error(err);
       setError("Failed to load club details.");
+      addToast("Failed to load club details.", "error");
     } finally {
       setLoading(false);
       await finishProgress();
@@ -80,15 +77,16 @@ export default function ClubDetails() {
       const galleryItems = [];
       data.events.forEach((event) => {
         event.photos.forEach((photo) =>
-          galleryItems.push({ type: "photo", url: photo })
+          galleryItems.push({ type: "photo", url: photo, title: event.title })
         );
         event.videos.forEach((video) =>
-          galleryItems.push({ type: "video", url: video })
+          galleryItems.push({ type: "video", url: video, title: event.title })
         );
       });
       setGallery(galleryItems);
     } catch (err) {
       console.error(err);
+      addToast("Failed to load events.", "error");
     }
   };
 
@@ -104,22 +102,12 @@ export default function ClubDetails() {
     }
   }, [token, id]);
 
-  useEffect(() => {
-    if (!alert) return;
-    const timer = setTimeout(() => setAlert(null), 4000);
-    return () => clearTimeout(timer);
-  }, [alert]);
-
   const members = useMemo(() => club?.users || [], [club?.users]);
 
   const handleAddMember = async (formData) => {
     const { userId, email, role, officer_title } = formData;
     if (!id || !role || (!userId && !email)) {
-      showAlert(
-        "error",
-        "Missing Fields",
-        "Please fill out all required fields."
-      );
+      addToast("Please fill out all required fields.", "error");
       return;
     }
 
@@ -148,11 +136,7 @@ export default function ClubDetails() {
 
       if (!res.ok) {
         if (res.status === 409) {
-          showAlert(
-            "warning",
-            "Duplicate Member",
-            "This user is already a member of the club."
-          );
+          addToast("This user is already a member.", "warning");
         } else {
           const err = await res.json();
           throw new Error(err.message || "Failed to add member");
@@ -160,17 +144,16 @@ export default function ClubDetails() {
         return;
       }
 
-      showAlert("success", "Member Added", "Member added successfully!");
+      addToast("Member added successfully!", "success");
       fetchClubDetails();
     } catch (error) {
       console.error(error);
-      showAlert("error", "Error", error.message || "Something went wrong.");
+      addToast(error.message || "Something went wrong.", "error");
     }
   };
 
   const handleEditMember = async (formData) => {
     const { userId, role, officer_title } = formData;
-
     if (!userId || !role) return;
 
     try {
@@ -187,14 +170,13 @@ export default function ClubDetails() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Failed to update member");
 
-      showAlert("success", "Member Updated", "Member info updated!");
+      addToast("Member info updated!", "success");
       fetchClubDetails();
     } catch (err) {
       console.error(err);
-      showAlert("error", "Error", err.message || "Failed to update member");
+      addToast(err.message || "Failed to update member", "error");
     }
   };
 
@@ -209,50 +191,31 @@ export default function ClubDetails() {
         `${APP_URL}/clubs/${id}/members/${member.id}/remove`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       if (!res.ok) throw new Error("Failed to remove member");
-      showAlert("success", "Member Removed", "Member removed successfully!");
+      addToast("Member removed successfully!", "success");
       fetchClubDetails();
     } catch (err) {
       console.error(err);
-      showAlert("error", "Error", err.message || "Failed to remove member");
+      addToast(err.message || "Failed to remove member", "error");
     }
   };
 
-  const handleViewApplicants = () => {
-    nav("pending-requests");
+  const handleEventClick = (eventId) => {
+    nav(`/events/${eventId}`);
   };
 
   return (
     <>
-      {alert && (
-        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
-          <AlertTemplate
-            icon={
-              alert.type === "success" ? (
-                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
-              ) : (
-                <AlertCircleIcon className="h-6 w-6 text-red-500" />
-              )
-            }
-            title={alert.title}
-            description={alert.description}
-          />
-        </div>
-      )}
-
       {loading ? (
         <SkeletonClubDetails />
       ) : error ? (
         <div className="p-6 text-red-400 text-center">{error}</div>
       ) : (
-        <div className="min-h-screen p-6 text-white lg:flex lg:gap-6">
-          {/* Left side: Club Info & Members */}
+        <div className="min-h-screen p-6 text-white flex flex-col lg:flex-row gap-6 max-w-[1600px] mx-auto">
           <div className="flex-1 space-y-6">
             <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center md:items-start gap-6">
               <img
@@ -288,6 +251,7 @@ export default function ClubDetails() {
               </div>
             </div>
 
+            {/* Members Section */}
             <MembersSection
               members={members}
               clubId={id}
@@ -298,79 +262,103 @@ export default function ClubDetails() {
               onAddMember={handleAddMember}
               onEditMember={handleEditMember}
               onRemoveMember={handleRemoveMember}
-              onViewApplicants={handleViewApplicants}
+              onViewApplicants={() => nav("pending-requests")}
             />
           </div>
 
-          {/* Right side: Activities & Gallery */}
-          <div className="min-h-screen lg:w-1/3 flex flex-col gap-6">
-            {/* Activities */}
-            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex-1 flex flex-col">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-semibold">Activities</h3>
-                <button className="text-sm text-blue-400 hover:underline">
-                  View all
-                </button>
+          {/* --- RIGHT SIDE: Activities & Gallery --- */}
+          <div className="lg:w-[400px] xl:w-[450px] shrink-0 flex flex-col gap-6 h-fit lg:sticky lg:top-6">
+            {/* Activities Widget */}
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-5 flex flex-col shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  Activities
+                  <span className="bg-blue-600/10 text-blue-400 text-xs px-2 py-0.5 rounded-full">
+                    {events.length}
+                  </span>
+                </h3>
               </div>
-              {events.length === 0 ? (
-                <div className="text-gray-400 text-sm flex-1 flex items-center justify-center">
-                  No activities found.
-                </div>
-              ) : (
-                <div className="flex-1 overflow-y-auto space-y-4">
-                  {events.map((event) => (
+
+              {/* Scrollable Container for Activities */}
+              <div className="h-[280px] overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-3">
+                {events.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-2 opacity-60">
+                    <Calendar className="w-10 h-10 stroke-[1.5]" />
+                    <span className="text-sm">No upcoming activities</span>
+                  </div>
+                ) : (
+                  events.map((event) => (
                     <div
                       key={event.id}
-                      className="flex items-center gap-4 bg-neutral-900 p-3 rounded-md"
+                      onClick={() => handleEventClick(event.id)}
+                      className="group flex gap-3 p-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10 transition-all cursor-pointer"
                     >
-                      <img
-                        src={
-                          event.cover_image || "https://via.placeholder.com/80"
-                        }
-                        alt={event.title}
-                        className="w-20 h-20 object-cover rounded"
-                      />
-                      <p className="font-medium">{event.title}</p>
+                      <div className="relative w-16 h-12 shrink-0 rounded-md overflow-hidden bg-neutral-800">
+                        <img
+                          src={
+                            event.cover_image ||
+                            "https://via.placeholder.com/80"
+                          }
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-200 truncate group-hover:text-blue-400 transition-colors">
+                          {event.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                          {event.description || "Event details..."}
+                        </p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
 
-            {/* Gallery */}
-            <div className="bg-sidebar border border-gray-800 rounded-xl p-6 flex-1 flex flex-col">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-semibold">Gallery</h3>
-                <button className="text-sm text-blue-400 hover:underline">
-                  View all
-                </button>
+            {/* Gallery Widget */}
+            <div className="bg-sidebar border border-gray-800 rounded-xl p-5 flex flex-col shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Gallery</h3>
               </div>
-              {gallery.length === 0 ? (
-                <div className="text-gray-400 text-sm flex-1 flex items-center justify-center">
-                  No photos or videos yet.
-                </div>
-              ) : (
-                <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-4">
-                  {gallery.map((item, idx) =>
-                    item.type === "photo" ? (
-                      <img
+
+              {/* Scrollable Container for Gallery */}
+              <div className="h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+                {gallery.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-2 opacity-60">
+                    <ImageIcon className="w-10 h-10 stroke-[1.5]" />
+                    <span className="text-sm">Gallery is empty</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {gallery.map((item, idx) => (
+                      <div
                         key={idx}
-                        src={item.url}
-                        alt="Event Photo"
-                        className="w-full h-32 object-cover rounded"
-                      />
-                    ) : (
-                      <video
-                        key={idx}
-                        controls
-                        className="w-full h-32 object-cover rounded"
+                        className="relative aspect-square bg-neutral-800 rounded-lg overflow-hidden cursor-pointer border border-[#333]"
                       >
-                        <source src={item.url} type="video/mp4" />
-                      </video>
-                    )
-                  )}
-                </div>
-              )}
+                        {item.type === "photo" ? (
+                          <img
+                            src={item.url}
+                            alt="Gallery"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="relative w-full h-full">
+                            <video
+                              src={item.url}
+                              className="w-full h-full object-cover opacity-80"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <PlayCircle className="w-6 h-6 text-white opacity-80" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

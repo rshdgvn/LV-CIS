@@ -7,15 +7,15 @@ import "nprogress/nprogress.css";
 import { APP_URL } from "@/lib/config";
 import ClubList from "@/components/ClubList";
 import { useAuth } from "@/contexts/AuthContext";
-import { AlertTemplate } from "@/components/AlertTemplate";
 import { SkeletonClubPage } from "@/components/skeletons/SkeletonClubPage";
+import { useToast } from "@/providers/ToastProvider";
 
 import {
-  CheckCircle2Icon,
-  AlertCircleIcon,
   GraduationCap,
   FilterIcon,
   ChevronDown,
+  Search, // Imported Search icon for empty state
+  FolderOpen, // Imported Folder icon for empty state
 } from "lucide-react";
 
 NProgress.configure({ showSpinner: false });
@@ -24,7 +24,7 @@ const finishProgress = () =>
     NProgress.done();
     setTimeout(resolve, 250);
   });
-
+  
 export default function Clubs() {
   const { token, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -35,11 +35,12 @@ export default function Clubs() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [alert, setAlert] = useState(null);
 
   const [activeFilter, setActiveFilter] = useState("your");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+
+  const { addToast } = useToast();
 
   const categoryOptions = [
     { label: "All", value: "all" },
@@ -90,6 +91,7 @@ export default function Clubs() {
     } catch (err) {
       console.error(err);
       setError("Failed to load clubs.");
+      addToast("Failed to load clubs.", "error");
     } finally {
       setLoading(false);
       await finishProgress();
@@ -101,19 +103,9 @@ export default function Clubs() {
     fetchClubs();
   }, [token]);
 
-  useEffect(() => {
-    if (!alert) return;
-    const timer = setTimeout(() => setAlert(null), 4000);
-    return () => clearTimeout(timer);
-  }, [alert]);
-
   const handleJoinClub = async (clubId, role = "member") => {
     if (!token) {
-      setAlert({
-        type: "error",
-        title: "Unauthorized",
-        description: "Please log in first.",
-      });
+      addToast("Please log in first", "error");
       return;
     }
 
@@ -139,20 +131,13 @@ export default function Clubs() {
       window.dispatchEvent(new Event("pendingClubsUpdated"));
 
       await finishProgress();
-
-      setAlert({
-        type: "success",
-        title: "Join Request Sent!",
-        description: data.message,
-      });
+      addToast("Application Request Sent!", "success");
     } catch (err) {
       await finishProgress();
-
-      setAlert({
-        type: "error",
-        title: "Failed to Join",
-        description: err.message || "An error occurred while joining the club.",
-      });
+      addToast(
+        err.message || "An error occurred while joining the club.",
+        "error"
+      );
     }
   };
 
@@ -183,29 +168,19 @@ export default function Clubs() {
       window.dispatchEvent(new Event("clubsUpdated"));
       await finishProgress();
 
-      setAlert({
-        type: "success",
-        title: "Application Cancelled",
-        description:
-          data.message || "Your club application has been cancelled.",
-      });
+      addToast(
+        data.message || "Your club application has been cancelled.",
+        "success"
+      );
     } catch (err) {
       await finishProgress();
-      setAlert({
-        type: "error",
-        title: "Failed to Cancel",
-        description: err.message || "An error occurred while cancelling.",
-      });
+      addToast(err.message || "An error occurred while cancelling.", "error");
     }
   };
 
   const handleEnterClub = (clubId) => {
     if (!token) {
-      setAlert({
-        type: "error",
-        title: "Unauthorized",
-        description: "Please log in first.",
-      });
+      addToast("Please log in first.", "success");
       return;
     }
     navigate(`/club/${clubId}`);
@@ -273,7 +248,7 @@ export default function Clubs() {
                 <button
                   key={filter.value}
                   onClick={() => handleFilterChange(filter.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer ${
                     activeFilter === filter.value
                       ? "bg-blue-950 text-white shadow-lg"
                       : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
@@ -286,7 +261,7 @@ export default function Clubs() {
             <div className="relative">
               <button
                 onClick={() => setShowCategoryMenu((prev) => !prev)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition cursor-pointer"
               >
                 <FilterIcon className="w-4 h-4" />
                 {categoryOptions.find((opt) => opt.value === categoryFilter)
@@ -300,7 +275,7 @@ export default function Clubs() {
                     <button
                       key={cat.value}
                       onClick={() => handleCategorySelect(cat.value)}
-                      className="block w-full text-left px-4 py-2 hover:bg-neutral-700 first:rounded-t-xl last:rounded-b-xl"
+                      className="block w-full text-left px-4 py-2 hover:bg-neutral-700 first:rounded-t-xl last:rounded-b-xl cursor-pointer"
                     >
                       {cat.label}
                     </button>
@@ -310,26 +285,10 @@ export default function Clubs() {
             </div>
           </div>
 
-          {alert && (
-            <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
-              <AlertTemplate
-                icon={
-                  alert.type === "success" ? (
-                    <CheckCircle2Icon className="h-6 w-6 text-green-500" />
-                  ) : (
-                    <AlertCircleIcon className="h-6 w-6 text-red-500" />
-                  )
-                }
-                title={alert.title}
-                description={alert.description}
-              />
-            </div>
-          )}
-
           <div className="min-h-screen p-6 text-white">
             {error ? (
               <p className="text-red-400 text-center">{error}</p>
-            ) : (
+            ) : displayedClubs.length > 0 ? (
               <ClubList
                 clubs={displayedClubs}
                 onEnter={handleEnterClub}
@@ -337,6 +296,39 @@ export default function Clubs() {
                 status={status}
                 onCancel={handleCancel}
               />
+            ) : (
+              // --- EMPTY STATE HANDLER ---
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="bg-neutral-900 p-4 rounded-full mb-4 border border-neutral-800">
+                  {activeFilter === "your" ? (
+                    <FolderOpen className="w-8 h-8 text-neutral-500" />
+                  ) : (
+                    <Search className="w-8 h-8 text-neutral-500" />
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {activeFilter === "your" &&
+                    "You haven't joined any clubs yet"}
+                  {activeFilter === "pending" && "No pending applications"}
+                  {activeFilter === "other" && "No other clubs found"}
+                </h3>
+                <p className="text-neutral-400 text-sm max-w-sm mb-6">
+                  {activeFilter === "your" &&
+                    "Browse the 'Other Clubs' tab to find communities you might like to join."}
+                  {activeFilter === "pending" &&
+                    "Applications you send will appear here until they are approved."}
+                  {activeFilter === "other" &&
+                    "It looks like there are no other clubs available to join right now."}
+                </p>
+                {activeFilter === "your" && (
+                  <button
+                    onClick={() => setActiveFilter("other")}
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+                  >
+                    Browse Clubs
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </>

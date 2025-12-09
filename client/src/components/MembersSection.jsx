@@ -3,19 +3,19 @@ import {
   Trash2Icon,
   XIcon,
   CheckIcon,
-  CheckCircle2Icon,
-  AlertCircleIcon,
   MoreHorizontal,
   UserPlus,
   Users,
   ArrowLeft,
+  Search,
+  Loader2,
 } from "lucide-react";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
-import { AlertTemplate } from "@/components/AlertTemplate";
 import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
+import { useToast } from "@/providers/ToastProvider";
 
 import {
   Dialog,
@@ -59,6 +59,7 @@ export default function MembersSection({
 }) {
   const nav = useNavigate();
   const { token } = useAuth();
+  const { addToast } = useToast();
 
   const [manageMode, setManageMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,7 +67,12 @@ export default function MembersSection({
   const [applicantMode, setApplicantMode] = useState(false);
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState(null);
+
+  // Email Search States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const membersPerPage = 5;
@@ -74,12 +80,21 @@ export default function MembersSection({
   const [formData, setFormData] = useState({
     userId: null,
     name: "",
+    email: "", // Default add by email
     role: "member",
     officer_title: "",
   });
 
   const openAddModal = () => {
-    setFormData({ userId: null, name: "", role: "member", officer_title: "" });
+    setFormData({
+      userId: null,
+      name: "",
+      email: "",
+      role: "member",
+      officer_title: "",
+    });
+    setSearchQuery("");
+    setSearchResults([]);
     setModalMode("add");
     setIsModalOpen(true);
   };
@@ -88,6 +103,7 @@ export default function MembersSection({
     setFormData({
       userId: member.id,
       name: `${member.first_name} ${member.last_name}`,
+      email: member.email,
       role: member.pivot?.role || "member",
       officer_title: member.pivot?.officer_title || "",
     });
@@ -95,10 +111,53 @@ export default function MembersSection({
     setIsModalOpen(true);
   };
 
+  // --- SEARCH USERS (Debounced) ---
+  useEffect(() => {
+    if (modalMode !== "add" || !searchQuery) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        // NOTE: Ensure your backend has an endpoint for searching users: GET /users?search=...
+        const res = await fetch(`${APP_URL}/users?search=${searchQuery}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Filter out users who are already members (optional optimization)
+          const availableUsers = data.filter(
+            (u) => !members.some((m) => m.id === u.id)
+          );
+          setSearchResults(availableUsers.slice(0, 5)); // Limit to 5
+          setShowSuggestions(true);
+        }
+      } catch (error) {
+        console.error("Search failed", error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, token, modalMode, members]);
+
+  const handleSelectUser = (user) => {
+    setFormData({ ...formData, email: user.email });
+    setSearchQuery(user.email); // Set input to selected email
+    setShowSuggestions(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (modalMode === "add") await onAddMember(formData);
-    else await onEditMember(formData);
+    // Ensure email is passed from searchQuery if added manually
+    const finalData = { ...formData, email: searchQuery };
+
+    if (modalMode === "add") await onAddMember(finalData);
+    else await onEditMember(finalData);
+
     setIsModalOpen(false);
   };
 
@@ -114,6 +173,7 @@ export default function MembersSection({
       setApplicants(data);
     } catch (err) {
       console.error(err);
+      addToast("Failed to load applicants.", "error");
     } finally {
       setLoading(false);
     }
@@ -134,45 +194,32 @@ export default function MembersSection({
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to update status");
 
-      setAlert({
-        type: "success",
-        title: status === "approved" ? "Approved!" : "Rejected!",
-        description:
-          status === "approved"
-            ? "Membership approved successfully!"
-            : "Membership rejected successfully!",
-      });
+      addToast(
+        status === "approved"
+          ? "Membership approved successfully!"
+          : "Membership rejected successfully!",
+        "success"
+      );
 
       fetchApplicants();
     } catch (err) {
-      setAlert({
-        type: "error",
-        title: "Action Failed",
-        description: err.message || "An error occurred while updating status.",
-      });
+      addToast(
+        err.message || "An error occurred while updating status.",
+        "error"
+      );
     }
   };
 
   useEffect(() => {
-    console.log(members);
     if (applicantMode) fetchApplicants();
   }, [applicantMode]);
 
-  useEffect(() => {
-    if (!alert) return;
-    const timer = setTimeout(() => setAlert(null), 4000);
-    return () => clearTimeout(timer);
-  }, [alert]);
-
   const filteredMembers = useMemo(() => {
     if (!activeFilter || activeFilter === "All") return members;
-
     if (activeFilter === "Active")
       return members.filter((m) => m.pivot?.activity_status === "active");
-
     if (activeFilter === "Inactive")
       return members.filter((m) => m.pivot?.activity_status === "inactive");
-
     return members;
   }, [members, activeFilter]);
 
@@ -193,22 +240,6 @@ export default function MembersSection({
 
   return (
     <div className="bg-sidebar border border-gray-800 rounded-xl p-6 relative">
-      {alert && (
-        <div className="flex items-center fixed top-4 left-1/2 -translate-x-1/2 z-50">
-          <AlertTemplate
-            icon={
-              alert.type === "success" ? (
-                <CheckCircle2Icon className="h-6 w-6 text-green-500" />
-              ) : (
-                <AlertCircleIcon className="h-6 w-6 text-red-500" />
-              )
-            }
-            title={alert.title}
-            description={alert.description}
-          />
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
           {applicantMode && (
@@ -234,7 +265,7 @@ export default function MembersSection({
                 <button
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
-                  className={`px-2 sm:px-3 py-1 text-[0.6rem] sm:text-xs font-medium rounded-md transition-all duration-200 ${
+                  className={`px-2 sm:px-3 py-1 text-[0.6rem] sm:text-xs font-medium rounded-md transition-all duration-200 cursor-pointer ${
                     activeFilter === filter
                       ? "bg-blue-900 text-white"
                       : "bg-transparent text-gray-300 hover:text-white"
@@ -287,11 +318,11 @@ export default function MembersSection({
         )}
       </div>
 
-      <div className="h-96">
+      <div className="min-h-[300px]">
         {applicantMode ? (
           loading ? (
-            <div className="flex items-center justify-center text-white">
-              <div className="loader"></div>
+            <div className="flex items-center justify-center text-white h-40">
+              <Loader2 className="w-6 h-6 animate-spin" />
             </div>
           ) : applicants.length > 0 ? (
             applicants.map((user) => (
@@ -343,7 +374,9 @@ export default function MembersSection({
               </div>
             ))
           ) : (
-            <p className="text-gray-400 text-center">No applicants yet.</p>
+            <p className="text-gray-400 text-center py-10">
+              No applicants yet.
+            </p>
           )
         ) : paginatedMembers.length > 0 ? (
           <>
@@ -370,7 +403,7 @@ export default function MembersSection({
                     className="w-10 h-10 rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-medium text-sm">{`${member.first_name} ${member.last_name}`}</p>
+                    <p className="font-medium text-sm cursor-pointer hover:text-blue-400">{`${member.first_name} ${member.last_name}`}</p>
                     <p className="text-xs text-gray-400 capitalize">
                       {member.pivot?.officer_title ||
                         member.pivot?.role ||
@@ -389,7 +422,6 @@ export default function MembersSection({
                     </button>
                   </div>
                 ) : (
-                  // ⭐ ADDED RED TEXT FOR INACTIVE STATUS
                   <p
                     className={`text-xs capitalize ${
                       member.pivot?.activity_status === "inactive"
@@ -460,75 +492,103 @@ export default function MembersSection({
             )}
           </>
         ) : (
-          <p className="text-gray-400 text-center">No members yet.</p>
+          <p className="text-gray-400 text-center py-10">No members yet.</p>
         )}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-neutral-900 border border-neutral-800">
+        <DialogContent className="sm:max-w-[425px] bg-neutral-900 border border-neutral-800 text-neutral-100">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
                 {modalMode === "add" ? "Add Member" : "Edit Member"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-neutral-400">
                 {modalMode === "add"
-                  ? "Fill out the details below to add a new member."
-                  : "Update the member details below and click save to apply changes."}
+                  ? "Enter the email of the user you want to add."
+                  : "Update the member details below."}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
-              {modalMode === "add" && (
-                <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="addBy">Add Member By</Label>
-                    <select
-                      id="addBy"
-                      value={formData.addBy || "userId"}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          addBy: e.target.value,
-                          userId: "",
-                          email: "",
-                        })
-                      }
-                      className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-900"
-                    >
-                      <option value="userId">User ID</option>
-                      <option value="email">Email</option>
-                    </select>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="userInput">
-                      {formData.addBy === "email" ? "Email" : "User ID"}
-                    </Label>
+              {modalMode === "add" ? (
+                // --- ADD MODE: EMAIL SEARCH ---
+                <div className="grid gap-2 relative">
+                  <Label htmlFor="searchEmail">Email Address</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
                     <Input
-                      id="userInput"
-                      type={formData.addBy === "email" ? "email" : "text"}
-                      value={
-                        formData.addBy === "email"
-                          ? formData.email || ""
-                          : formData.userId || ""
-                      }
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          [formData.addBy === "email" ? "email" : "userId"]:
-                            e.target.value,
-                        })
-                      }
-                      placeholder={
-                        formData.addBy === "email"
-                          ? "Enter user email"
-                          : "Enter user ID"
-                      }
+                      id="searchEmail"
+                      type="email"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        // Hide suggestions immediately if user clears input
+                        if (!e.target.value) setShowSuggestions(false);
+                      }}
+                      onFocus={() => {
+                        if (searchResults.length > 0) setShowSuggestions(true);
+                      }}
+                      className="pl-9 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500"
+                      placeholder="Search user by email..."
+                      autoComplete="off"
                       required
                     />
+                    {isSearching && (
+                      <div className="absolute right-3 top-2.5">
+                        <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />
+                      </div>
+                    )}
                   </div>
-                </>
+
+                  {/* Search Suggestions Dropdown */}
+                  {showSuggestions && searchResults.length > 0 && (
+                    <ul className="absolute z-50 w-full bg-neutral-800 border border-neutral-700 rounded-md mt-[70px] max-h-48 overflow-y-auto shadow-lg">
+                      {searchResults.map((user) => (
+                        <li
+                          key={user.id}
+                          onClick={() => handleSelectUser(user)}
+                          className="px-4 py-2 hover:bg-neutral-700 cursor-pointer flex items-center gap-3 transition-colors"
+                        >
+                          <img
+                            src={
+                              user.avatar ||
+                              `https://ui-avatars.com/api/?name=${user.first_name}+${user.last_name}&background=random`
+                            }
+                            alt="avatar"
+                            className="w-6 h-6 rounded-full"
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-white">
+                              {user.first_name} {user.last_name}
+                            </span>
+                            <span className="text-xs text-neutral-400">
+                              {user.email}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {showSuggestions &&
+                    searchQuery &&
+                    searchResults.length === 0 &&
+                    !isSearching && (
+                      <div className="absolute z-50 w-full bg-neutral-800 border border-neutral-700 rounded-md mt-[70px] p-2 text-center text-xs text-neutral-400">
+                        No users found
+                      </div>
+                    )}
+                </div>
+              ) : (
+                // --- EDIT MODE: READ ONLY NAME ---
+                <div className="grid gap-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={formData.name}
+                    disabled
+                    className="bg-neutral-800 border-neutral-700 text-neutral-400 cursor-not-allowed"
+                  />
+                </div>
               )}
 
               <div className="grid gap-2">
@@ -558,7 +618,8 @@ export default function MembersSection({
                         officer_title: e.target.value,
                       })
                     }
-                    placeholder="Enter officer title"
+                    placeholder="Enter officer title (e.g. President)"
+                    className="bg-neutral-800 border-neutral-700 text-white"
                   />
                 </div>
               )}
@@ -569,12 +630,14 @@ export default function MembersSection({
                 type="button"
                 variant="outline"
                 onClick={() => setIsModalOpen(false)}
+                className="bg-transparent border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-blue-900 hover:bg-blue-950 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={modalMode === "add" && !searchQuery}
               >
                 {modalMode === "add" ? "Add Member" : "Save Changes"}
               </Button>

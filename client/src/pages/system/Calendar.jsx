@@ -34,6 +34,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { SkeletonAttendances } from "@/components/skeletons/SkeletonAttendances";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // --- UTILITY: Theme Classes ---
 const themeClasses = {
@@ -192,6 +193,8 @@ const Calendar = () => {
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  const nav = useNavigate();
+
   if (loading) return <SkeletonAttendances />;
 
   return (
@@ -201,7 +204,10 @@ const Calendar = () => {
           {/* HEADER */}
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-neutral-800 pb-4 gap-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-3xl font-bold tracking-tight">
+              <h2
+                className="text-3xl font-bold tracking-tight cursor-pointer"
+                onClick={() => nav("/calendar")}
+              >
                 {format(currentDate, "MMMM yyyy")}
               </h2>
 
@@ -230,7 +236,7 @@ const Calendar = () => {
                 onClick={openAddModal}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow-lg shadow-blue-900/20 transition flex items-center gap-2"
               >
-                <Plus size={18} /> Add Event
+                <Plus size={18} /> Add Activities
               </Button>
             )}
           </div>

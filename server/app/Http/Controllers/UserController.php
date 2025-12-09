@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use App\Models\Club;
 
 class UserController extends Controller
 {
@@ -29,26 +31,48 @@ class UserController extends Controller
         ]);
 
         $user = User::create([
-            'first_name'      => $validated['first_name'],
-            'last_name'       => $validated['last_name'],
-            'email'           => $validated['email'],
-            'password'        => Hash::make($validated['password']),
-            'role'            => $validated['role'],
+            'first_name' => $validated['first_name'],
+            'last_name'  => $validated['last_name'],
+            'email'      => $validated['email'],
+            'password'   => Hash::make($validated['password']),
+            'role'       => $validated['role'],
             'email_verified_at' => now(),
         ]);
 
-        if (isset($validated['course'], $validated['year_level']) && $validated['role'] === 'user') {
+        if ($user->role === 'user' && isset($validated['course'], $validated['year_level'])) {
             $user->member()->create([
                 'course'     => $validated['course'],
                 'year_level' => $validated['year_level'],
             ]);
         }
 
+        if ($user->role === 'admin') {
+            $clubs = Club::all();
+
+            foreach ($clubs as $club) {
+                DB::table('club_memberships')->updateOrInsert(
+                    [
+                        'club_id' => $club->id,
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'role' => 'adviser',
+                        'status' => 'approved',
+                        'activity_status' => 'active',
+                        'joined_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        }
+
         return response()->json([
             'message' => 'User created successfully',
-            'user' => $user
+            'user' => $user->load(['member', 'clubs'])
         ], 201);
     }
+
 
     public function show(User $user)
     {
@@ -56,14 +80,14 @@ class UserController extends Controller
             $user->load(['member', 'clubs'])
         );
     }
-
     public function update(Request $request, User $user)
     {
+        $oldRole = $user->role; // ✅ capture old role
+
         $validated = $request->validate([
             'first_name' => 'sometimes|string|max:255',
             'last_name'  => 'sometimes|string|max:255',
             'email'      => 'sometimes|email|unique:users,email,' . $user->id,
-            // Added 'confirmed' rule here too
             'password'   => 'nullable|string|min:6|confirmed',
             'role'       => 'sometimes|in:admin,user',
             'course'     => 'nullable|string|max:255',
@@ -78,7 +102,34 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        // Logic updated to handle creating member record if it doesn't exist yet
+
+        if ($oldRole === 'admin' && $user->role === 'user') {
+            DB::table('club_memberships')
+                ->where('user_id', $user->id)
+                ->delete();
+        }
+
+        if ($oldRole === 'user' && $user->role === 'admin') {
+            $clubs = Club::all();
+
+            foreach ($clubs as $club) {
+                DB::table('club_memberships')->updateOrInsert(
+                    [
+                        'club_id' => $club->id,
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'role' => 'adviser',
+                        'status' => 'approved',
+                        'activity_status' => 'active',
+                        'joined_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        }
+
         if ($user->role === 'user' && (isset($validated['course']) || isset($validated['year_level']))) {
             $user->member()->updateOrCreate(
                 ['user_id' => $user->id],
@@ -91,9 +142,10 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $user->load('member')
+            'user' => $user->load(['member', 'clubs']),
         ]);
     }
+
 
     public function destroy(User $user)
     {

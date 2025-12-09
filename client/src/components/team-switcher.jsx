@@ -10,10 +10,12 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import logo from "../assets/lvcc-logo.png";
+import { useNavigate } from "react-router-dom";
 
 export function TeamSwitcher() {
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const nav = useNavigate();
 
   return (
     <SidebarMenu>
@@ -21,7 +23,8 @@ export function TeamSwitcher() {
         <DropdownMenu>
           <SidebarMenuButton
             size="xl"
-            className="relative data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground my-4 flex flex-col items-center justify-center"
+            onClick={() => nav("/")}
+            className="relative data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground my-4 flex flex-col items-center justify-center cursor-pointer"
           >
             <a
               className={`flex items-center font-medium ${

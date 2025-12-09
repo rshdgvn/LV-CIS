@@ -68,7 +68,7 @@ export default function Profile() {
 
       const json = await res.json();
       setData(json);
-      setFormData(JSON.parse(JSON.stringify(json))); // deep copy
+      setFormData(JSON.parse(JSON.stringify(json))); 
     } catch (err) {
       console.error(err);
       toast.error("Failed to load profile");
@@ -154,7 +154,6 @@ export default function Profile() {
       const json = await res.json();
 
       if (res.status === 422) {
-        // Laravel Validation Error
         setValidationErrors(json.errors || {});
         toast.error("Validation failed. Please check the form.");
         throw new Error("Validation Error");
@@ -162,7 +161,6 @@ export default function Profile() {
 
       if (!res.ok) throw new Error(json.message || "Failed to save profile");
 
-      // Success
       setData(json);
       setFormData(JSON.parse(JSON.stringify(json)));
       setAvatarPreview(null);

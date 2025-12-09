@@ -154,7 +154,7 @@ export default function MembersSection({
   };
 
   useEffect(() => {
-    console.log(members)
+    console.log(members);
     if (applicantMode) fetchApplicants();
   }, [applicantMode]);
 
@@ -211,10 +211,6 @@ export default function MembersSection({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
-          <h2 className="text-lg sm:text-xl font-semibold">
-            {applicantMode ? "Applicants" : "Members"}
-          </h2>
-
           {applicantMode && (
             <Button
               variant="ghost"
@@ -226,6 +222,9 @@ export default function MembersSection({
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
+          <h2 className="text-lg sm:text-xl font-semibold">
+            {applicantMode ? "Applicants" : "Members"}
+          </h2>
         </div>
 
         {!applicantMode && (
@@ -356,7 +355,8 @@ export default function MembersSection({
                 <div
                   className="flex items-center gap-3 cursor-pointer"
                   onClick={() =>
-                    !manageMode && nav(`/club/${clubId}/members/${member.id}`)
+                    !manageMode &&
+                    nav(`/member-attendances/${member.id}/${clubId}`)
                   }
                 >
                   <img

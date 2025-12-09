@@ -332,7 +332,7 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
                       <SelectValue placeholder="Select Year" />
                     </SelectTrigger>
                     <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
-                      {[1, 2, 3, 4, 5].map((y) => (
+                      {[1, 2, 3, 4].map((y) => (
                         <SelectItem key={y} value={String(y)}>
                           {y} Year
                         </SelectItem>

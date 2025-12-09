@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use App\Services\CloudinaryService; 
+use App\Services\CloudinaryService;
 
 class ProfileController extends Controller
 {
@@ -53,7 +53,7 @@ class ProfileController extends Controller
             $validatedUser = $request->validate([
                 'first_name' => 'nullable|string|max:255',
                 'last_name'  => 'nullable|string|max:255',
-                'email'      => 'nullable|email|max:255',
+                'email'      => 'nullable|email|max:255|unique:users,email,' . $user->id,
                 'avatar'     => 'nullable|file|image|max:2048',
             ]);
 
@@ -65,21 +65,41 @@ class ProfileController extends Controller
 
             $user->update($validatedUser);
 
-            $validatedMember = $request->validate([
-                'course'     => 'nullable|string|max:255',
-                'year_level' => 'nullable|string|max:255',
-            ]);
+            $member = null;
+            if (strtolower($user->role) !== 'admin') {
+                $validatedMember = $request->validate([
+                    'course'     => 'nullable|string|max:255',
+                    'year_level' => 'nullable|string|max:255',
+                ]);
 
-            $member = Member::updateOrCreate(
-                ['user_id' => $user->id],
-                $validatedMember
-            );
+                $member = Member::updateOrCreate(
+                    ['user_id' => $user->id],
+                    $validatedMember
+                );
+            } else {
+                $member = Member::where('user_id', $user->id)->first();
+            }
 
             return response()->json([
                 'message' => 'Profile updated successfully',
-                'user'    => $user,
-                'member'  => $member,
+                'user'    => [
+                    'id'         => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name'  => $user->last_name,
+                    'email'      => $user->email,
+                    'role'       => $user->role,
+                    'avatar'     => $user->avatar,
+                ],
+                'member'  => $member ?? [
+                    'course'     => null,
+                    'year_level' => null,
+                ],
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('Error updating profile: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -135,7 +155,12 @@ class ProfileController extends Controller
         ]);
 
         if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json(['message' => 'Current password is incorrect'], 422);
+            return response()->json([
+                'message' => 'Current password is incorrect',
+                'errors' => [
+                    'current_password' => ['The current password is incorrect.']
+                ]
+            ], 422);
         }
 
         $user->update(['password' => Hash::make($request->new_password)]);

@@ -262,7 +262,7 @@ export default function Clubs() {
       ) : (
         <>
           {/* HEADER */}
-          <div className="flex flex-col gap-2 my-8 mx-4">
+          <div className="flex flex-col gap-2 mb-5 mt-2 mx-4">
             <div className="flex flex-row items-center gap-5">
               <div className="shrink-0 p-2 bg-blue-900/30 rounded-lg">
                 <GraduationCap className="w-9 h-9 text-blue-400" />

@@ -157,7 +157,7 @@ function Events() {
 
   return (
     <>
-      <div className="flex flex-col gap-2 my-8 mx-4">
+      {/* <div className="flex flex-col gap-2 my-8 mx-4">
         <div className="flex flex-row items-center gap-5">
           <div className="shrink-0 p-2 bg-blue-900/30 rounded-lg">
             <CalendarCheck className="w-9 h-9 text-blue-400" />
@@ -167,7 +167,7 @@ function Events() {
         <p className="text-gray-400 my-2">
           See all upcoming and past events organized by student clubs.
         </p>
-      </div>
+      </div> */}
 
       <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
         {filterOptions.map((filter) => (

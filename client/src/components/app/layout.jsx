@@ -1,8 +1,12 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { Bell } from "lucide-react";
 import logo from "../../assets/lvcc-logo.png";
+import { useToast } from "@/providers/ToastProvider";
 
 export default function Layout({ children }) {
+  const { addToast } = useToast()
+
   return (
     <SidebarProvider
       style={{
@@ -35,7 +39,13 @@ export default function Layout({ children }) {
       </div>
 
       <div className="relative flex-1">
-        <main className="m-4 pt-16 md:pt-0">{children}</main>
+        <main className="m-4 pt-16 md:pt-0">
+          <div className="flex items-center mb-0 justify-between">
+            <SidebarTrigger className="mx-3 relative z-70 cursor-pointer hidden md:block" />
+            <Bell className="mr-5 relative z-70 cursor-pointer hidden md:block" onClick={() => addToast('Under development', )} />
+          </div>
+          {children}
+        </main>
       </div>
     </SidebarProvider>
   );

@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { APP_URL } from "@/lib/config";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import { toast } from "sonner";
 import { SkeletonProfile } from "@/components/skeletons/SkeletonProfile";
 import {
   Select,
@@ -16,10 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, Loader2, Camera } from "lucide-react";
+import { User, Loader2, Camera, Eye, EyeOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/providers/ToastProvider";
 
 // Custom component to display validation errors
 const ErrorMessage = ({ message }) => {
@@ -40,6 +40,11 @@ export default function Profile() {
   const [validationErrors, setValidationErrors] = useState({});
   const [passwordErrors, setPasswordErrors] = useState({});
 
+  // Password Visibility States
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
     new_password: "",
@@ -48,10 +53,9 @@ export default function Profile() {
 
   const fileInputRef = useRef(null);
 
-  // --- UTILITY FUNCTION: Check if the user is an Admin ---
   const isAdmin = formData?.user?.role?.toLowerCase() === "admin";
+  const { addToast } = useToast();
 
-  // --- Fetch Profile Data ---
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -64,14 +68,19 @@ export default function Profile() {
         },
       });
 
-      if (!res.ok) throw new Error("Failed to fetch profile");
+      if (!res.ok) {
+        const errorData = await res.json();
+        addToast(errorData.message, "error");
+        return;
+      }
 
       const json = await res.json();
       setData(json);
-      setFormData(JSON.parse(JSON.stringify(json))); 
+      setFormData(JSON.parse(JSON.stringify(json)));
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load profile");
+
+      addToast("Failed to load profile", "error");
     } finally {
       setLoading(false);
       NProgress.done();
@@ -82,7 +91,6 @@ export default function Profile() {
     if (token) fetchProfile();
   }, [token]);
 
-  // --- Form Handlers ---
   const handleChange = (section, key, value) => {
     setValidationErrors((prev) => {
       const newErrors = { ...prev };
@@ -119,7 +127,6 @@ export default function Profile() {
     }
   };
 
-  // --- Save Profile Handler (Unchanged logic) ---
   const handleSave = async () => {
     setIsSaving(true);
     NProgress.start();
@@ -128,18 +135,14 @@ export default function Profile() {
     try {
       const fd = new FormData();
       fd.append("_method", "PATCH");
-
-      // Always append user fields
       fd.append("first_name", formData.user.first_name || "");
       fd.append("last_name", formData.user.last_name || "");
       fd.append("email", formData.user.email || "");
 
-      // Only append avatar if it is a new File object
       if (formData.user.avatar instanceof File) {
         fd.append("avatar", formData.user.avatar);
       }
 
-      // CONDITIONAL LOGIC: Only append member fields if the user is NOT an admin
       if (!isAdmin && formData.member) {
         fd.append("course", formData.member.course || "");
         fd.append("year_level", formData.member.year_level || "");
@@ -155,30 +158,33 @@ export default function Profile() {
 
       if (res.status === 422) {
         setValidationErrors(json.errors || {});
-        toast.error("Validation failed. Please check the form.");
+        addToast("Validation failed. Please check the form.", "error");
         throw new Error("Validation Error");
       }
 
-      if (!res.ok) throw new Error(json.message || "Failed to save profile");
+      if (!res.ok) {
+        const errorData = await res.json();
+        addToast(errorData.message, "error");
+        return;
+      }
 
       setData(json);
       setFormData(JSON.parse(JSON.stringify(json)));
       setAvatarPreview(null);
       setEditMode(false);
-
-      toast.success("Profile updated successfully!");
     } catch (err) {
       console.error(err);
       if (err.message !== "Validation Error") {
-        toast.error("Failed to update profile. Try again.");
+        addToast("Failed to update profile. Try again.", "error");
       }
     } finally {
+      addToast("Profile updated successfully!", "success");
+
       setIsSaving(false);
       NProgress.done();
     }
   };
 
-  // --- Cancel Edit Mode (Unchanged) ---
   const handleCancel = () => {
     setFormData(JSON.parse(JSON.stringify(data)));
     setAvatarPreview(null);
@@ -186,11 +192,39 @@ export default function Profile() {
     setValidationErrors({});
   };
 
-  // --- Password Change Handler (Unchanged) ---
+  // --- Password Validation Helper ---
+  const validatePasswordStrength = (password) => {
+    const errors = [];
+    if (password.length < 8) errors.push("At least 8 characters");
+    if (!/[A-Z]/.test(password)) errors.push("One uppercase letter");
+    if (!/[a-z]/.test(password)) errors.push("One lowercase letter");
+    if (!/[0-9]/.test(password)) errors.push("One number");
+    if (!/[!@#$%^&*]/.test(password))
+      errors.push("One special character (!@#$%^&*)");
+    return errors;
+  };
+
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    NProgress.start();
     setPasswordErrors({});
+
+    // Client-side Strength Validation
+    const strengthErrors = validatePasswordStrength(passwordForm.new_password);
+    if (strengthErrors.length > 0) {
+      setPasswordErrors({ new_password: ["Password is too weak."] });
+      addToast("Password is too weak. Check requirements.", "toast");
+      return;
+    }
+
+    if (passwordForm.new_password !== passwordForm.new_password_confirmation) {
+      setPasswordErrors({
+        new_password_confirmation: ["Passwords do not match."],
+      });
+      addToast("Passwords do not match.", "error");
+      return;
+    }
+
+    NProgress.start();
 
     try {
       const res = await fetch(`${APP_URL}/user/change-password`, {
@@ -205,16 +239,18 @@ export default function Profile() {
       const result = await res.json();
 
       if (res.status === 422) {
-        // Laravel Validation Error
         setPasswordErrors(result.errors || {});
-        toast.error("Password change failed due to invalid data.");
+        addToast("Password change failed. Check inputs.", "error");
         throw new Error("Validation Error");
       }
 
-      if (!res.ok)
-        throw new Error(result.message || "Failed to change password");
+      if (!res.ok) {
+        const errorData = await res.json();
+        addToast(errorData.message, "error");
+        return;
+      }
 
-      toast.success("Password updated successfully!");
+      addToast("Password updated successfully!", "success");
       setPasswordForm({
         current_password: "",
         new_password: "",
@@ -223,7 +259,7 @@ export default function Profile() {
     } catch (err) {
       console.error(err);
       if (err.message !== "Validation Error") {
-        toast.error(err.message || "Failed to change password.");
+        addToast(err.message || "Failed to change password.", "error");
       }
     } finally {
       NProgress.done();
@@ -232,9 +268,8 @@ export default function Profile() {
 
   if (loading || !data || !formData) return <SkeletonProfile />;
 
-  // Style constants
   const baseInputStyle =
-    "w-full p-2 rounded-md bg-neutral-900 border text-white transition-colors";
+    "w-full p-2 rounded-md bg-neutral-900 border text-white transition-colors pr-10"; // Added pr-10 for eye icon
   const readOnlyInputStyle = "cursor-default border-neutral-700 opacity-90";
   const editableInputStyle = "border-neutral-700 focus:border-blue-500";
   const selectTriggerStyle =
@@ -253,12 +288,13 @@ export default function Profile() {
           Manage your account settings and preferences
         </p>
       </div>
+
       <div className="min-h-screen text-white px-6 pb-10 md:px-20">
-        {/* PROFILE INFORMATION SECTION */}
+        {/* PROFILE INFO (Unchanged logic, just truncated for brevity if needed) */}
         <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 mb-10 shadow-lg border border-neutral-800">
+          {/* ... (Avatar & Personal Info Logic remains exactly as provided in your prompt) ... */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <div className="flex items-center gap-4">
-              {/* 📸 CLICKABLE AVATAR SECTION WITH CAMERA ICON */}
               <div
                 className={`relative w-20 h-20 shrink-0 ${
                   editMode ? "cursor-pointer group" : ""
@@ -273,19 +309,15 @@ export default function Profile() {
                       `${data.user.first_name} ${data.user.last_name}`
                     )}`
                   }
-                  alt={`${data.user.first_name}'s avatar`}
+                  alt="avatar"
                   className="w-full h-full rounded-full object-cover border-2 border-neutral-700 transition-opacity"
                 />
-
-                {/* 🛑 CAMERA ICON BADGE */}
                 {editMode && (
                   <div className="absolute bottom-0 right-0 p-1 bg-blue-600 rounded-full border-2 border-neutral-900 shadow-lg group-hover:bg-blue-700 transition-colors">
                     <Camera className="w-4 h-4 text-white" />
                   </div>
                 )}
               </div>
-
-              {/* HIDDEN FILE INPUT */}
               <Input
                 id="avatar-upload"
                 type="file"
@@ -294,7 +326,6 @@ export default function Profile() {
                 className="hidden"
                 ref={fileInputRef}
               />
-              {/* Display avatar error next to the image/info */}
               {editMode && (
                 <ErrorMessage
                   message={
@@ -348,9 +379,7 @@ export default function Profile() {
             )}
           </div>
 
-          {/* FORM FIELDS */}
           <div className="grid md:grid-cols-2 gap-4 mt-6">
-            {/* FIRST NAME */}
             <div>
               <Label className="text-sm text-gray-400">First Name</Label>
               <Input
@@ -372,8 +401,6 @@ export default function Profile() {
                 }
               />
             </div>
-
-            {/* LAST NAME */}
             <div>
               <Label className="text-sm text-gray-400">Last Name</Label>
               <Input
@@ -395,8 +422,6 @@ export default function Profile() {
                 }
               />
             </div>
-
-            {/* EMAIL */}
             <div className={isAdmin ? "md:col-span-2" : ""}>
               <Label className="text-sm text-gray-400">Email</Label>
               <Input
@@ -415,10 +440,8 @@ export default function Profile() {
               />
             </div>
 
-            {/* 🛑 CONDITIONAL RENDERING: Only show for non-admin users */}
             {!isAdmin && (
               <>
-                {/* COURSE SELECT */}
                 <div>
                   <Label className="text-sm text-gray-400">Course</Label>
                   <Select
@@ -435,9 +458,9 @@ export default function Profile() {
                       <SelectGroup>
                         <SelectLabel>Courses</SelectLabel>
                         {["ACT", "BAB", "BSA", "BSAIS", "BSIS", "BSSW"].map(
-                          (course) => (
-                            <SelectItem key={course} value={course}>
-                              {course}
+                          (c) => (
+                            <SelectItem key={c} value={c}>
+                              {c}
                             </SelectItem>
                           )
                         )}
@@ -452,8 +475,6 @@ export default function Profile() {
                     }
                   />
                 </div>
-
-                {/* YEAR LEVEL */}
                 <div>
                   <Label className="text-sm text-gray-400">Year Level</Label>
                   <Select
@@ -490,50 +511,156 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* PASSWORD SECTION */}
         <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 shadow-lg border border-neutral-800">
-          <h2 className="text-lg font-semibold mb-4">Account Security</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Account Security</h2>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-900/20 border border-yellow-900/50 text-yellow-500 text-xs">
+              <Info size={14} />
+              <span>
+                Password must be at least 8 chars with uppercase, number &
+                symbol.
+              </span>
+            </div>
+          </div>
+
+          <div className="sm:hidden flex items-start gap-2 mb-4 px-3 py-2 rounded-lg bg-yellow-900/20 border border-yellow-900/50 text-yellow-500 text-xs">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            <span>
+              Password must be at least 8 chars, include uppercase, lowercase,
+              number & symbol.
+            </span>
+          </div>
 
           <form onSubmit={handlePasswordChange} className="space-y-4">
-            {[
-              { name: "current_password", label: "Current Password" },
-              { name: "new_password", label: "New Password" },
-              {
-                name: "new_password_confirmation",
-                label: "Confirm New Password",
-              },
-            ].map((f) => (
-              <div key={f.name}>
-                <Label className="text-sm text-gray-400">{f.label}</Label>
+            <div>
+              <Label className="text-sm text-gray-400">Current Password</Label>
+              <div className="relative">
                 <Input
-                  type="password"
-                  name={f.name}
+                  type={showCurrentPassword ? "text" : "password"}
+                  name="current_password"
                   required
-                  value={passwordForm[f.name]}
+                  value={passwordForm.current_password}
                   onChange={(e) => {
                     setPasswordErrors((prev) => {
                       const newErrors = { ...prev };
-                      delete newErrors[e.target.name];
+                      delete newErrors.current_password;
                       return newErrors;
                     });
                     setPasswordForm({
                       ...passwordForm,
-                      [e.target.name]: e.target.value,
+                      current_password: e.target.value,
                     });
                   }}
                   className={`${baseInputStyle} ${editableInputStyle}`}
                 />
-                <ErrorMessage
-                  message={
-                    passwordErrors[f.name] ? passwordErrors[f.name][0] : null
-                  }
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
+                </button>
               </div>
-            ))}
+              <ErrorMessage
+                message={
+                  passwordErrors.current_password
+                    ? passwordErrors.current_password[0]
+                    : null
+                }
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-400">New Password</Label>
+              <div className="relative">
+                <Input
+                  type={showNewPassword ? "text" : "password"}
+                  name="new_password"
+                  required
+                  value={passwordForm.new_password}
+                  onChange={(e) => {
+                    setPasswordErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.new_password;
+                      return newErrors;
+                    });
+                    setPasswordForm({
+                      ...passwordForm,
+                      new_password: e.target.value,
+                    });
+                  }}
+                  className={`${baseInputStyle} ${editableInputStyle}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {passwordErrors.new_password && (
+                <div className="text-red-400 text-xs mt-1 italic flex flex-col">
+                  {Array.isArray(passwordErrors.new_password)
+                    ? passwordErrors.new_password.map((msg, i) => (
+                        <span key={i}>{msg}</span>
+                      ))
+                    : passwordErrors.new_password}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-400">
+                Confirm New Password
+              </Label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="new_password_confirmation"
+                  required
+                  value={passwordForm.new_password_confirmation}
+                  onChange={(e) => {
+                    setPasswordErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.new_password_confirmation;
+                      return newErrors;
+                    });
+                    setPasswordForm({
+                      ...passwordForm,
+                      new_password_confirmation: e.target.value,
+                    });
+                  }}
+                  className={`${baseInputStyle} ${editableInputStyle}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
+                </button>
+              </div>
+              <ErrorMessage
+                message={
+                  passwordErrors.new_password_confirmation
+                    ? passwordErrors.new_password_confirmation[0]
+                    : null
+                }
+              />
+            </div>
 
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold w-full sm:w-auto"
             >
               Change Password
             </Button>

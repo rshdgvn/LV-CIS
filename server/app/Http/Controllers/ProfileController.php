@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Services\CloudinaryService;
+use Illuminate\Support\Arr; // Import Arr helper
+use Illuminate\Support\Facades\Hash;
+
 
 class ProfileController extends Controller
 {
@@ -23,7 +25,6 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if (!$user) {
-            Log::warning('Profile fetch failed: no authenticated user found.');
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -50,31 +51,44 @@ class ProfileController extends Controller
         try {
             $user = $request->user();
 
-            $validatedUser = $request->validate([
+            // 1. Define Base Rules (User)
+            $rules = [
                 'first_name' => 'nullable|string|max:255',
                 'last_name'  => 'nullable|string|max:255',
                 'email'      => 'nullable|email|max:255|unique:users,email,' . $user->id,
                 'avatar'     => 'nullable|file|image|max:2048',
-            ]);
+            ];
 
-            if ($request->hasFile('avatar')) {
-                $avatarFile = $request->file('avatar');
-                $avatarUrl  = $this->cloudinary->upload($avatarFile, 'avatars');
-                $validatedUser['avatar'] = $avatarUrl;
+            // 2. Add Member Rules ONLY if not admin
+            if (strtolower($user->role) !== 'admin') {
+                $rules['course'] = 'nullable|string|max:255';
+                $rules['year_level'] = 'nullable|string|max:255';
             }
 
-            $user->update($validatedUser);
+            // 3. Validate ONCE (Prevents partial updates)
+            $validated = $request->validate($rules);
 
+            // 4. Handle Avatar Upload
+            if ($request->hasFile('avatar')) {
+                $validated['avatar'] = $this->cloudinary->upload($request->file('avatar'), 'avatars');
+            }
+
+            // 5. Update User Table
+            // Only take fields relevant to the User model
+            $userData = Arr::only($validated, ['first_name', 'last_name', 'email', 'avatar']);
+            // Filter out nulls only if you don't want to erase data with nulls
+            // $userData = array_filter($userData, function($v) { return !is_null($v); }); 
+
+            $user->update($userData);
+
+            // 6. Update Member Table (If not admin)
             $member = null;
             if (strtolower($user->role) !== 'admin') {
-                $validatedMember = $request->validate([
-                    'course'     => 'nullable|string|max:255',
-                    'year_level' => 'nullable|string|max:255',
-                ]);
+                $memberData = Arr::only($validated, ['course', 'year_level']);
 
                 $member = Member::updateOrCreate(
                     ['user_id' => $user->id],
-                    $validatedMember
+                    $memberData
                 );
             } else {
                 $member = Member::where('user_id', $user->id)->first();
@@ -108,6 +122,7 @@ class ProfileController extends Controller
 
             return response()->json([
                 'error' => 'Something went wrong while updating profile.',
+                'debug' => env('APP_DEBUG') ? $e->getMessage() : null // remove debug in production
             ], 500);
         }
     }

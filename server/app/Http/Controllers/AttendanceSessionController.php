@@ -55,16 +55,19 @@ class AttendanceSessionController extends Controller
                 ];
             });
 
+        // Optional: You might want to filter advisers out of these counts as well
         $totalMembers = $user->clubs()->where('club_id', $clubId)
             ->first()
             ->users()
             ->wherePivot('status', 'approved')
+            ->wherePivot('role', '!=', 'adviser') // Exclude advisers from count
             ->count();
 
         $activeMembers = $user->clubs()->where('club_id', $clubId)
             ->first()
             ->users()
             ->wherePivot('status', 'approved')
+            ->wherePivot('role', '!=', 'adviser') // Exclude advisers from count
             ->wherePivot('activity_status', 'active')
             ->count();
 
@@ -72,6 +75,7 @@ class AttendanceSessionController extends Controller
             ->first()
             ->users()
             ->wherePivot('status', 'approved')
+            ->wherePivot('role', '!=', 'adviser') // Exclude advisers from count
             ->wherePivot('activity_status', 'inactive')
             ->count();
 
@@ -87,8 +91,6 @@ class AttendanceSessionController extends Controller
         ]);
     }
 
-
-
     public function show($id)
     {
         $session = AttendanceSession::with(['club.approvedUsers.member', 'event'])->find($id);
@@ -101,22 +103,28 @@ class AttendanceSessionController extends Controller
             return response()->json(['message' => 'No club or members found'], 404);
         }
 
-        $users = $session->club->approvedUsers->map(function ($user) use ($session) {
-            $attendance = Attendance::where('attendance_session_id', $session->id)
-                ->where('user_id', $user->id)
-                ->first();
+        // Filter out advisers before mapping
+        $users = $session->club->approvedUsers
+            ->filter(function ($user) {
+                // Check the role in the pivot table (club_memberships)
+                return $user->pivot->role !== 'adviser';
+            })
+            ->map(function ($user) use ($session) {
+                $attendance = Attendance::where('attendance_session_id', $session->id)
+                    ->where('user_id', $user->id)
+                    ->first();
 
-            $member = $user->member;
+                $member = $user->member;
 
-            return [
-                'user_id' => $user->id,
-                'name' => $user->first_name . ' ' . $user->last_name,
-                'avatar' => $user->avatar,
-                'course' => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
-                'status' => $attendance?->status ?? null,
-
-            ];
-        });
+                return [
+                    'user_id' => $user->id,
+                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'avatar' => $user->avatar,
+                    'course' => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
+                    'status' => $attendance?->status ?? null,
+                ];
+            })
+            ->values(); // Reset array keys after filtering
 
         return response()->json([
             'id' => $session->id,
@@ -135,7 +143,6 @@ class AttendanceSessionController extends Controller
             'members' => $users,
         ]);
     }
-
 
     public function store(Request $request)
     {
@@ -180,14 +187,12 @@ class AttendanceSessionController extends Controller
             'date' => $request->date,
             'is_open' => true,
         ]);
-        
+
         return response()->json([
             'message' => 'Attendance session created successfully',
             'session' => $session
         ], 201);
     }
-
-    // AttendanceSessionController.php
 
     public function update(Request $request, $id)
     {

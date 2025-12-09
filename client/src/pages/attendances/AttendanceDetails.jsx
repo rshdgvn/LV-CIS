@@ -31,6 +31,7 @@ import {
 import { formatStatus } from "@/utils/formatStatus";
 import { SkeletonAttendanceDetails } from "@/components/skeletons/SkeletonAttendanceDetails";
 import { formatDate } from "@/utils/formatDate";
+import { useToast } from "@/providers/ToastProvider"; // 1. Import useToast
 
 import {
   Pagination,
@@ -42,6 +43,7 @@ import {
 } from "@/components/ui/pagination";
 
 export default function AttendanceDetails() {
+  const { addToast } = useToast(); // 2. Destructure addToast
   const { id } = useParams();
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
@@ -49,7 +51,7 @@ export default function AttendanceDetails() {
   const [savingId, setSavingId] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Adjust as needed
+  const itemsPerPage = 5;
 
   const fetchSession = async () => {
     try {
@@ -61,11 +63,17 @@ export default function AttendanceDetails() {
         },
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
+
       setSession(data);
     } catch (error) {
       console.error("Error fetching session details:", error);
+      // 3. Toast on fetch error
+      addToast(error.message || "Failed to load session details.", "error");
     } finally {
       setLoading(false);
     }
@@ -93,7 +101,12 @@ export default function AttendanceDetails() {
         }
       );
 
-      if (!res.ok) throw new Error("Failed to update status");
+      if (!res.ok) {
+        const errorData = await res.json();
+        addToast(errorData.message, 'error')
+        return;
+      }
+
       setSession((prev) => ({
         ...prev,
         members: prev.members.map((m) =>
@@ -102,7 +115,7 @@ export default function AttendanceDetails() {
       }));
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("❌ Failed to update status");
+      addToast("Failed to update status. Please try again.", "error");
     } finally {
       setSavingId(null);
     }
@@ -160,11 +173,6 @@ export default function AttendanceDetails() {
       <div className="flex flex-col lg:flex-row gap-6 mx-4 lg:mx-10">
         <div className="flex flex-col flex-1">
           <div className="flex justify-end items-center gap-3">
-            <Button className="bg-neutral-900 border border-neutral-800 text-gray-200 hover:bg-neutral-800 rounded-full text-sm flex items-center gap-2 px-4 py-1.5">
-              <Filter className="w-4 h-4" />
-              Filter
-            </Button>
-
             <div className="bg-neutral-900 border border-neutral-800 rounded-full px-4 py-2 text-gray-300 text-sm flex items-center gap-2">
               <Calendar size={14} />
               {formatDate(session.date)}
@@ -252,7 +260,7 @@ export default function AttendanceDetails() {
                                     </SelectItem>
                                     <SelectItem value="late">Late</SelectItem>
                                     <SelectItem value="excuse">
-                                      Excuse
+                                      Excused
                                     </SelectItem>
                                   </SelectContent>
                                 </Select>
@@ -283,7 +291,7 @@ export default function AttendanceDetails() {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-4">
@@ -381,7 +389,9 @@ export default function AttendanceDetails() {
           <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
             <BookMarked className="text-blue-500 w-7 h-7" />
             <div className="text-right">
-              <p className=" text-gray-300 font-medium">Total Student Excuse</p>
+              <p className=" text-gray-300 font-medium">
+                Total Student Excused
+              </p>
               <h3 className="text-2xl font-bold text-start text-white mt-1">
                 {stats.excuse}
               </h3>

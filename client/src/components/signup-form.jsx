@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info } from "lucide-react";
 
 export function SignupForm({
   className,
@@ -31,7 +31,38 @@ export function SignupForm({
   errors = {},
 }) {
   const nav = useNavigate();
-  const [showPassword, setShowPassword] = useState(false); // toggle state
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordValidationErrors, setPasswordValidationErrors] = useState([]);
+  const [isTypingPassword, setIsTypingPassword] = useState(false);
+
+  // --- Password Validation Helper ---
+  const validatePasswordStrength = (password) => {
+    const issues = [];
+    if (!password || password.length < 8) issues.push("At least 8 characters");
+    if (!/[A-Z]/.test(password)) issues.push("One uppercase letter");
+    if (!/[a-z]/.test(password)) issues.push("One lowercase letter");
+    if (!/[0-9]/.test(password)) issues.push("One number");
+    if (!/[!@#$%^&*]/.test(password))
+      issues.push("One special character (!@#$%^&*)");
+    return issues;
+  };
+
+  // --- Local Submit Handler ---
+  const handleLocalSubmit = (e) => {
+    e.preventDefault();
+    setPasswordValidationErrors([]);
+
+    // Check password strength before sending to backend
+    const strengthIssues = validatePasswordStrength(formData.password);
+
+    if (strengthIssues.length > 0) {
+      setPasswordValidationErrors(strengthIssues);
+      return; // Stop submission
+    }
+
+    // Pass to parent handler if valid
+    submitSignup(e);
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
@@ -44,7 +75,7 @@ export function SignupForm({
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={submitSignup}>
+          <form onSubmit={handleLocalSubmit}>
             <div className="grid gap-6">
               {/* First + Last Name */}
               <div className="grid grid-cols-2 gap-3">
@@ -96,25 +127,57 @@ export function SignupForm({
                 )}
               </div>
 
-              {/* Password with toggle */}
+              {/* Password Section */}
               <div className="grid gap-1 relative">
-                <Label>Password</Label>
-                <Input
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-6.5 text-muted-foreground"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-                {errors.password && (
-                  <p className="text-destructive text-xs">{errors.password}</p>
+                <div className="flex items-center justify-between">
+                  <Label>Password</Label>
+                </div>
+
+                <div className="relative">
+                  <Input
+                    name="password"
+                    value={formData.password}
+                    onChange={(e) => {
+                      handleChange(e);
+
+                      // Show info only when typing
+                      setIsTypingPassword(e.target.value.length > 0);
+
+                      // Clear local errors
+                      if (passwordValidationErrors.length > 0)
+                        setPasswordValidationErrors([]);
+                    }}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    className="pr-10"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                {isTypingPassword && (
+                  <div className="flex items-start gap-2 mt-2 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 text-[11px] leading-tight">
+                    <Info size={14} className="shrink-0 mt-0.5" />
+                    <span>
+                      Password must be at least 8 chars, include uppercase,
+                      lowercase, number & symbol.
+                    </span>
+                  </div>
+                )}
+
+                {(errors.password || passwordValidationErrors.length > 0) && (
+                  <div className="text-destructive text-xs mt-1 flex flex-col gap-0.5">
+                    {errors.password && <p>{errors.password}</p>}
+                    {passwordValidationErrors.map((err, i) => (
+                      <span key={i}>• {err}</span>
+                    ))}
+                  </div>
                 )}
               </div>
 

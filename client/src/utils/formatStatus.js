@@ -34,7 +34,7 @@ export function formatStatus(status) {
       };
     case "excuse":
       return {
-        label: "Excuse",
+        label: "Excused",
         color: "text-blue-400",
         bg: "bg-blue-900/30 border border-blue-700/30",
       };

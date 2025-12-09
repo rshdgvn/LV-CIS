@@ -10,10 +10,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { APP_URL } from "@/lib/config";
 import { DatePicker } from "../DatePicker";
-import { formatDate } from "@/utils/formatDate";
+import { useToast } from "@/providers/ToastProvider"; // 1. Import useToast
 
 export default function UpdateAttendanceModal({
   open,
@@ -21,6 +20,7 @@ export default function UpdateAttendanceModal({
   session,
   onSuccess,
 }) {
+  const { addToast } = useToast(); // 2. Destructure addToast
   const [form, setForm] = useState({
     title: "",
     venue: "",
@@ -29,7 +29,6 @@ export default function UpdateAttendanceModal({
 
   useEffect(() => {
     if (session) {
-      console.log(session);
       setForm({
         title: session.title || "",
         venue: session.venue || "",
@@ -47,7 +46,6 @@ export default function UpdateAttendanceModal({
     const year = selectedDate.getFullYear();
     const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
     const day = String(selectedDate.getDate()).padStart(2, "0");
-    console.log(day);
 
     setForm({ ...form, date: `${year}-${month}-${day}` });
   };
@@ -69,20 +67,21 @@ export default function UpdateAttendanceModal({
 
       const data = await res.json();
       if (res.ok) {
+        addToast("Session updated successfully!", "success"); // Success Toast
         onSuccess();
         setOpen(false);
       } else {
-        alert(data.error || "Error updating session");
+        addToast(data.error || "Error updating session", "error"); // Error Toast
       }
     } catch (err) {
       console.error(err);
-      alert("Error updating session");
+      addToast("Error updating session", "error"); // Catch Error Toast
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-neutral-900 border-neutral-800 text-white">
         <DialogHeader>
           <DialogTitle>Update Attendance Session</DialogTitle>
         </DialogHeader>
@@ -90,12 +89,22 @@ export default function UpdateAttendanceModal({
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className="text-sm text-neutral-400">Title</label>
-            <Input name="title" value={form.title} onChange={handleChange} />
+            <Input
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              className="bg-neutral-800 border-neutral-700 text-white"
+            />
           </div>
 
           <div>
             <label className="text-sm text-neutral-400">Venue</label>
-            <Input name="venue" value={form.venue} onChange={handleChange} />
+            <Input
+              name="venue"
+              value={form.venue}
+              onChange={handleChange}
+              className="bg-neutral-800 border-neutral-700 text-white"
+            />
           </div>
 
           <div>
@@ -112,7 +121,7 @@ export default function UpdateAttendanceModal({
               type="button"
               variant="secondary"
               onClick={() => setOpen(false)}
-              className="cursor-pointer"
+              className="cursor-pointer bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white"
             >
               Cancel
             </Button>

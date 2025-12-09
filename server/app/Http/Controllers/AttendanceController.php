@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\ClubMembership;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
@@ -25,6 +26,21 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'status' => 'required|string|in:present,absent,late,excuse',
         ]);
+
+        $authUser = Auth::user();
+
+        $session = AttendanceSession::findOrFail($sessionId);
+        $clubId = $session->club_id;
+
+        $authMembership = ClubMembership::where('user_id', $authUser->id)
+            ->where('club_id', $clubId)
+            ->first();
+
+        if (!$authMembership || $authMembership->role === 'member') {
+            return response()->json([
+                'message' => 'You are not authorized to update attendance.',
+            ], 403);
+        }
 
         $attendance = Attendance::updateOrCreate(
             [
@@ -101,7 +117,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'attendances' => $attendances,
-            'stats'       => $stats,  
+            'stats'       => $stats,
             'user' => [
                 'id'         => $membership?->user->id,
                 'avatar'     => $membership?->user->avatar,

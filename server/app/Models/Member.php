@@ -10,6 +10,7 @@ class Member extends Model
         'user_id',
         'course',
         'year_level',
+        'student_number', 
     ];
 
     public function user()

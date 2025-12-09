@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
   SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import {
   Loader2,
@@ -87,6 +88,14 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+
+    // Client side check for password match (optional but good UX)
+    if (form.password && form.password !== form.password_confirmation) {
+      setErrors({ password_confirmation: ["Passwords do not match"] });
+      addToast("Passwords do not match.", "error");
+      setLoading(false);
+      return;
+    }
 
     const formData = new FormData();
     Object.keys(form).forEach((key) => {
@@ -326,7 +335,9 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
                   onChange={(e) =>
                     handleInputChange("password_confirmation", e.target.value)
                   }
-                  className="bg-neutral-800 border-neutral-700 pr-10"
+                  className={`bg-neutral-800 border-neutral-700 pr-10 ${
+                    errors.password_confirmation ? "border-red-500" : ""
+                  }`}
                   placeholder="••••••"
                 />
                 <button
@@ -341,6 +352,11 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
                   )}
                 </button>
               </div>
+              {errors.password_confirmation && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.password_confirmation[0]}
+                </p>
+              )}
             </div>
           </div>
 
@@ -429,7 +445,7 @@ export default function AddUserModal({ open, setOpen, onSuccess }) {
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
-                    {[1, 2, 3, 4, 5].map((y) => (
+                    {[1, 2, 3, 4].map((y) => (
                       <SelectItem key={y} value={String(y)}>
                         {y} Year
                       </SelectItem>

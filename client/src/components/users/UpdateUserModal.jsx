@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
   SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { Loader2, Eye, EyeOff, Upload, User as UserIcon } from "lucide-react";
 import { APP_URL } from "@/lib/config";
@@ -76,10 +77,40 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
     }
   };
 
+  // --- Password Strength Helper ---
+  const validatePasswordStrength = (password) => {
+    if (!password) return null; // Only validate if password is provided (optional update)
+    const issues = [];
+    if (password.length < 8) issues.push("At least 8 characters");
+    if (!/[A-Z]/.test(password)) issues.push("One uppercase letter");
+    if (!/[a-z]/.test(password)) issues.push("One lowercase letter");
+    if (!/[0-9]/.test(password)) issues.push("One number");
+    if (!/[!@#$%^&*]/.test(password))
+      issues.push("One special character (!@#$%^&*)");
+    return issues;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+
+    // Client-side password validation
+    if (form.password) {
+      const passwordIssues = validatePasswordStrength(form.password);
+      if (passwordIssues && passwordIssues.length > 0) {
+        setErrors({ password: passwordIssues });
+        addToast("Password does not meet requirements.", "error");
+        setLoading(false);
+        return;
+      }
+      if (form.password !== form.password_confirmation) {
+        setErrors({ password_confirmation: ["Passwords do not match."] });
+        addToast("Passwords do not match.", "error");
+        setLoading(false);
+        return;
+      }
+    }
 
     const formData = new FormData();
     formData.append("_method", "PATCH");
@@ -110,18 +141,15 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
       if (!res.ok) {
         if (res.status === 422 && responseData.errors) {
           setErrors(responseData.errors);
-          // 3. Error Toast (Validation)
           addToast("Please check the fields for errors.", "error");
         } else {
           const msg = responseData.message || "Failed to update user.";
           setErrors({ general: msg });
-          // 3. Error Toast (General)
           addToast(msg, "error");
         }
         return;
       }
 
-      // 4. Success Toast
       addToast("User updated successfully!", "success");
       setOpen(false);
       onSuccess?.();
@@ -264,10 +292,17 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {/* Show password validation errors */}
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.password[0]}
-                </p>
+                <div className="text-red-500 text-xs mt-1 flex flex-col">
+                  {Array.isArray(errors.password) ? (
+                    errors.password.map((msg, i) => (
+                      <span key={i}>• {msg}</span>
+                    ))
+                  ) : (
+                    <span>{errors.password}</span>
+                  )}
+                </div>
               )}
             </div>
             <div className="relative">
@@ -300,6 +335,11 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
                   )}
                 </button>
               </div>
+              {errors.password_confirmation && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.password_confirmation[0]}
+                </p>
+              )}
             </div>
           </div>
 
@@ -391,7 +431,7 @@ export default function UpdateUserModal({ user, open, setOpen, onSuccess }) {
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent className="bg-neutral-800 border-neutral-700 text-neutral-100">
-                    {[1, 2, 3, 4, 5].map((y) => (
+                    {[1, 2, 3, 4].map((y) => (
                       <SelectItem key={y} value={String(y)}>
                         {y} Year
                       </SelectItem>

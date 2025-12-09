@@ -14,8 +14,8 @@ import {
   GraduationCap,
   FilterIcon,
   ChevronDown,
-  Search, // Imported Search icon for empty state
-  FolderOpen, // Imported Folder icon for empty state
+  Search,
+  FolderOpen,
 } from "lucide-react";
 
 NProgress.configure({ showSpinner: false });
@@ -24,10 +24,11 @@ const finishProgress = () =>
     NProgress.done();
     setTimeout(resolve, 250);
   });
-  
+
 export default function Clubs() {
   const { token, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [yourClubs, setYourClubs] = useState([]);
   const [pendingClubs, setPendingClubs] = useState([]);
@@ -36,11 +37,16 @@ export default function Clubs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [activeFilter, setActiveFilter] = useState("your");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  // --- 1. Initialize FILTERS from sessionStorage ---
+  const [activeFilter, setActiveFilter] = useState(() => {
+    return sessionStorage.getItem("clubs_active_filter") || "your";
+  });
 
-  const { addToast } = useToast();
+  const [categoryFilter, setCategoryFilter] = useState(() => {
+    return sessionStorage.getItem("clubs_category_filter") || "all";
+  });
+
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
 
   const categoryOptions = [
     { label: "All", value: "all" },
@@ -57,6 +63,19 @@ export default function Clubs() {
     { label: "Pending", value: "pending" },
     { label: "Other Clubs", value: "other" },
   ];
+
+  // --- 2. Persist Tab Filter ---
+  const handleFilterChange = (filter) => {
+    setActiveFilter(filter);
+    sessionStorage.setItem("clubs_active_filter", filter);
+  };
+
+  // --- 3. Persist Category Filter ---
+  const handleCategorySelect = (value) => {
+    setCategoryFilter(value);
+    sessionStorage.setItem("clubs_category_filter", value);
+    setShowCategoryMenu(false);
+  };
 
   const fetchClubs = async () => {
     if (!token) return;
@@ -127,7 +146,7 @@ export default function Clubs() {
 
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
-      await fetchClubs(false);
+      await fetchClubs();
       window.dispatchEvent(new Event("pendingClubsUpdated"));
 
       await finishProgress();
@@ -164,7 +183,7 @@ export default function Clubs() {
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
 
-      await fetchClubs(false);
+      await fetchClubs();
       window.dispatchEvent(new Event("clubsUpdated"));
       await finishProgress();
 
@@ -180,16 +199,10 @@ export default function Clubs() {
 
   const handleEnterClub = (clubId) => {
     if (!token) {
-      addToast("Please log in first.", "success");
+      addToast("Please log in first.", "error");
       return;
     }
     navigate(`/club/${clubId}`);
-  };
-
-  const handleFilterChange = (filter) => setActiveFilter(filter);
-  const handleCategorySelect = (value) => {
-    setCategoryFilter(value);
-    setShowCategoryMenu(false);
   };
 
   const filterByCategory = (data) => {
@@ -322,7 +335,10 @@ export default function Clubs() {
                 </p>
                 {activeFilter === "your" && (
                   <button
-                    onClick={() => setActiveFilter("other")}
+                    onClick={() => {
+                      handleFilterChange("other");
+                      handleCategorySelect("all");
+                    }}
                     className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
                   >
                     Browse Clubs

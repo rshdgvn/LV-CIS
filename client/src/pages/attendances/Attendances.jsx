@@ -19,12 +19,15 @@ import {
   Edit,
   Trash2,
   MoreVertical,
+  User,
+  UserCheck,
+  UserX,
+  FolderOpen,
 } from "lucide-react";
 import { APP_URL } from "@/lib/config";
 import { useNavigate } from "react-router-dom";
 import { SkeletonAttendances } from "@/components/skeletons/SkeletonAttendances";
 import { useClub } from "@/contexts/ClubContext";
-import { User, UserCheck, UserX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -54,8 +57,10 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { formatClubCategory } from "@/utils/formatClubCategory";
+import { useToast } from "@/providers/ToastProvider";
 
 export default function Attendances() {
+  const { addToast } = useToast();
   const { clubs, loading: clubsLoading } = useClub();
   const [sessions, setSessions] = useState([]);
   const [analytics, setAnalytics] = useState([]);
@@ -72,11 +77,39 @@ export default function Attendances() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
+  // --- UPDATED: Persist Club Selection Logic ---
   useEffect(() => {
     if (!clubs || clubs.length === 0) return;
-    const club = clubs.find((c) => c.category === "academics") || clubs[0];
-    setSelectedClub(club);
+
+    // 1. Try to get saved club ID from sessionStorage
+    const savedClubId = sessionStorage.getItem("selected_attendance_club_id");
+
+    // 2. Check if the saved ID actually exists in the user's current clubs list
+    const savedClub = savedClubId
+      ? clubs.find((c) => String(c.id) === String(savedClubId))
+      : null;
+
+    if (savedClub) {
+      setSelectedClub(savedClub);
+    } else {
+      // 3. Fallback to default logic if no save found or club no longer exists
+      const defaultClub =
+        clubs.find((c) => c.category === "academics") || clubs[0];
+      setSelectedClub(defaultClub);
+      // Save the default to session so it sticks immediately
+      if (defaultClub) {
+        sessionStorage.setItem("selected_attendance_club_id", defaultClub.id);
+      }
+    }
   }, [clubs]);
+
+  // Helper function to handle switching clubs
+  const handleSwitchClub = (club) => {
+    setSelectedClub(club);
+    sessionStorage.setItem("selected_attendance_club_id", club.id); // Save to storage
+    setSwitchOpen(false);
+  };
+  // --------------------------------------------
 
   const fetchSessions = async () => {
     if (!selectedClub) return;
@@ -101,6 +134,7 @@ export default function Attendances() {
       setAnalytics(data.analytics || []);
     } catch (err) {
       console.error(err);
+      addToast("Failed to fetch sessions.", "error");
     } finally {
       setLoading(false);
     }
@@ -108,7 +142,6 @@ export default function Attendances() {
 
   useEffect(() => {
     fetchSessions();
-    console.log(sessions);
   }, [selectedClub]);
 
   const filteredSessions = sessions.filter((session) => {
@@ -138,21 +171,43 @@ export default function Attendances() {
 
       if (!res.ok) throw new Error(res.status);
 
+      addToast("Session deleted successfully", "success");
       fetchSessions();
     } catch (err) {
       console.error(err);
-      alert("Failed to delete session");
+      addToast("Failed to delete session", "error");
     }
   };
 
-  if (loading || clubsLoading) return <SkeletonAttendances />;
-
-  if (!selectedClub)
+  if (loading || clubsLoading)
     return (
-      <div className="text-center text-neutral-400 py-10">
-        You are not part of any club.
+      <div className="px-8 py-6 w-full h-screen">
+        <SkeletonAttendances />
       </div>
     );
+
+  if (!clubs || clubs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
+        <div className="bg-neutral-900 p-4 rounded-full mb-4 border border-neutral-800">
+          <FolderOpen className="w-10 h-10 text-neutral-500" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">No Clubs Found</h2>
+        <p className="text-neutral-400 max-w-md mb-6">
+          You are not a member of any club yet. Join a club to start managing
+          attendances.
+        </p>
+        <Button
+          onClick={() => nav("/clubs")}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          Browse Clubs
+        </Button>
+      </div>
+    );
+  }
+
+  if (!selectedClub) return null;
 
   return (
     <div className="px-8 py-6 text-neutral-100 w-full flex flex-col gap-6">
@@ -183,7 +238,7 @@ export default function Attendances() {
                   </Button>
                 </DialogTrigger>
 
-                <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-neutral-900">
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-neutral-900 border-neutral-800 text-white">
                   <div className="sticky top-0 bg-neutral-900 border-b border-neutral-800 px-6 py-4 z-10">
                     <DialogHeader>
                       <DialogTitle className="text-lg font-semibold">
@@ -196,18 +251,16 @@ export default function Attendances() {
                     {clubs.map((club) => (
                       <button
                         key={club.id}
-                        onClick={() => {
-                          setSelectedClub(club);
-                          setSwitchOpen(false);
-                        }}
+                        // UPDATED: Use handleSwitchClub
+                        onClick={() => handleSwitchClub(club)}
                         className={`
-            w-full flex items-center gap-4 p-3 rounded-xl transition-all border
-            ${
-              selectedClub?.id === club.id
-                ? "border-blue-500 bg-blue-500/10 shadow-lg"
-                : "border-neutral-800 hover:bg-neutral-800/70"
-            }
-          `}
+                            w-full flex items-center gap-4 p-3 rounded-xl transition-all border text-left
+                            ${
+                              selectedClub?.id === club.id
+                                ? "border-blue-500 bg-blue-500/10 shadow-lg"
+                                : "border-neutral-800 hover:bg-neutral-800/70"
+                            }
+                        `}
                       >
                         <img
                           src={
@@ -263,13 +316,6 @@ export default function Attendances() {
 
               <div className="flex items-center gap-3">
                 <Button
-                  variant="secondary"
-                  className="bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-neutral-200 rounded-full px-5 py-2 flex items-center gap-2 cursor-pointer"
-                >
-                  <Filter className="w-4 h-4" /> Filter
-                </Button>
-
-                <Button
                   onClick={() => setAddModalOpen(true)}
                   className="bg-blue-950 border border-neutral-800 hover:bg-blue-900 text-neutral-200 rounded-lg px-5 py-2 flex items-center gap-2 cursor-pointer"
                 >
@@ -278,17 +324,17 @@ export default function Attendances() {
               </div>
             </div>
 
-            <Card className="border border-neutral-800 rounded-2xl mt-3 p-0">
+            <Card className="border border-neutral-800 rounded-2xl mt-3 p-0 shadow-lg">
               <Table className="bg-neutral-800/50 rounded-2xl w-full table-fixed">
                 <TableHeader>
-                  <TableRow className="text-center">
-                    <TableHead className="px-6 py-3 text-center w-1/3">
+                  <TableRow className="text-center border-neutral-700">
+                    <TableHead className="px-6 py-3 text-center w-1/3 text-neutral-300">
                       Event
                     </TableHead>
-                    <TableHead className="px-6 py-3 text-center w-1/3">
+                    <TableHead className="px-6 py-3 text-center w-1/3 text-neutral-300">
                       Venue
                     </TableHead>
-                    <TableHead className="px-6 py-3 text-center w-1/3">
+                    <TableHead className="px-6 py-3 text-center w-1/3 text-neutral-300">
                       Date
                     </TableHead>
                   </TableRow>
@@ -297,58 +343,71 @@ export default function Attendances() {
                 <TableBody className="bg-neutral-900">
                   {paginatedSessions.length > 0 ? (
                     paginatedSessions.map((session) => (
-                      <tr
+                      <TableRow
                         key={session.id}
-                        className="border-neutral-800/70 border-y-2 hover:bg-neutral-800 transition relative cursor-pointer"
+                        className="border-b border-neutral-800/70 hover:bg-neutral-800 transition relative"
                       >
-                        <td
-                          className="px-6 py-4 text-neutral-200 text-center"
+                        <TableCell
+                          className="px-6 py-4 text-neutral-200 text-center font-medium cursor-pointer hover:text-blue-400"
                           onClick={() => nav(`/attendance/${session.id}`)}
                         >
                           {session.event?.title || session.title || "N/A"}
-                        </td>
+                        </TableCell>
 
-                        <td className="px-6 py-4 text-neutral-400 text-center">
+                        <TableCell className="px-6 py-4 text-neutral-400 text-center">
                           {session.venue || "N/A"}
-                        </td>
+                        </TableCell>
 
-                        <td className="px-6 py-4 text-neutral-400 text-center">
+                        <TableCell className="px-6 py-4 text-neutral-400 text-center relative group">
                           {formatDate(session.date)}
-                        </td>
 
-                        <td className="absolute right-4 top-1/2 -translate-y-1/2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger>
-                              <MoreVertical className="text-neutral-400 hover:text-white w-5 h-5 cursor-pointer" />
-                            </DropdownMenuTrigger>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
 
-                            <DropdownMenuContent className="bg-neutral-900 border border-neutral-700 text-neutral-200">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedSession(session);
-                                  setUpdateModalOpen(true);
-                                }}
-                                className="cursor-pointer flex items-center gap-2"
+                              <DropdownMenuContent
+                                align="end"
+                                className="bg-neutral-900 border border-neutral-700 text-neutral-200"
                               >
-                                <Edit size={14} /> Edit
-                              </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedSession(session);
+                                    setUpdateModalOpen(true);
+                                  }}
+                                  className="cursor-pointer flex items-center gap-2 focus:bg-neutral-800 focus:text-white"
+                                >
+                                  <Edit size={14} /> Edit
+                                </DropdownMenuItem>
 
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(session.id)}
-                                className="cursor-pointer text-red-400 focus:text-red-500 flex items-center gap-2"
-                              >
-                                <Trash2 size={14} /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(session.id);
+                                  }}
+                                  className="cursor-pointer text-red-400 focus:bg-red-900/20 focus:text-red-400 flex items-center gap-2"
+                                >
+                                  <Trash2 size={14} /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
                         colSpan="3"
-                        className="text-center py-6 text-neutral-500 italic"
+                        className="text-center py-8 text-neutral-500 italic"
                       >
                         No attendance sessions found.
                       </TableCell>
@@ -363,7 +422,6 @@ export default function Attendances() {
               <div className="flex justify-center mt-4">
                 <Pagination>
                   <PaginationContent>
-                    {/* Previous */}
                     <PaginationItem>
                       <PaginationPrevious
                         href="#"
@@ -374,12 +432,11 @@ export default function Attendances() {
                         className={
                           currentPage === 1
                             ? "opacity-50 pointer-events-none"
-                            : ""
+                            : "text-neutral-400 hover:text-white"
                         }
                       />
                     </PaginationItem>
 
-                    {/* Page Numbers */}
                     {Array.from({ length: totalPages }).map((_, index) => {
                       const pageNum = index + 1;
 
@@ -392,6 +449,11 @@ export default function Attendances() {
                               e.preventDefault();
                               setCurrentPage(pageNum);
                             }}
+                            className={
+                              currentPage === pageNum
+                                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                : "text-neutral-400 hover:text-white"
+                            }
                           >
                             {pageNum}
                           </PaginationLink>
@@ -399,7 +461,6 @@ export default function Attendances() {
                       );
                     })}
 
-                    {/* Next */}
                     <PaginationItem>
                       <PaginationNext
                         href="#"
@@ -410,7 +471,7 @@ export default function Attendances() {
                         className={
                           currentPage === totalPages
                             ? "opacity-50 pointer-events-none"
-                            : ""
+                            : "text-neutral-400 hover:text-white"
                         }
                       />
                     </PaginationItem>
@@ -424,30 +485,36 @@ export default function Attendances() {
             <SmallCalendar />
             <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
               <User className="text-blue-500 w-7 h-7" />
-              <div className="text-right">
-                <p className=" text-gray-300 font-medium">Total Club Members</p>
-                <h3 className="text-2xl font-bold text-start text-white mt-1">
-                  {analytics.total_members}
+              <div className="text-right flex-1">
+                <p className=" text-gray-300 font-medium text-sm">
+                  Total Members
+                </p>
+                <h3 className="text-2xl font-bold text-end text-white mt-1">
+                  {analytics.total_members || 0}
                 </h3>
               </div>
             </Card>
 
             <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
               <UserCheck className="text-green-500 w-7 h-7" />
-              <div className="text-right">
-                <p className=" text-gray-300 font-medium">Active Members</p>
-                <h3 className="text-2xl font-bold text-start text-white mt-1">
-                  {analytics.active_members}
+              <div className="text-right flex-1">
+                <p className=" text-gray-300 font-medium text-sm">
+                  Active Members
+                </p>
+                <h3 className="text-2xl font-bold text-end text-white mt-1">
+                  {analytics.active_members || 0}
                 </h3>
               </div>
             </Card>
 
             <Card className="bg-neutral-900/50 border-neutral-800 rounded-2xl shadow-sm p-3 flex-none flex flex-row items-center h-24">
               <UserX className="text-red-500 w-7 h-7" />
-              <div className="text-right">
-                <p className=" text-gray-300 font-medium">Inactive Members</p>
-                <h3 className="text-2xl font-bold text-start text-white mt-1">
-                  {analytics.inactive_members}
+              <div className="text-right flex-1">
+                <p className=" text-gray-300 font-medium text-sm">
+                  Inactive Members
+                </p>
+                <h3 className="text-2xl font-bold text-end text-white mt-1">
+                  {analytics.inactive_members || 0}
                 </h3>
               </div>
             </Card>
@@ -455,7 +522,6 @@ export default function Attendances() {
         </div>
       </div>
 
-      {/* MODALS */}
       <AddAttendanceModal
         open={addModalOpen}
         setOpen={setAddModalOpen}

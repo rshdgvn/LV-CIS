@@ -37,7 +37,7 @@ export default function Clubs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- 1. Initialize FILTERS from sessionStorage ---
+  // --- Filters saved in sessionStorage ---
   const [activeFilter, setActiveFilter] = useState(() => {
     return sessionStorage.getItem("clubs_active_filter") || "your";
   });
@@ -64,22 +64,43 @@ export default function Clubs() {
     { label: "Other Clubs", value: "other" },
   ];
 
-  // --- 2. Persist Tab Filter ---
   const handleFilterChange = (filter) => {
     setActiveFilter(filter);
     sessionStorage.setItem("clubs_active_filter", filter);
   };
 
-  // --- 3. Persist Category Filter ---
   const handleCategorySelect = (value) => {
     setCategoryFilter(value);
     sessionStorage.setItem("clubs_category_filter", value);
     setShowCategoryMenu(false);
   };
 
+  // ----------------------------
+  //       🚀 LOAD FROM CACHE
+  // ----------------------------
+  useEffect(() => {
+    const cachedYour = sessionStorage.getItem("yourClubs");
+    const cachedPending = sessionStorage.getItem("pendingClubs");
+    const cachedOther = sessionStorage.getItem("otherClubs");
+
+    if (cachedYour || cachedPending || cachedOther) {
+      setYourClubs(JSON.parse(cachedYour || "[]"));
+      setPendingClubs(JSON.parse(cachedPending || "[]"));
+      setOtherClubs(JSON.parse(cachedOther || "[]"));
+      setLoading(false); // show cached instantly
+    }
+  }, []);
+
+  // ----------------------------
+  //     🚀 FETCH & SAVE CACHE
+  // ----------------------------
   const fetchClubs = async () => {
     if (!token) return;
-    setLoading(true);
+
+    if (!sessionStorage.getItem("yourClubs")) {
+      setLoading(true);
+    }
+
     NProgress.start();
 
     const headers = {
@@ -107,6 +128,11 @@ export default function Clubs() {
       setYourClubs(yourData);
       setPendingClubs(pendingData);
       setOtherClubs(otherData);
+
+      // Save to sessionStorage
+      sessionStorage.setItem("yourClubs", JSON.stringify(yourData));
+      sessionStorage.setItem("pendingClubs", JSON.stringify(pendingData));
+      sessionStorage.setItem("otherClubs", JSON.stringify(otherData));
     } catch (err) {
       console.error(err);
       setError("Failed to load clubs.");
@@ -122,11 +148,9 @@ export default function Clubs() {
     fetchClubs();
   }, [token]);
 
+  // JOIN, CANCEL, ENTER CLUB ----------------
   const handleJoinClub = async (clubId, role = "member") => {
-    if (!token) {
-      addToast("Please log in first", "error");
-      return;
-    }
+    if (!token) return addToast("Please log in first", "error");
 
     try {
       NProgress.start();
@@ -144,19 +168,17 @@ export default function Clubs() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to join club.");
 
+      // Clear cache
       sessionStorage.removeItem("yourClubs");
       sessionStorage.removeItem("otherClubs");
+
       await fetchClubs();
       window.dispatchEvent(new Event("pendingClubsUpdated"));
-
       await finishProgress();
       addToast("Application Request Sent!", "success");
     } catch (err) {
       await finishProgress();
-      addToast(
-        err.message || "An error occurred while joining the club.",
-        "error"
-      );
+      addToast(err.message, "error");
     }
   };
 
@@ -187,24 +209,19 @@ export default function Clubs() {
       window.dispatchEvent(new Event("clubsUpdated"));
       await finishProgress();
 
-      addToast(
-        data.message || "Your club application has been cancelled.",
-        "success"
-      );
+      addToast(data.message, "success");
     } catch (err) {
       await finishProgress();
-      addToast(err.message || "An error occurred while cancelling.", "error");
+      addToast(err.message, "error");
     }
   };
 
   const handleEnterClub = (clubId) => {
-    if (!token) {
-      addToast("Please log in first.", "error");
-      return;
-    }
+    if (!token) return addToast("Please log in first.", "error");
     navigate(`/club/${clubId}`);
   };
 
+  // FILTERING -----------------------------
   const filterByCategory = (data) => {
     if (categoryFilter === "all") return data;
     return data.filter((c) => c.category === categoryFilter);
@@ -237,12 +254,14 @@ export default function Clubs() {
   const displayedClubs = getDisplayedClubs();
   const status = getStatus();
 
+  // UI -----------------------------------
   return (
     <div>
       {loading ? (
         <SkeletonClubPage filtersCount={filterOptions.length} cardsCount={8} />
       ) : (
         <>
+          {/* HEADER */}
           <div className="flex flex-col gap-2 my-8 mx-4">
             <div className="flex flex-row items-center gap-5">
               <div className="shrink-0 p-2 bg-blue-900/30 rounded-lg">
@@ -255,6 +274,7 @@ export default function Clubs() {
             </p>
           </div>
 
+          {/* FILTERS */}
           <div className="flex flex-wrap items-center gap-3 my-3 ml-5">
             {!isAdmin &&
               filterOptions.map((filter) => (
@@ -271,14 +291,17 @@ export default function Clubs() {
                 </button>
               ))}
 
+            {/* Category Filter */}
             <div className="relative">
               <button
                 onClick={() => setShowCategoryMenu((prev) => !prev)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-900 text-white text-sm font-medium shadow-md hover:bg-blue-950 transition cursor-pointer"
               >
                 <FilterIcon className="w-4 h-4" />
-                {categoryOptions.find((opt) => opt.value === categoryFilter)
-                  ?.label || "All"}
+                {
+                  categoryOptions.find((opt) => opt.value === categoryFilter)
+                    ?.label
+                }
                 <ChevronDown className="w-4 h-4" />
               </button>
 
@@ -298,6 +321,7 @@ export default function Clubs() {
             </div>
           </div>
 
+          {/* CLUB LIST */}
           <div className="min-h-screen p-6 text-white">
             {error ? (
               <p className="text-red-400 text-center">{error}</p>
@@ -310,7 +334,7 @@ export default function Clubs() {
                 onCancel={handleCancel}
               />
             ) : (
-              // --- EMPTY STATE HANDLER ---
+              // EMPTY STATE
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 <div className="bg-neutral-900 p-4 rounded-full mb-4 border border-neutral-800">
                   {activeFilter === "your" ? (

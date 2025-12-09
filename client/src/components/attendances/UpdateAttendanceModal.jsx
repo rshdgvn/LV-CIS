@@ -12,7 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { APP_URL } from "@/lib/config";
 import { DatePicker } from "../DatePicker";
-import { useToast } from "@/providers/ToastProvider"; // 1. Import useToast
+import { useToast } from "@/providers/ToastProvider";
+import { Loader2 } from "lucide-react"; // Import Loader
 
 export default function UpdateAttendanceModal({
   open,
@@ -20,12 +21,13 @@ export default function UpdateAttendanceModal({
   session,
   onSuccess,
 }) {
-  const { addToast } = useToast(); // 2. Destructure addToast
+  const { addToast } = useToast();
   const [form, setForm] = useState({
     title: "",
     venue: "",
     date: "",
   });
+  const [loading, setLoading] = useState(false); // Loading state
 
   useEffect(() => {
     if (session) {
@@ -54,6 +56,8 @@ export default function UpdateAttendanceModal({
     e.preventDefault();
     if (!session) return;
 
+    setLoading(true); // Start loading
+
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${APP_URL}/attendance-sessions/${session.id}`, {
@@ -67,15 +71,17 @@ export default function UpdateAttendanceModal({
 
       const data = await res.json();
       if (res.ok) {
-        addToast("Session updated successfully!", "success"); // Success Toast
+        addToast("Session updated successfully!", "success");
         onSuccess();
         setOpen(false);
       } else {
-        addToast(data.error || "Error updating session", "error"); // Error Toast
+        addToast(data.error || "Error updating session", "error");
       }
     } catch (err) {
       console.error(err);
-      addToast("Error updating session", "error"); // Catch Error Toast
+      addToast("Error updating session", "error");
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -122,14 +128,23 @@ export default function UpdateAttendanceModal({
               variant="secondary"
               onClick={() => setOpen(false)}
               className="cursor-pointer bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white"
+              disabled={loading} // Disable cancel on load
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-blue-900 hover:bg-blue-950 cursor-pointer text-white"
+              disabled={loading} // Disable submit on load
+              className="bg-blue-900 hover:bg-blue-950 cursor-pointer text-white min-w-[80px]"
             >
-              Update
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update"
+              )}
             </Button>
           </DialogFooter>
         </form>

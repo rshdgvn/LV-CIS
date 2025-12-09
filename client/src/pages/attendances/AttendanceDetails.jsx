@@ -51,7 +51,7 @@ export default function AttendanceDetails() {
   const [savingId, setSavingId] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 7;
 
   const fetchSession = async () => {
     try {
@@ -115,6 +115,7 @@ export default function AttendanceDetails() {
           m.user_id === userId ? { ...m, status: newStatus } : m
         ),
       }));
+      addToast('Status updated successfully!', 'success')
     } catch (error) {
       console.error("Error updating status:", error);
       addToast("Failed to update status. Please try again.", "error");

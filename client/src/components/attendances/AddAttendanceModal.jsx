@@ -12,7 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { APP_URL } from "@/lib/config";
 import { DatePicker } from "../DatePicker";
-import { useToast } from "@/providers/ToastProvider"; // 1. Import useToast
+import { useToast } from "@/providers/ToastProvider";
+import { Loader2 } from "lucide-react"; // 1. Import Loader
 
 export default function AddAttendanceModal({
   open,
@@ -20,12 +21,13 @@ export default function AddAttendanceModal({
   clubId,
   onSuccess,
 }) {
-  const { addToast } = useToast(); // 2. Destructure addToast
+  const { addToast } = useToast();
   const [form, setForm] = useState({
     title: "",
     venue: "",
     date: "",
   });
+  const [loading, setLoading] = useState(false); // 2. Add loading state
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,6 +45,7 @@ export default function AddAttendanceModal({
 
   const submit = async (e) => {
     e.preventDefault();
+    setLoading(true); // 3. Start loading
     const token = localStorage.getItem("token");
 
     try {
@@ -61,7 +64,7 @@ export default function AddAttendanceModal({
       const data = await res.json();
 
       if (res.ok) {
-        addToast("Session created successfully!", "success"); // Success Toast
+        addToast("Session created successfully!", "success");
         onSuccess();
         setOpen(false);
         setForm({
@@ -70,11 +73,13 @@ export default function AddAttendanceModal({
           date: "",
         });
       } else {
-        addToast(data.error || "Error creating session", "error"); // Error Toast
+        addToast(data.error || "Error creating session", "error");
       }
     } catch (err) {
       console.error(err);
-      addToast("Error creating session", "error"); // Catch Error Toast
+      addToast("Error creating session", "error");
+    } finally {
+      setLoading(false); // 4. Stop loading in finally block
     }
   };
 
@@ -109,7 +114,7 @@ export default function AddAttendanceModal({
           <div>
             <label className="text-sm text-neutral-400">Date</label>
             <DatePicker
-              value={form.date} // Fixed prop name from 'selected' to 'value' to match typical DatePicker
+              value={form.date}
               onChange={handleDateChange}
               placeholder="Select date"
             />
@@ -121,14 +126,23 @@ export default function AddAttendanceModal({
               variant="secondary"
               onClick={() => setOpen(false)}
               className="cursor-pointer bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white"
+              disabled={loading} // Disable cancel while loading
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-blue-900 hover:bg-blue-950 text-white cursor-pointer"
+              disabled={loading} 
+              className="bg-blue-900 hover:bg-blue-950 text-white cursor-pointer min-w-[80px]"
             >
-              Create
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create"
+              )}
             </Button>
           </DialogFooter>
         </form>

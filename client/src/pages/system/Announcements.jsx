@@ -450,35 +450,37 @@ export default function Announcements() {
 
                 {/* 3. Actions - Only show if user has permission (Admin or maybe Officer of that club) */}
                 {/* For now, simplified to allow actions, but backend should protect delete/update */}
-                <div className="flex items-center gap-2 sm:self-center self-end mt-2 sm:mt-0">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white"
+                {admin && (
+                  <div className="flex items-center gap-2 sm:self-center self-end mt-2 sm:mt-0">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 p-0 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white"
+                        >
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-neutral-900 border-neutral-800"
                       >
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="bg-neutral-900 border-neutral-800"
-                    >
-                      <DropdownMenuItem
-                        onClick={() => openEditModal(item)}
-                        className="text-neutral-300 focus:bg-neutral-800 focus:text-white cursor-pointer"
-                      >
-                        <Edit className="mr-2 h-4 w-4" /> Edit Post
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDelete(item.id)}
-                        className="text-red-400 focus:bg-red-900/20 focus:text-red-400 cursor-pointer"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Post
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                        <DropdownMenuItem
+                          onClick={() => openEditModal(item)}
+                          className="text-neutral-300 focus:bg-neutral-800 focus:text-white cursor-pointer"
+                        >
+                          <Edit className="mr-2 h-4 w-4" /> Edit Post
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(item.id)}
+                          className="text-red-400 focus:bg-red-900/20 focus:text-red-400 cursor-pointer"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
 
                 {/* Accent Line on Left (Gray if past) */}
                 <div

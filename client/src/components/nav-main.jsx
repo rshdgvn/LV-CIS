@@ -13,11 +13,11 @@ export function NavMain({ items }) {
 
   return (
     <SidebarMenu className="flex flex-col gap-3 mt-5 pl-2">
-      {items.map(({ title, url, icon: Icon }) => {
+      {items.map(({ key, title, url, icon: Icon }) => {
         const isActive = location.pathname === url;
 
         return (
-          <SidebarMenuItem key={title} className="w-full pr-2">
+          <SidebarMenuItem key={key} className="w-full pr-2">
             <SidebarMenuButton
               tooltip={title}
               onClick={() => navigate(url)}

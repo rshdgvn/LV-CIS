@@ -25,7 +25,6 @@ export default function UpcomingEventsList() {
         });
         if (res.ok) {
           const json = await res.json();
-          console.log(json);
           setEvents(json.data);
         }
       } catch (err) {

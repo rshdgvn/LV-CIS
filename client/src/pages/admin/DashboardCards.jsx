@@ -66,7 +66,7 @@ export default function DashboardCards({ cards }) {
         >
           <div className="flex items-start justify-between mb-4">
             <p className="text-md font-semibold">{c.title}</p>
-            <MoreHorizontal size={18} className="text-[#9a9a9a]" />
+            {/* <MoreHorizontal size={18} className="text-[#9a9a9a]" /> */}
           </div>
 
           {/* ✅ COUNTING ANIMATION FROM 0 */}

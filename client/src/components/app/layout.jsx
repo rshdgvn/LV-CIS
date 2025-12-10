@@ -5,7 +5,7 @@ import logo from "../../assets/lvcc-logo.png";
 import { useToast } from "@/providers/ToastProvider";
 
 export default function Layout({ children }) {
-  const { addToast } = useToast()
+  const { addToast } = useToast();
 
   return (
     <SidebarProvider
@@ -16,7 +16,6 @@ export default function Layout({ children }) {
     >
       <AppSidebar />
 
-      {/* Header */}
       <div
         className="fixed flex top-0 left-0 right-0 h-20 bg-neutral-900 border-b border-neutral-800 
              items-center justify-between z-60 md:invisible"
@@ -37,15 +36,15 @@ export default function Layout({ children }) {
 
         <SidebarTrigger className="mx-3 relative z-70 cursor-pointer" />
       </div>
-
+      {/* <div className="flex items-center mb-0 justify-between">
+        <SidebarTrigger className="mx-3 relative z-70 cursor-pointer hidden md:block" />
+        <Bell
+          className="mr-5 relative z-70 cursor-pointer hidden md:block"
+          onClick={() => addToast("Under development")}
+        />
+      </div> */}
       <div className="relative flex-1">
-        <main className="m-4 pt-16 md:pt-0">
-          <div className="flex items-center mb-0 justify-between">
-            <SidebarTrigger className="mx-3 relative z-70 cursor-pointer hidden md:block" />
-            <Bell className="mr-5 relative z-70 cursor-pointer hidden md:block" onClick={() => addToast('Under development', )} />
-          </div>
-          {children}
-        </main>
+        <main className="m-4 pt-16 md:pt-0">{children}</main>
       </div>
     </SidebarProvider>
   );

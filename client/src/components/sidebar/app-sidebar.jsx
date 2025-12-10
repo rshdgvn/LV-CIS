@@ -35,18 +35,23 @@ export function AppSidebar(props) {
   const data = {
     navMain: [
       {
+        key: 1,
         title: admin ? "Admin Dashboard" : "Dashboard",
         url: admin ? "/admin/dashboard" : "/dashboard",
         icon: House,
-        isActive: true,
       },
-      { title: "Attendance", url: "/attendance", icon: UserRoundCheck },
-      { title: "Clubs", url: "/clubs", icon: GraduationCap },
-      { title: "Events", url: "/events", icon: CalendarCheck },
-      { title: "Profile", url: "/profile", icon: User },
-      { title: "Annoucements", url: "/announcements", icon: Megaphone },
-      (admin && { title: "Users", url: "/users", icon: Users }),
-    ],
+      { key: 2, title: "Attendance", url: "/attendance", icon: UserRoundCheck },
+      { key: 3, title: "Clubs", url: "/clubs", icon: GraduationCap },
+      { key: 4, title: "Events", url: "/events", icon: CalendarCheck },
+      { key: 5, title: "Profile", url: "/profile", icon: User },
+      {
+        key: 6,
+        title: "Announcements",
+        url: "/announcements",
+        icon: Megaphone,
+      },
+      admin && { key: 7, title: "Users", url: "/users", icon: Users },
+    ].filter(Boolean), // <-- removes false values
   };
 
   return (

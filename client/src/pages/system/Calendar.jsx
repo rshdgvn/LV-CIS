@@ -13,14 +13,7 @@ import {
   parseISO,
 } from "date-fns";
 import { APP_URL } from "@/lib/config";
-import {
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  Trash2, // Icon for delete
-  Clock,
-  Loader2,
-} from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Trash2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,9 +25,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { SkeletonAttendances } from "@/components/skeletons/SkeletonAttendances";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+
+// --- CUSTOM IMPORTS ---
+import { useToast } from "@/providers/ToastProvider"; // Imported Toast
+import { AlertDialogTemplate } from "@/components/AlertDialogTemplate"; // Imported Alert Template
 
 // --- UTILITY: Theme Classes ---
 const themeClasses = {
@@ -46,7 +42,6 @@ const themeClasses = {
     "bg-purple-500/10 text-purple-300 border-purple-500/30 hover:bg-purple-500/20",
 };
 
-// Helper to format date for input[type="datetime-local"]
 const formatForInput = (dateString) => {
   if (!dateString) return "";
   return format(new Date(dateString), "yyyy-MM-dd'T'HH:mm");
@@ -55,6 +50,9 @@ const formatForInput = (dateString) => {
 const Calendar = () => {
   const { user } = useAuth();
   const admin = user.role == "admin";
+  const { addToast } = useToast(); // Initialize Toast
+  const nav = useNavigate();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +93,7 @@ const Calendar = () => {
       setEvents(data);
     } catch (err) {
       console.error("Failed to fetch events:", err);
+      addToast("Failed to load calendar events.", "error");
     } finally {
       setLoading(false);
     }
@@ -106,7 +105,7 @@ const Calendar = () => {
 
   // --- 2. OPEN MODAL (ADD vs EDIT) ---
   const openAddModal = () => {
-    setSelectedEvent(null); // Null means "Create Mode"
+    setSelectedEvent(null);
     setFormData({
       title: "",
       start_time: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
@@ -117,7 +116,7 @@ const Calendar = () => {
   };
 
   const openEditModal = (event) => {
-    setSelectedEvent(event); // Object means "Edit Mode"
+    setSelectedEvent(event);
     setFormData({
       title: event.title,
       start_time: formatForInput(event.start_time),
@@ -148,21 +147,25 @@ const Calendar = () => {
 
       if (!res.ok) throw new Error("Operation failed");
 
-      // Refresh and Close
+      addToast(
+        isEditing ? "Event updated successfully" : "Event created successfully",
+        "success"
+      );
+
       await fetchEvents();
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to save event.");
+      addToast("Failed to save event.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // --- 4. HANDLE DELETE ---
+  // Note: 'confirm' logic removed because AlertDialogTemplate handles it
   const handleDelete = async () => {
     if (!selectedEvent) return;
-    if (!confirm("Are you sure you want to delete this event?")) return;
 
     setIsSubmitting(true);
     try {
@@ -176,11 +179,12 @@ const Calendar = () => {
 
       if (!res.ok) throw new Error("Delete failed");
 
+      addToast("Event deleted successfully", "success");
       await fetchEvents();
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to delete event.");
+      addToast("Failed to delete event.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -193,8 +197,6 @@ const Calendar = () => {
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  const nav = useNavigate();
-
   return (
     <div className="min-h-screen text-white flex justify-center font-sans">
       <div className="w-full max-w-6xl">
@@ -203,7 +205,7 @@ const Calendar = () => {
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-neutral-800 pb-4 gap-4">
             <div className="flex items-center gap-4">
               <h2
-                className="text-3xl font-bold tracking-tight cursor-pointer"
+                className="text-3xl font-bold tracking-tight cursor-pointer hover:text-blue-400 transition-colors"
                 onClick={() => nav("/calendar")}
               >
                 {format(currentDate, "MMMM yyyy")}
@@ -239,7 +241,14 @@ const Calendar = () => {
             )}
           </div>
 
-          <div className="w-full border border-neutral-800 rounded-lg overflow-hidden">
+          <div className="w-full border border-neutral-800 rounded-lg overflow-hidden relative">
+            {/* Loading Overlay */}
+            {loading && (
+              <div className="absolute inset-0 bg-neutral-950/60 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                <Loader2 className="animate-spin text-blue-500" size={32} />
+              </div>
+            )}
+
             <div className="grid grid-cols-7 bg-neutral-950/50 border-b border-neutral-800">
               {weekDays.map((day) => (
                 <div
@@ -257,7 +266,6 @@ const Calendar = () => {
                 const isCurrentMonth = isSameMonth(day, currentDate);
                 const isToday = isSameDay(day, new Date());
 
-                // Filter events for this specific day
                 const dayEvents = events
                   .filter((e) => isSameDay(parseISO(e.start_time), day))
                   .sort(
@@ -276,7 +284,6 @@ const Calendar = () => {
                       }
                     `}
                   >
-                    {/* Date Number */}
                     <div className="flex justify-between items-start">
                       <span
                         className={`
@@ -294,7 +301,6 @@ const Calendar = () => {
                       </span>
                     </div>
 
-                    {/* Events List */}
                     <div className="flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar">
                       {dayEvents.slice(0, 3).map((event) => (
                         <button
@@ -427,18 +433,24 @@ const Calendar = () => {
 
             {/* Footer Actions */}
             <DialogFooter className="mt-4 pt-4 border-t border-neutral-900 flex flex-row justify-between items-center w-full">
-              {/* DELETE BUTTON (Only in Edit Mode) */}
+              {/* DELETE BUTTON (Using AlertDialogTemplate) */}
               <div>
                 {selectedEvent && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={handleDelete}
-                    disabled={isSubmitting}
-                    className="text-red-500 hover:text-red-400 hover:bg-red-950/30 px-3"
-                  >
-                    <Trash2 size={18} />
-                  </Button>
+                  <AlertDialogTemplate
+                    title="Delete Event?"
+                    description={`Are you sure you want to delete "${formData.title}"? This cannot be undone.`}
+                    onConfirm={handleDelete}
+                    button={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disabled={isSubmitting}
+                        className="text-red-500 hover:text-red-400 hover:bg-red-950/30 px-3"
+                      >
+                        <Trash2 size={18} />
+                      </Button>
+                    }
+                  />
                 )}
               </div>
 

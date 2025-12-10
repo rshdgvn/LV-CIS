@@ -7,6 +7,7 @@ import {
   MoreVertical,
   CreditCard,
   LogOut,
+  User,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +38,7 @@ export function NavUser() {
   const nav = useNavigate();
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { addToast } = useToast();
 
   const handleLogout = async () => {
     try {
@@ -139,14 +141,12 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => nav("/profile")}>
-                <BadgeCheck />
+                <User />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => nav("/account")}>
-                <CreditCard />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => nav("/notifications")}>
+              <DropdownMenuItem
+                onClick={() => addToast("Under development, sorry", "success")}
+              >
                 <Bell />
                 Notifications
               </DropdownMenuItem>

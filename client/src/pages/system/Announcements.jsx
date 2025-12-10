@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Calendar,
   Clock,
   MapPin,
   Megaphone,
@@ -11,10 +10,9 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  AlertCircle,
-  ChevronRight,
   CheckCircle2,
   History,
+  Loader2, // Imported Loader Icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +41,8 @@ import { Label } from "@/components/ui/label";
 import { APP_URL } from "@/lib/config";
 import { useClub } from "@/contexts/ClubContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/providers/ToastProvider";
+import { AlertDialogTemplate } from "@/components/AlertDialogTemplate";
 
 // Helper to split date
 const getDateParts = (dateString) => {
@@ -66,9 +66,13 @@ const isPastDate = (dateString) => {
 export default function Announcements() {
   const { clubs } = useClub();
   const { token, user } = useAuth();
+  const { addToast } = useToast();
 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // New State for button loaders
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- FILTERS ---
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -101,7 +105,6 @@ export default function Announcements() {
         const allData = json.data || [];
 
         // --- FILTERING LOGIC ---
-        // Only show if: Admin OR General OR User belongs to Club
         const filteredData = allData.filter((item) => {
           if (user?.role === "admin") return true;
           if (item.target_type === "general") return true;
@@ -112,6 +115,7 @@ export default function Announcements() {
       }
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
+      addToast("Failed to load announcements.", "error");
     } finally {
       setLoading(false);
     }
@@ -121,7 +125,7 @@ export default function Announcements() {
     if (user && clubs) {
       fetchAnnouncements();
     }
-  }, [user, clubs]); // Re-run when clubs or user load
+  }, [user, clubs]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -147,6 +151,7 @@ export default function Announcements() {
   };
 
   const handleCreate = async () => {
+    setIsSubmitting(true); // Start Loader
     try {
       const payload = {
         ...formData,
@@ -161,16 +166,21 @@ export default function Announcements() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create");
+
       setIsAddOpen(false);
       resetForm();
       fetchAnnouncements();
+      addToast("Announcement posted successfully!", "success");
     } catch (err) {
-      alert("Error creating announcement");
+      addToast("Error creating announcement.", "error");
+    } finally {
+      setIsSubmitting(false); // Stop Loader
     }
   };
 
   const handleUpdate = async () => {
     if (!currentAnnouncement) return;
+    setIsSubmitting(true); // Start Loader
     try {
       const payload = {
         ...formData,
@@ -188,25 +198,31 @@ export default function Announcements() {
         }
       );
       if (!res.ok) throw new Error("Failed to update");
+
       setIsEditOpen(false);
       resetForm();
       fetchAnnouncements();
+      addToast("Announcement updated successfully!", "success");
     } catch (err) {
-      alert("Error updating announcement");
+      addToast("Error updating announcement.", "error");
+    } finally {
+      setIsSubmitting(false); // Stop Loader
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this announcement?")) return;
     try {
       const res = await fetch(`${APP_URL}/announcements/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to delete");
+
       fetchAnnouncements();
+      addToast("Announcement deleted successfully.", "success");
     } catch (err) {
       console.error(err);
+      addToast("Failed to delete announcement.", "error");
     }
   };
 
@@ -228,13 +244,11 @@ export default function Announcements() {
   // --- FILTER & SORT LOGIC ---
   const filteredAnnouncements = announcements
     .filter((item) => {
-      // 1. Category Filter
       const matchesCategory =
         categoryFilter === "all" ||
         (categoryFilter === "general" && item.target_type === "general") ||
         item.club_id == categoryFilter;
 
-      // 2. Status Filter
       const isPast = isPastDate(item.date);
       const matchesStatus =
         statusFilter === "all" ||
@@ -246,7 +260,6 @@ export default function Announcements() {
     .sort((a, b) => {
       const isPastA = isPastDate(a.date);
       const isPastB = isPastDate(b.date);
-      // Sort: Active first, then Concluded
       if (isPastA === isPastB) return new Date(b.date) - new Date(a.date);
       return isPastA ? 1 : -1;
     });
@@ -280,7 +293,6 @@ export default function Announcements() {
       {/* CONTROLS BAR */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-4">
-          {/* Filter: Category (Club/General) */}
           <div className="flex items-center gap-3 bg-blue-950 p-1.5 rounded-lg border border-neutral-800">
             <div className="px-2 text-neutral-500">
               <Filter size={16} className="text-white" />
@@ -308,7 +320,6 @@ export default function Announcements() {
             </select>
           </div>
 
-          {/* Filter: Status (Upcoming/Concluded) */}
           <div className="flex items-center gap-3 bg-neutral-900 p-1.5 rounded-lg border border-neutral-800">
             <div className="px-2 text-neutral-500">
               <History size={16} className="text-neutral-400" />
@@ -336,7 +347,7 @@ export default function Announcements() {
         </span>
       </div>
 
-      {/* FEED LIST (Rows) */}
+      {/* FEED LIST */}
       <div className="flex flex-col gap-4 max-w-5xl mx-auto">
         {loading ? (
           <div className="text-center py-20">
@@ -368,7 +379,6 @@ export default function Announcements() {
                     : "hover:border-neutral-700 hover:bg-neutral-800"
                 }`}
               >
-                {/* 1. Date Box with YEAR */}
                 <div
                   className={`flex-shrink-0 flex flex-col items-center justify-center border rounded-lg w-16 h-16 sm:w-20 sm:h-20 text-center shadow-sm transition-colors py-1
                   ${
@@ -377,7 +387,6 @@ export default function Announcements() {
                       : "bg-neutral-900 border-neutral-800 group-hover:bg-neutral-800/80"
                   }`}
                 >
-                  {/* Year Display */}
                   <span className="text-[10px] sm:text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-0.5">
                     {dateParts.year}
                   </span>
@@ -398,7 +407,6 @@ export default function Announcements() {
                   </span>
                 </div>
 
-                {/* 2. Main Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <span
@@ -411,7 +419,6 @@ export default function Announcements() {
                       {isGeneral ? "General" : clubName || "Club"}
                     </span>
 
-                    {/* PAST/DONE INDICATOR */}
                     {isPast && (
                       <span className="flex items-center gap-1 bg-neutral-800 text-neutral-400 border border-neutral-700 px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded">
                         <CheckCircle2 size={10} /> Concluded
@@ -448,8 +455,6 @@ export default function Announcements() {
                   </div>
                 </div>
 
-                {/* 3. Actions - Only show if user has permission (Admin or maybe Officer of that club) */}
-                {/* For now, simplified to allow actions, but backend should protect delete/update */}
                 {admin && (
                   <div className="flex items-center gap-2 sm:self-center self-end mt-2 sm:mt-0">
                     <DropdownMenu>
@@ -471,18 +476,27 @@ export default function Announcements() {
                         >
                           <Edit className="mr-2 h-4 w-4" /> Edit Post
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-400 focus:bg-red-900/20 focus:text-red-400 cursor-pointer"
+
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete Post
-                        </DropdownMenuItem>
+                          <AlertDialogTemplate
+                            title="Delete Announcement?"
+                            description={`Are you sure you want to delete "${item.title}"? This cannot be undone.`}
+                            onConfirm={() => handleDelete(item.id)}
+                            button={
+                              <div className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-neutral-800 text-red-400 focus:bg-red-900/20 focus:text-red-400 w-full">
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                              </div>
+                            }
+                          />
+                        </div>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                 )}
 
-                {/* Accent Line on Left (Gray if past) */}
                 <div
                   className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
                     isPast
@@ -509,6 +523,7 @@ export default function Announcements() {
         handleSelectChange={handleSelectChange}
         clubs={clubs}
         submitLabel="Post Now"
+        isSubmitting={isSubmitting} // Pass loading state
       />
 
       {/* --- EDIT MODAL --- */}
@@ -522,6 +537,7 @@ export default function Announcements() {
         handleSelectChange={handleSelectChange}
         clubs={clubs}
         submitLabel="Save Changes"
+        isSubmitting={isSubmitting} // Pass loading state
       />
     </div>
   );
@@ -538,6 +554,7 @@ function AnnouncementModal({
   handleSelectChange,
   clubs,
   submitLabel,
+  isSubmitting, // Receive loading state
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -666,11 +683,19 @@ function AnnouncementModal({
           >
             Cancel
           </Button>
+          {/* Submit Button with Loader */}
           <Button
             onClick={onSubmit}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+            disabled={isSubmitting} // Disable while loading
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 min-w-[120px]"
           >
-            {submitLabel}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+              </>
+            ) : (
+              submitLabel
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

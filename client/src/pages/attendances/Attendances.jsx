@@ -12,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Filter,
   Search,
   Users,
   Plus,
@@ -39,6 +38,7 @@ import {
 
 import AddAttendanceModal from "@/components/attendances/AddAttendanceModal";
 import UpdateAttendanceModal from "@/components/attendances/UpdateAttendanceModal";
+import { AlertDialogTemplate } from "@/components/AlertDialogTemplate"; // 1. Import Template
 
 import {
   DropdownMenu,
@@ -77,14 +77,11 @@ export default function Attendances() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
-  // --- UPDATED: Persist Club Selection Logic ---
+  // --- Persist Club Selection Logic ---
   useEffect(() => {
     if (!clubs || clubs.length === 0) return;
 
-    // 1. Try to get saved club ID from sessionStorage
     const savedClubId = sessionStorage.getItem("selected_attendance_club_id");
-
-    // 2. Check if the saved ID actually exists in the user's current clubs list
     const savedClub = savedClubId
       ? clubs.find((c) => String(c.id) === String(savedClubId))
       : null;
@@ -92,24 +89,20 @@ export default function Attendances() {
     if (savedClub) {
       setSelectedClub(savedClub);
     } else {
-      // 3. Fallback to default logic if no save found or club no longer exists
       const defaultClub =
         clubs.find((c) => c.category === "academics") || clubs[0];
       setSelectedClub(defaultClub);
-      // Save the default to session so it sticks immediately
       if (defaultClub) {
         sessionStorage.setItem("selected_attendance_club_id", defaultClub.id);
       }
     }
   }, [clubs]);
 
-  // Helper function to handle switching clubs
   const handleSwitchClub = (club) => {
     setSelectedClub(club);
-    sessionStorage.setItem("selected_attendance_club_id", club.id); // Save to storage
+    sessionStorage.setItem("selected_attendance_club_id", club.id);
     setSwitchOpen(false);
   };
-  // --------------------------------------------
 
   const fetchSessions = async () => {
     if (!selectedClub) return;
@@ -159,9 +152,8 @@ export default function Attendances() {
     setCurrentPage(1);
   }, [search, sessions]);
 
+  // --- 2. Refactored handleDelete (Removed window.confirm) ---
   const handleDelete = async (sessionId) => {
-    if (!confirm("Are you sure you want to delete this session?")) return;
-
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${APP_URL}/attendance-sessions/${sessionId}`, {
@@ -255,7 +247,6 @@ export default function Attendances() {
                     {clubs.map((club) => (
                       <button
                         key={club.id}
-                        // UPDATED: Use handleSwitchClub
                         onClick={() => handleSwitchClub(club)}
                         className={`
                             w-full flex items-center gap-4 p-3 rounded-xl transition-all border text-left
@@ -392,15 +383,24 @@ export default function Attendances() {
                                   <Edit size={14} /> Edit
                                 </DropdownMenuItem>
 
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(session.id);
-                                  }}
-                                  className="cursor-pointer text-red-400 focus:bg-red-900/20 focus:text-red-400 flex items-center gap-2"
+                                {/* 3. UPDATED: Delete Item using AlertDialogTemplate */}
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                  className="w-full"
                                 >
-                                  <Trash2 size={14} /> Delete
-                                </DropdownMenuItem>
+                                  <AlertDialogTemplate
+                                    title="Delete Session?"
+                                    description="Are you sure you want to delete this session? This action cannot be undone."
+                                    onConfirm={() => handleDelete(session.id)}
+                                    button={
+                                      <div className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-neutral-800 text-red-400 focus:bg-red-900/20 focus:text-red-400 w-full">
+                                        <Trash2 size={14} className="mr-2" />
+                                        Delete
+                                      </div>
+                                    }
+                                  />
+                                </div>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>

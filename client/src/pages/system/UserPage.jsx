@@ -51,7 +51,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 8;
 
   const fetchUsers = async () => {
     setLoading(true);

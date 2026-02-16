@@ -33,4 +33,6 @@ class ClubEventController extends Controller
             'events' => $events,
         ]);
     }
+
+    
 }

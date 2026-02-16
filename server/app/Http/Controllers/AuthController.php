@@ -17,7 +17,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name'  => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'email', 'unique:users,email', new LaverdadEmail],
+            'email'      => ['required', 'email', 'unique:users,email'],
             'password'   => ['required', 'string', 'min:6'],
             'course'     => ['required', 'string', 'max:255'],
             'year_level' => ['required', 'string', 'max:255'],
@@ -31,13 +31,11 @@ class AuthController extends Controller
             'role'       => 'user'
         ]);
 
-        $user->member()->create([
-            'course'     => $validated['course'],
-            'year_level' => $validated['year_level'],
-        ]);
 
-        $frontendUrl = config('app.frontend_url');
-        $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
+        $backendUrl = config('app.url');
+        $hash = sha1($user->getEmailForVerification());
+
+        $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}";
 
         $htmlBody = view('emails.verify-email', [
             'name' => $user->first_name,
@@ -45,7 +43,6 @@ class AuthController extends Controller
         ])->render();
 
         (new GmailService)->send($user->email, "Verify Your Email - LVCIS", $htmlBody);
-
 
         return response()->json([
             'message' => 'Account created! Please check your email to verify your account.',
@@ -98,28 +95,16 @@ class AuthController extends Controller
         $user = User::findOrFail($id);
 
         if (!hash_equals($hash, sha1($user->getEmailForVerification()))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid verification link',
-                'redirect_url' => config('app.frontend_url') . '/login?verified=0'
-            ], 400);
+            return response("Invalid or expired verification link.", 400);
         }
 
-        if ($user->hasVerifiedEmail()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Email already verified',
-                'redirect_url' => config('app.frontend_url') . '/login?verified=1'
-            ]);
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
         }
 
-        $user->markEmailAsVerified();
+        $mobileAppUrl = config('app.mobile_url', env('MOBILE_APP_URL'));
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Email successfully verified!',
-            'redirect_url' => config('app.frontend_url') . '/login?verified=1'
-        ]);
+        return redirect($mobileAppUrl . "?verified=true");
     }
 
     public function resendVerification(Request $request)

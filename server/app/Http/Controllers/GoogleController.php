@@ -28,25 +28,20 @@ class GoogleController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
             
-            // Decode the state parameter
             $stateData = json_decode(base64_decode($request->input('state')), true);
             $mode = $stateData['mode'] ?? 'login';
             $platform = $stateData['platform'] ?? 'web';
 
-            // Determine the base redirect URL based on the platform
             if ($platform === 'mobile') {
-                // This matches the scheme you set in app.json + a path
                 $redirectBase = 'lvcismobile://auth/callback'; 
             } else {
                 $redirectBase = config('app.frontend_url', env('FRONTEND_URL')) . '/auth/callback';
             }
 
-            // Domain Check
             if (!str_ends_with($googleUser->getEmail(), 'laverdad.edu.ph')) {
                 return redirect()->away($redirectBase . "?error=" . urlencode("Only La Verdad emails allowed."));
             }
 
-            // --- SIGNUP FLOW ---
             if ($mode === "signup") {
                 $existing = User::where('email', $googleUser->getEmail())->first();
                 if ($existing) {
@@ -67,7 +62,16 @@ class GoogleController extends Controller
                     'year_level' => 'N/A'
                 ]);
 
-                // ... Send Email Verification Logic ...
+                 $backendUrl = config('app.url');
+                $hash = sha1($user->getEmailForVerification());
+                $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}";
+
+                $htmlBody = view('emails.verify-email', [
+                    'name' => $user->first_name,
+                    'verificationLink' => $verificationUrl
+                ])->render();
+
+                (new GmailService)->send($user->email, "Verify Your Email - LVCIS", $htmlBody);
 
                 return redirect()->away($redirectBase . "?status=signup_success");
             }
@@ -96,7 +100,6 @@ class GoogleController extends Controller
             return redirect()->away($redirectBase . "?error=" . urlencode("Invalid mode."));
 
         } catch (\Exception $e) {
-            // Fallback for absolute failure
             $fallbackUrl = 'lvcismobile://auth/callback?error=' . urlencode("Google authentication failed.");
             return redirect()->away($fallbackUrl);
         }

@@ -21,7 +21,7 @@ class AuthController extends Controller
             'password'       => ['required', 'string', 'min:6'],
             'course'         => ['required', 'string', 'max:255'],
             'year_level'     => ['required', 'string', 'max:255'],
-            'mobile_app_url' => ['required', 'url'] 
+            'mobile_app_url' => ['required'] 
         ]);
 
         $user = User::create([

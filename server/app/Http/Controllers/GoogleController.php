@@ -12,7 +12,7 @@ class GoogleController extends Controller
 {
     public function redirect(Request $request)
     {
-        $state = $request->query('state', 'login');
+        $state = $request->query('state', 'login'); 
 
         return Socialite::driver('google')
             ->stateless()
@@ -23,31 +23,39 @@ class GoogleController extends Controller
 
     public function callback(Request $request)
     {
+        $mobileAppUrl = config('app.mobile_url', env('MOBILE_APP_URL'));
+
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
             $mode = $request->input('state', 'login');
 
             if (!str_ends_with($googleUser->getEmail(), 'laverdad.edu.ph')) {
-                return redirect()->away(config('app.frontend_url') . "/google/error?message=" . urlencode("Only La Verdad emails allowed."));
+                return redirect()->away($mobileAppUrl . "?error=" . urlencode("Only La Verdad emails allowed."));
             }
 
             if ($mode === "signup") {
                 $existing = User::where('email', $googleUser->getEmail())->first();
                 if ($existing) {
-                    return redirect()->away(config('app.frontend_url') . "/google/error?message=" . urlencode("This email is already registered. Please login instead."));
+                    return redirect()->away($mobileAppUrl . "?error=" . urlencode("Email already registered. Please login."));
                 }
 
                 $user = User::create([
-                    'first_name' => $googleUser->user['given_name'] ?? null,
-                    'last_name'  => $googleUser->user['family_name'] ?? null,
+                    'first_name' => $googleUser->user['given_name'] ?? 'Student',
+                    'last_name'  => $googleUser->user['family_name'] ?? '',
                     'email'      => $googleUser->getEmail(),
                     'avatar'     => $googleUser->getAvatar(),
                     'password'   => bcrypt(str()->random(16)),
                     'role'       => 'user'
                 ]);
 
-                $frontendUrl = config('app.frontend_url');
-                $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
+                $user->member()->create([
+                    'course' => 'N/A',
+                    'year_level' => 'N/A'
+                ]);
+
+                $backendUrl = config('app.url');
+                $hash = sha1($user->getEmailForVerification());
+                $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}";
 
                 $htmlBody = view('emails.verify-email', [
                     'name' => $user->first_name,
@@ -56,19 +64,18 @@ class GoogleController extends Controller
 
                 (new GmailService)->send($user->email, "Verify Your Email - LVCIS", $htmlBody);
 
-
-                return redirect()->away($frontendUrl . "/google/signup/success?email_sent=1");
+                return redirect()->away($mobileAppUrl . "?status=signup_success");
             }
 
             if ($mode === "login") {
                 $user = User::where('email', $googleUser->getEmail())->first();
 
                 if (!$user) {
-                    return redirect()->away(config('app.frontend_url') . "/google/error?message=" . urlencode("Account not registered. Please sign up."));
+                    return redirect()->away($mobileAppUrl . "?error=" . urlencode("Account not found. Please sign up first."));
                 }
 
                 if (!$user->hasVerifiedEmail()) {
-                    return redirect()->away(config('app.frontend_url') . "/google/error?message=" . urlencode("Please verify your email first."));
+                    return redirect()->away($mobileAppUrl . "?error=" . urlencode("Please verify your email first."));
                 }
 
                 if ($user->avatar !== $googleUser->getAvatar()) {
@@ -76,15 +83,12 @@ class GoogleController extends Controller
                     $user->save();
                 }
 
-                Auth::login($user);
-                $token = $user->createToken('auth_token')->plainTextToken;
+                $token = $user->createToken('mobile_auth_token')->plainTextToken;
 
-                return redirect()->away(config('app.frontend_url') . "/google/callback?token={$token}");
+                return redirect()->away($mobileAppUrl . "?token={$token}");
             }
-
-            return redirect()->away(config('app.frontend_url') . "/google/error?message=" . urlencode("Invalid mode"));
         } catch (\Exception $e) {
-            return redirect()->away(config('app.frontend_url') . "/google/error?message=" . urlencode("Google auth failed"));
+            return redirect()->away($mobileAppUrl . "?error=" . urlencode("Google authentication failed."));
         }
     }
 }

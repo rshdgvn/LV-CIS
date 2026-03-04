@@ -15,12 +15,13 @@ class AuthController extends Controller
     public function signup(Request $request)
     {
         $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name'  => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'email', 'unique:users,email'],
-            'password'   => ['required', 'string', 'min:6'],
-            'course'     => ['required', 'string', 'max:255'],
-            'year_level' => ['required', 'string', 'max:255'],
+            'first_name'     => ['required', 'string', 'max:255'],
+            'last_name'      => ['required', 'string', 'max:255'],
+            'email'          => ['required', 'email', 'unique:users,email'],
+            'password'       => ['required', 'string', 'min:6'],
+            'course'         => ['required', 'string', 'max:255'],
+            'year_level'     => ['required', 'string', 'max:255'],
+            'mobile_app_url' => ['required', 'url'] 
         ]);
 
         $user = User::create([
@@ -31,11 +32,11 @@ class AuthController extends Controller
             'role'       => 'user'
         ]);
 
-
         $backendUrl = config('app.url');
         $hash = sha1($user->getEmailForVerification());
 
-        $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}";
+        $redirectParam = urlencode($validated['mobile_app_url']);
+        $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}?redirect_url={$redirectParam}";
 
         $htmlBody = view('emails.verify-email', [
             'name' => $user->first_name,
@@ -102,14 +103,20 @@ class AuthController extends Controller
             $user->markEmailAsVerified();
         }
 
-        $mobileAppUrl = config('app.mobile_url', env('MOBILE_APP_URL'));
+        $mobileAppUrl = $request->query('redirect_url', config('app.mobile_url', env('MOBILE_APP_URL')));
 
-        return redirect($mobileAppUrl . "?verified=true");
+        $separator = str_contains($mobileAppUrl, '?') ? '&' : '?';
+
+        return redirect($mobileAppUrl . $separator . "verified=true");
     }
 
     public function resendVerification(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate([
+            'email' => 'required|email',
+            'mobile_app_url' => 'required|url' 
+        ]);
+        
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
@@ -136,7 +143,9 @@ class AuthController extends Controller
         );
 
         $frontendUrl = config('app.frontend_url');
-        $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification());
+        $redirectParam = urlencode($request->mobile_app_url);
+        
+        $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification()) . "&redirect_url={$redirectParam}";
 
         $htmlBody = view('emails.verify-email', [
             'name' => $user->first_name,
@@ -144,7 +153,6 @@ class AuthController extends Controller
         ])->render();
 
         (new GmailService)->send($user->email, "Verify Your Email - LVCIS", $htmlBody);
-
 
         return response()->json([
             'message' => 'Verification email sent successfully!',

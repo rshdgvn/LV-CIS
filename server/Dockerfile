@@ -34,7 +34,7 @@ RUN chown -R www-data:www-data /var/www/html \
 EXPOSE 8000
 
 # Runtime commands (executed when container starts with .env available)
-CMD php artisan migrate --seed --force && \
+CMD php artisan migrate --force && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \

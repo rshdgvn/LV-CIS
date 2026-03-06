@@ -78,7 +78,7 @@
                 </p>
             </div>
             <div class="footer">
-                <p>&copy; {{ date('Y') }} Your App Name. All rights reserved.</p>
+                <p>&copy; {{ date('Y') }} LVCIS. All rights reserved.</p>
             </div>
         </div>
     </div>

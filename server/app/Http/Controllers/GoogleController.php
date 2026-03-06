@@ -71,8 +71,10 @@ class GoogleController extends Controller
 
                 $backendUrl = config('app.url');
                 
-                $hash = sha1($user->getEmailForVerification() . config('app.key'));
-                $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}";
+                $hash = sha1($user->getEmailForVerification());
+                
+                $redirectParam = urlencode($mobileAppUrl);
+                $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}?redirect_url={$redirectParam}";
 
                 $htmlBody = view('emails.verify-email', [
                     'name' => $user->first_name,

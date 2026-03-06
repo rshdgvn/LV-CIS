@@ -36,7 +36,6 @@ Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
     ->name('verification.verify');
 Route::post('/email/resend', [AuthController::class, 'resendVerification']);
 
-
 Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory']);
 
 Route::middleware('auth:sanctum')->group(function () {

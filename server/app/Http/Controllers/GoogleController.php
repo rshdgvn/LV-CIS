@@ -13,9 +13,14 @@ class GoogleController extends Controller
     {
         $mode = $request->query('mode', 'login');
         $platform = $request->query('platform', 'web'); 
+        
+        $mobileAppUrl = $request->query('mobile_app_url'); 
 
-        // Encode both variables into the state parameter
-        $state = base64_encode(json_encode(['mode' => $mode, 'platform' => $platform]));
+        $state = base64_encode(json_encode([
+            'mode' => $mode, 
+            'platform' => $platform,
+            'mobile_app_url' => $mobileAppUrl
+        ]));
 
         return Socialite::driver('google')
             ->stateless()
@@ -31,9 +36,11 @@ class GoogleController extends Controller
             $stateData = json_decode(base64_decode($request->input('state')), true);
             $mode = $stateData['mode'] ?? 'login';
             $platform = $stateData['platform'] ?? 'web';
+            
+            $mobileAppUrl = $stateData['mobile_app_url'] ?? 'lvcismobile://auth/callback';
 
             if ($platform === 'mobile') {
-                $redirectBase = 'lvcismobile://auth/callback'; 
+                $redirectBase = $mobileAppUrl; 
             } else {
                 $redirectBase = config('app.frontend_url', env('FRONTEND_URL')) . '/auth/callback';
             }
@@ -62,8 +69,9 @@ class GoogleController extends Controller
                     'year_level' => 'N/A'
                 ]);
 
-                 $backendUrl = config('app.url');
-                $hash = sha1($user->getEmailForVerification());
+                $backendUrl = config('app.url');
+                
+                $hash = sha1($user->getEmailForVerification() . config('app.key'));
                 $verificationUrl = "{$backendUrl}/api/email/verify/{$user->id}/{$hash}";
 
                 $htmlBody = view('emails.verify-email', [
@@ -76,7 +84,6 @@ class GoogleController extends Controller
                 return redirect()->away($redirectBase . "?status=signup_success");
             }
 
-            // --- LOGIN FLOW ---
             if ($mode === "login") {
                 $user = User::where('email', $googleUser->getEmail())->first();
 
@@ -100,7 +107,8 @@ class GoogleController extends Controller
             return redirect()->away($redirectBase . "?error=" . urlencode("Invalid mode."));
 
         } catch (\Exception $e) {
-            $fallbackUrl = 'lvcismobile://auth/callback?error=' . urlencode("Google authentication failed.");
+            $stateData = json_decode(base64_decode($request->input('state') ?? ''), true);
+            $fallbackUrl = ($stateData['mobile_app_url'] ?? 'lvcismobile://auth/callback') . '?error=' . urlencode("Google authentication failed.");
             return redirect()->away($fallbackUrl);
         }
     }

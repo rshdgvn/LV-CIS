@@ -29,6 +29,7 @@ Route::get('/auth/google', [GoogleController::class, 'redirect']);
 Route::get('/auth/google/callback', [GoogleController::class, 'callback']);;
 
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetToken']);
+Route::post('/verify-reset-code', [PasswordResetController::class, 'verifyCode']);
 Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])

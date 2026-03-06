@@ -5,14 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Services\GmailService;
 
 class PasswordResetController extends Controller
 {
-
     public function sendResetToken(Request $request)
     {
         $request->validate([
@@ -42,39 +40,60 @@ class PasswordResetController extends Controller
             }
         }
 
-        $plainToken = Str::random(64);
-        $hashedToken = Hash::make($plainToken);
+        $resetCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $hashedCode = Hash::make($resetCode);
 
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $request->email],
             [
-                'token' => $hashedToken,
+                'token' => $hashedCode,
                 'created_at' => now(),
             ]
         );
 
-        $frontendUrl = config('app.frontend_url');
-        $resetLink = "{$frontendUrl}/reset-password?token={$plainToken}&email={$user->email}";
-
         $htmlBody = view('emails.reset-password', [
             'name' => $user->first_name,
-            'resetLink' => $resetLink,
+            'code' => $resetCode,
         ])->render();
 
-        (new GmailService)->send($user->email, 'Reset Your Password', $htmlBody);
-
+        (new GmailService)->send($user->email, 'Your Password Reset Code', $htmlBody);
 
         return response()->json([
-            'message' => 'Reset link has been sent successfully!.',
+            'message' => 'Reset code has been sent successfully!',
             'cooldown' => $cooldown,
         ]);
     }
+    
+
+    public function verifyCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|digits:6',
+        ]);
+
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
+
+        if (!$record || !Hash::check($request->code, $record->token)) {
+            return response()->json(['message' => 'Invalid verification code.'], 400);
+        }
+
+        if (Carbon::parse($record->created_at)->addMinutes(15)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            return response()->json(['message' => 'Verification code has expired. Please request a new one.'], 400);
+        }
+
+        return response()->json(['message' => 'Code verified successfully.']);
+    }
+
 
     public function reset(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
-            'token' => 'required|string',
+            'code' => 'required|digits:6', 
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -82,13 +101,13 @@ class PasswordResetController extends Controller
             ->where('email', $request->email)
             ->first();
 
-        if (!$record || !Hash::check($request->token, $record->token)) {
-            return response()->json(['message' => 'Invalid or expired link.'], 400);
+        if (!$record || !Hash::check($request->code, $record->token)) {
+            return response()->json(['message' => 'Invalid or expired code.'], 400);
         }
 
-        if (Carbon::parse($record->created_at)->addHour()->isPast()) {
+        if (Carbon::parse($record->created_at)->addMinutes(15)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
-            return response()->json(['message' => 'Token has expired.'], 400);
+            return response()->json(['message' => 'Verification code has expired.'], 400);
         }
 
         $user = User::where('email', $request->email)->first();

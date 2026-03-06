@@ -45,11 +45,9 @@ class GmailService
 
         $client->setAccessToken($accessToken);
 
-        // Refresh token if expired
         if ($client->isAccessTokenExpired()) {
             $newToken = $client->fetchAccessTokenWithRefreshToken($tokenRecord->refresh_token);
 
-            // Save new token to database
             $tokenRecord->update([
                 'access_token' => $newToken['access_token'],
                 'expires_in' => $newToken['expires_in'],

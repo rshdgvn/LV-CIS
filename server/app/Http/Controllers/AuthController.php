@@ -114,7 +114,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'mobile_app_url' => 'required|url' 
+            'mobile_app_url' => 'required' 
         ]);
         
         $user = User::where('email', $request->email)->first();

@@ -109,21 +109,16 @@ class ClubSeeder extends Seeder
 
             if (file_exists($localPath)) {
                 try {
-                    $compressedPath = storage_path('app/temp_' . basename($localPath));
-
-                    $imageManager->read($localPath)
-                        ->scaleDown(width: 1920)
-                        ->save($compressedPath, quality: 75); 
-
-                    $upload = $cloudinary->uploadApi()->upload($compressedPath, [
+                    $upload = $cloudinary->uploadApi()->upload($localPath, [
                         'folder' => 'lv-cis/clubs',
                         'overwrite' => true,
                         'resource_type' => 'image',
+                        'width' => 1920,   
+                        'crop' => 'limit',    
+                        'quality' => '75',   
                     ]);
 
                     $clubData['logo'] = $upload['secure_url'] ?? null;
-
-                    File::delete($compressedPath);
                 } catch (\Exception $e) {
                     $this->command->warn("Failed to upload {$clubData['name']} logo: " . $e->getMessage());
                     $clubData['logo'] = null;
@@ -135,6 +130,5 @@ class ClubSeeder extends Seeder
 
             Club::updateOrCreate(['name' => $clubData['name']], $clubData);
         }
-
     }
 }

@@ -15,40 +15,46 @@ class ClubMembershipSeeder extends Seeder
         $admin = User::where('role', 'admin')->first();
         $clubs = Club::all();
 
-        foreach ($clubs as $club) {
-            $members = User::factory(10)->create(['role' => 'user']);
+        if (app()->environment(['local', 'testing', 'development'])) {
+            foreach ($clubs as $club) {
+                $members = User::factory(10)->create(['role' => 'user']);
 
-            foreach ($members as $user) {
-                Member::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'course' => fake()->randomElement(['BSIS', 'BAB', 'BSSW', 'ACT', 'BSA', 'BSAIS']),
-                        'year_level' => fake()->numberBetween(1, 4),
-                    ]
-                );
+                foreach ($members as $user) {
+                    Member::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'course' => fake()->randomElement(['BSIS', 'BAB', 'BSSW', 'ACT', 'BSA', 'BSAIS']),
+                            'year_level' => fake()->numberBetween(1, 4),
+                        ]
+                    );
 
-                DB::table('club_memberships')->insert([
+                    DB::table('club_memberships')->insert([
+                        'club_id' => $club->id,
+                        'user_id' => $user->id,
+                        'role' => fake()->randomElement(['member', 'officer']),
+                        'status' => fake()->randomElement(['approved', 'pending']),
+                        'activity_status' => fake()->randomElement(['active', 'inactive']), 
+                        'joined_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        }
+
+        if ($admin) {
+            foreach ($clubs as $club) {
+                DB::table('club_memberships')->insertOrIgnore([
                     'club_id' => $club->id,
-                    'user_id' => $user->id,
-                    'role' => fake()->randomElement(['member', 'officer']),
-                    'status' => fake()->randomElement(['approved', 'pending']),
-                    'activity_status' => fake()->randomElement(['active', 'inactive']), 
+                    'user_id' => $admin->id,
+                    'role' => 'adviser',
+                    'status' => 'approved',
+                    'activity_status' => 'active', 
                     'joined_at' => now(),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
-
-            DB::table('club_memberships')->insertOrIgnore([
-                'club_id' => $club->id,
-                'user_id' => $admin->id,
-                'role' => 'adviser',
-                'status' => 'approved',
-                'activity_status' => 'active', 
-                'joined_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
         }
     }
 }

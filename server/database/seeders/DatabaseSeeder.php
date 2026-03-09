@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             ClubSeeder::class,
             ClubMembershipSeeder::class,
-            EventSeeder::class,
-            EventTaskSeeder::class,
-            EventTaskAssignmentSeeder::class,
-            AttendanceSeeder::class,
+            // EventSeeder::class,
+            // EventTaskSeeder::class,
+            // EventTaskAssignmentSeeder::class,
+            // AttendanceSeeder::class,
             // AnnouncementSeeder::class,
         ]);
     }

@@ -79,7 +79,7 @@
                 <p>Welcome to LVCIS! We're excited to have you on board. Please click the button below to verify your email address and activate your account.</p>
                 
                 <div class="btn-wrapper">
-                    <a href="{{ $url }}" class="btn">Verify Email Address</a>
+                    <a href="{{ $verificationLink }}" class="btn">Verify Email Address</a>
                 </div>
                 
                 <p><strong>Note:</strong> For your security, this verification link will expire in <strong>60 minutes</strong>.</p>
@@ -91,7 +91,7 @@
                 <div class="fallback-text">
                     If you're having trouble clicking the "Verify Email Address" button, copy and paste the URL below into your web browser:
                     <br><br>
-                    <a href="{{ $url }}" style="color: #4F46E5;">{{ $url }}</a>
+                    <a href="{{ $verificationLink }}" style="color: #4F46E5;">{{ $verificationLink }}</a>
                 </div>
             </div>
             <div class="footer">

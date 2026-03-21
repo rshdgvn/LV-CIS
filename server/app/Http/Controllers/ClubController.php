@@ -31,6 +31,8 @@ class ClubController extends Controller
             }
         ])->findOrFail($id);
 
+        $club = Club::withCount('approvedUsers')->findOrFail($id);
+
         return response()->json($club);
     }
 
@@ -86,6 +88,7 @@ class ClubController extends Controller
         $user = $request->user();
 
         $clubs = $user->clubs()
+            ->withCount('approvedUsers')
             ->wherePivot('status', 'approved')
             ->get();
 
@@ -97,7 +100,10 @@ class ClubController extends Controller
         $user = $request->user();
 
         $joinedClubIds = $user->clubs()->pluck('clubs.id');
-        $clubs = Club::whereNotIn('id', $joinedClubIds)->get();
+        
+        $clubs = Club::withCount('approvedUsers') 
+            ->whereNotIn('id', $joinedClubIds)
+            ->get();
 
         return response()->json($clubs);
     }
@@ -107,6 +113,7 @@ class ClubController extends Controller
         $user = $request->user();
 
         $clubs = $user->clubs()
+            ->withCount('approvedUsers') 
             ->wherePivot('status', 'pending')
             ->get();
 

@@ -22,7 +22,8 @@ class Club extends Model
     public function approvedUsers()
     {
         return $this->belongsToMany(User::class, 'club_memberships')
-            ->wherePivot('status', 'approved') 
+            ->wherePivot('status', 'approved')
+            ->where('users.role', 'user') 
             ->withPivot('role', 'officer_title', 'status', 'joined_at', 'activity_status')
             ->withTimestamps();
     }

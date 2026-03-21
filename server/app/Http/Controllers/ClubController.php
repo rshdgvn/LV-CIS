@@ -35,7 +35,6 @@ class ClubController extends Controller
     }
 
 
-    // Create a new club
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -43,27 +42,43 @@ class ClubController extends Controller
             'category' => 'required|in:academics,culture_and_performing_arts,socio_politics',
             'description' => 'nullable|string',
             'adviser' => 'nullable|string',
-            'logo' => 'nullable|string',
+            'logo' => 'nullable|string', 
         ]);
 
         $club = Club::create($validated);
-        return response()->json($club, 201);
+        
+        return response()->json([
+            'message' => 'Club created successfully',
+            'club' => $club
+        ], 201);
     }
 
-    // Update club info
     public function update(Request $request, $id)
     {
         $club = Club::findOrFail($id);
-        $club->update($request->all());
-        return response()->json($club);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'category' => 'sometimes|required|in:academics,culture_and_performing_arts,socio_politics',
+            'description' => 'nullable|string',
+            'adviser' => 'nullable|string',
+            'logo' => 'nullable|string',
+        ]);
+
+        $club->update($validated);
+        
+        return response()->json([
+            'message' => 'Club updated successfully',
+            'club' => $club
+        ]);
     }
 
-    // Delete club
     public function destroy($id)
     {
         $club = Club::findOrFail($id);
         $club->delete();
-        return response()->json(['message' => 'Club deleted successfully']);
+        
+        return response()->json(['message' => 'Club deleted successfully'], 200);
     }
 
     public function yourClubs(Request $request)

@@ -9,9 +9,9 @@ use Illuminate\Http\Request;
 class ClubController extends Controller
 {
     // List all clubs
-    public function index(Request $request)
+  public function index(Request $request)
     {
-        $query = Club::query();
+        $query = Club::withCount('approvedUsers');
 
         if ($request->has('category') && !empty($request->category)) {
             $query->where('category', $request->category);

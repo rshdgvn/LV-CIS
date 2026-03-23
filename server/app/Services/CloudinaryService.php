@@ -29,7 +29,6 @@ class CloudinaryService
         throw new Exception("File not found at: {$path}");
       }
 
-      // Check if file is readable
       if (!is_readable($path)) {
         throw new Exception("File is not readable: {$path}");
       }

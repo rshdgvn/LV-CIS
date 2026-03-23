@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/clubs', [ClubController::class, 'store']);
     Route::get('/clubs/{id}', [ClubController::class, 'show']);
     Route::put('/clubs/{id}', [ClubController::class, 'update']);
+    Route::post('/clubs/{id}', [ClubController::class, 'update']);
     Route::delete('/clubs/{id}', [ClubController::class, 'destroy']);
     Route::get('/your/clubs', [ClubController::class, 'yourClubs']);
     Route::get('/other/clubs', [ClubController::class, 'otherClubs']);

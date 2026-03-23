@@ -17,11 +17,11 @@ class AuthController extends Controller
         $validated = $request->validate([
             'first_name'     => ['required', 'string', 'max:255'],
             'last_name'      => ['required', 'string', 'max:255'],
-            'email'          => ['required', 'email', 'unique:users,email'],
+            'email' => ['required', 'email', new LaverdadEmail, 'unique:users,email'],
             'password'       => ['required', 'string', 'min:6'],
             'course'         => ['required', 'string', 'max:255'],
             'year_level'     => ['required', 'string', 'max:255'],
-            'mobile_app_url' => ['required'] 
+            'mobile_app_url' => ['required']
         ]);
 
         $user = User::create([
@@ -114,9 +114,9 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'mobile_app_url' => 'required' 
+            'mobile_app_url' => 'required'
         ]);
-        
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
@@ -144,7 +144,7 @@ class AuthController extends Controller
 
         $frontendUrl = config('app.frontend_url');
         $redirectParam = urlencode($request->mobile_app_url);
-        
+
         $verificationUrl = "{$frontendUrl}/verify-email?id={$user->id}&hash=" . sha1($user->getEmailForVerification()) . "&redirect_url={$redirectParam}";
 
         $htmlBody = view('emails.verify-email', [

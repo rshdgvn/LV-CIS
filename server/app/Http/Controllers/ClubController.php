@@ -29,11 +29,28 @@ class ClubController extends Controller
     {
         $club = Club::with([
             'users' => function ($query) {
-                $query->wherePivot('status', 'approved');
+                $query->wherePivot('status', 'approved')
+                    ->with('member');
             }
-        ])->findOrFail($id);
+        ])
+            ->withCount('approvedUsers')
+            ->findOrFail($id);
 
-        $club = Club::withCount('approvedUsers')->findOrFail($id);
+        $club->users->transform(function ($user) {
+            return [
+                'user_id'       => $user->id,
+                'first_name'    => $user->first_name,
+                'last_name'     => $user->last_name,
+                'email'         => $user->email,
+                'avatar'        => $user->avatar,
+                'course'        => $user->member?->course,
+                'year_level'    => $user->member?->year_level,
+                'student_id'    => $user->member?->student_id,
+                'role'          => $user->pivot->role,
+                'officer_title' => $user->pivot->officer_title,
+                'joined_at'     => $user->pivot->joined_at,
+            ];
+        });
 
         return response()->json($club);
     }
@@ -46,14 +63,14 @@ class ClubController extends Controller
             'category' => 'required|in:academics,culture_and_performing_arts,socio_politics',
             'description' => 'nullable|string',
             'adviser' => 'nullable|string',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         if ($request->hasFile('logo')) {
             try {
                 $uploadedUrl = $cloudinaryService->upload(
                     $request->file('logo'),
-                    'lv-cis/clubs' 
+                    'lv-cis/clubs'
                 );
 
                 if ($uploadedUrl) {
@@ -90,7 +107,7 @@ class ClubController extends Controller
         if ($request->hasFile('logo')) {
             $rules['logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120';
         } else {
-            $rules['logo'] = 'nullable|string'; 
+            $rules['logo'] = 'nullable|string';
         }
 
         $validated = $request->validate($rules);

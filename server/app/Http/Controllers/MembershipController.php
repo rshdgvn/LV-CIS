@@ -98,11 +98,30 @@ class MembershipController extends Controller
      */
     public function getClubMembers($clubId)
     {
-        $club = Club::with(['users' => function ($query) {
-            $query->select('users.id', 'users.first_name', 'users.last_name', 'users.email', 'users.course', 'users.year_level', 'users.student_id');
-        }])->findOrFail($clubId);
+        $club = Club::findOrFail($clubId);
 
-        return response()->json($club->users);
+        $members = $club->users()
+            ->wherePivot('status', 'approved')        // ✅ only approved members
+            ->where('users.role', 'user')              // ✅ exclude admins
+            ->with('member')                           // ✅ eager load member profile for course/year_level
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'user_id'      => $user->id,
+                    'first_name'   => $user->first_name,
+                    'last_name'    => $user->last_name,
+                    'email'        => $user->email,
+                    'avatar'       => $user->avatar,                 
+                    'course'       => $user->member?->course,         
+                    'year_level'   => $user->member?->year_level,      
+                    'student_id'   => $user->member?->student_id,
+                    'role'         => $user->pivot->role,              
+                    'officer_title' => $user->pivot->officer_title,     
+                    'joined_at'    => $user->pivot->joined_at,
+                ];
+            });
+
+        return response()->json($members);
     }
 
     /**
@@ -169,7 +188,7 @@ class MembershipController extends Controller
         $pendingMembers = $club->users()
             ->wherePivot('status', 'pending')
             ->with('member')
-            ->latest() 
+            ->latest()
             ->get()
             ->map(function ($user) {
                 return [

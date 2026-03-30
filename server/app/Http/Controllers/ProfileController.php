@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Services\CloudinaryService;
-use Illuminate\Support\Arr; // Import Arr helper
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
 
 
@@ -166,14 +166,32 @@ class ProfileController extends Controller
 
         $request->validate([
             'current_password' => 'required',
-            'new_password'     => 'required|min:8|confirmed',
+            'new_password'     => [
+                'required',
+                'min:8',
+                'confirmed',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/'
+            ],
+            'new_password_confirmation' => 'required',
+        ], [
+            'new_password.regex' => 'The password must contain at least one number and one special character.',
         ]);
 
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
-                'message' => 'Current password is incorrect',
+                'message' => 'The current password you entered is incorrect.',
                 'errors' => [
                     'current_password' => ['The current password is incorrect.']
+                ]
+            ], 422);
+        }
+
+        if (Hash::check($request->new_password, $user->password)) {
+            return response()->json([
+                'message' => 'New password cannot be the same as your old password.',
+                'errors' => [
+                    'new_password' => ['Please choose a different password.']
                 ]
             ], 422);
         }

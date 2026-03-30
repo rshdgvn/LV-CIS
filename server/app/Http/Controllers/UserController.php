@@ -19,10 +19,22 @@ class UserController extends Controller
         $this->cloudinary = $cloudinary;
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->query('search');
+
         return response()->json(
-            User::with(['member', 'clubs'])->latest()->get()
+            User::with(['member', 'clubs'])
+                ->where('role', 'user')          // excludes admins
+                ->when($search, fn($q) =>
+                    $q->where(fn($q) =>
+                        $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name',  'like', "%{$search}%")
+                        ->orWhere('email',      'like', "%{$search}%")
+                    )
+                )
+                ->latest()
+                ->get()
         );
     }
 

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Models\Club;
-use App\Services\CloudinaryService; // Import Cloudinary Service
+use App\Services\CloudinaryService;
 
 class UserController extends Controller
 {
@@ -23,19 +23,19 @@ class UserController extends Controller
     {
         $search = $request->query('search');
 
-        return response()->json(
-            User::with(['member', 'clubs'])
-                ->where('role', 'user')          // excludes admins
-                ->when($search, fn($q) =>
-                    $q->where(fn($q) =>
-                        $q->where('first_name', 'like', "%{$search}%")
+        $users = User::with(['member', 'clubs'])
+            ->where('role', 'user') 
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name',  'like', "%{$search}%")
-                        ->orWhere('email',      'like', "%{$search}%")
-                    )
-                )
-                ->latest()
-                ->get()
-        );
+                        ->orWhere('email',      'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->get();
+
+        return response()->json($users);
     }
 
     public function store(Request $request)
@@ -48,7 +48,7 @@ class UserController extends Controller
             'role'       => 'required|in:admin,user',
             'course'     => 'nullable|string|max:255',
             'year_level' => 'nullable|string|max:255',
-            'avatar'     => 'nullable|file|image|max:2048', // Add avatar validation
+            'avatar'     => 'nullable|file|image|max:2048',
         ]);
 
         $avatarUrl = null;
@@ -62,7 +62,7 @@ class UserController extends Controller
             'email'      => $validated['email'],
             'password'   => Hash::make($validated['password']),
             'role'       => $validated['role'],
-            'avatar'     => $avatarUrl, // Save avatar URL
+            'avatar'     => $avatarUrl,
             'email_verified_at' => now(),
         ]);
 
@@ -73,7 +73,6 @@ class UserController extends Controller
             ]);
         }
 
-        // Auto-assign admin as adviser to all clubs (existing logic)
         if ($user->role === 'admin') {
             $clubs = Club::all();
             foreach ($clubs as $club) {
@@ -108,8 +107,6 @@ class UserController extends Controller
     {
         $oldRole = $user->role;
 
-        // NOTE: removed 'unique' check on email if it hasn't changed to avoid self-validation error logic complexity, 
-        // usually handled by 'unique:users,email,' . $user->id
         $validated = $request->validate([
             'first_name' => 'sometimes|string|max:255',
             'last_name'  => 'sometimes|string|max:255',
@@ -127,7 +124,6 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        // Handle Avatar Update
         if ($request->hasFile('avatar')) {
             $avatarUrl = $this->cloudinary->upload($request->file('avatar'), 'avatars');
             $validated['avatar'] = $avatarUrl;
@@ -135,7 +131,6 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        // Role Change Logic (Admin <-> User)
         if ($oldRole === 'admin' && $user->role === 'user') {
             DB::table('club_memberships')->where('user_id', $user->id)->delete();
         }
@@ -157,7 +152,6 @@ class UserController extends Controller
             }
         }
 
-        // Update Member details if User
         if ($user->role === 'user' && (isset($validated['course']) || isset($validated['year_level']))) {
             $user->member()->updateOrCreate(
                 ['user_id' => $user->id],

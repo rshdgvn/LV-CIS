@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Club;
+use App\Models\User;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -56,7 +57,7 @@ class ClubController extends Controller
     }
 
 
-    public function store(Request $request, CloudinaryService $cloudinaryService)
+ public function store(Request $request, CloudinaryService $cloudinaryService)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -86,6 +87,28 @@ class ClubController extends Controller
         }
 
         $club = Club::create($validated);
+
+        $admins = User::where('role', 'admin')->get();
+        
+        if ($admins->isNotEmpty()) {
+            $memberships = [];
+            $now = now();
+
+            foreach ($admins as $admin) {
+                $memberships[] = [
+                    'club_id' => $club->id,
+                    'user_id' => $admin->id,
+                    'role' => 'adviser', 
+                    'status' => 'approved',
+                    'activity_status' => 'active',
+                    'joined_at' => $now,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            \Illuminate\Support\Facades\DB::table('club_memberships')->insert($memberships);
+        }
 
         return response()->json([
             'message' => 'Club created successfully',

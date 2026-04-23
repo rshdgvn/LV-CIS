@@ -179,9 +179,10 @@ class TaskController extends Controller
         $availableMembers = [];
         if ($task->event && $task->event->club) {
             $availableMembers = ClubMembership::where('club_id', $task->event->club->id)
-                ->with('user:id,first_name,last_name,avatar,email')
-                ->get(['id', 'user_id', 'club_id']);
-        }
+                ->whereIn('role', ['member', 'officer']) 
+                ->with('user:id,first_name,last_name,avatar')
+                ->get(['id', 'user_id', 'club_id', 'role']);
+                    }
 
         return response()->json([
             'task' => $task,

@@ -15,6 +15,13 @@ class MobileDashboardController extends Controller
     {
         $user = $request->user();
 
+        if (!$user) {
+            return response()->json([
+                'active_members' => 0,
+                'inactive_members' => 0,
+            ]);
+        }
+
         $approvedClubIds = ClubMembership::where('user_id', $user->id)
             ->where('status', 'approved')
             ->pluck('club_id');
@@ -37,20 +44,8 @@ class MobileDashboardController extends Controller
         ]);
     }
 
-    private function hasAccess($user, $clubId)
-    {
-        return ClubMembership::where('user_id', $user->id)
-            ->where('club_id', $clubId)
-            ->where('status', 'approved')
-            ->exists();
-    }
-
     public function membersHealth(Request $request, $clubId)
     {
-        if (!$this->hasAccess($request->user(), $clubId)) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
         $baseQuery = ClubMembership::where('club_id', $clubId)->where('status', 'approved');
 
         return response()->json([
@@ -62,10 +57,6 @@ class MobileDashboardController extends Controller
 
     public function pendingMembers(Request $request, $clubId)
     {
-        if (!$this->hasAccess($request->user(), $clubId)) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
         $pendingMembers = ClubMembership::where('club_id', $clubId)
             ->where('status', 'pending')
             ->count();
@@ -77,10 +68,6 @@ class MobileDashboardController extends Controller
 
     public function attendanceRate(Request $request, $clubId)
     {
-        if (!$this->hasAccess($request->user(), $clubId)) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
         $sessionIds = AttendanceSession::where('club_id', $clubId)->pluck('id');
 
         $totalAttendances = Attendance::whereIn('attendance_session_id', $sessionIds)->count();
@@ -99,10 +86,6 @@ class MobileDashboardController extends Controller
 
     public function monthlyTrend(Request $request, $clubId)
     {
-        if (!$this->hasAccess($request->user(), $clubId)) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
         $monthlyTrend = AttendanceSession::where('club_id', $clubId)
             ->where('date', '>=', now()->subMonths(6)->startOfMonth())
             ->select(

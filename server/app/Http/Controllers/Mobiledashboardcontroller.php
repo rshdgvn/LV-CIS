@@ -37,38 +37,49 @@ class MobileDashboardController extends Controller
         ]);
     }
 
-    public function clubAnalytics(Request $request, $clubId)
+    private function hasAccess($user, $clubId)
     {
-        $user = $request->user();
-
-        $membership = ClubMembership::where('user_id', $user->id)
+        return ClubMembership::where('user_id', $user->id)
             ->where('club_id', $clubId)
             ->where('status', 'approved')
-            ->first();
+            ->exists();
+    }
 
-        if (!$membership) {
-            return response()->json(['message' => 'You are not a member of this club.'], 403);
+    public function membersHealth(Request $request, $clubId)
+    {
+        if (!$this->hasAccess($request->user(), $clubId)) {
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $club = Club::findOrFail($clubId);
+        $baseQuery = ClubMembership::where('club_id', $clubId)->where('status', 'approved');
 
-        $totalMembers = ClubMembership::where('club_id', $clubId)
-            ->where('status', 'approved')
-            ->count();
+        return response()->json([
+            'total_members' => (clone $baseQuery)->count(),
+            'active_members' => (clone $baseQuery)->where('activity_status', 'active')->count(),
+            'inactive_members' => (clone $baseQuery)->where('activity_status', 'inactive')->count(),
+        ]);
+    }
 
-        $activeMembers = ClubMembership::where('club_id', $clubId)
-            ->where('status', 'approved')
-            ->where('activity_status', 'active')
-            ->count();
-
-        $inactiveMembers = ClubMembership::where('club_id', $clubId)
-            ->where('status', 'approved')
-            ->where('activity_status', 'inactive')
-            ->count();
+    public function pendingMembers(Request $request, $clubId)
+    {
+        if (!$this->hasAccess($request->user(), $clubId)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
         $pendingMembers = ClubMembership::where('club_id', $clubId)
             ->where('status', 'pending')
             ->count();
+
+        return response()->json([
+            'pending_members' => $pendingMembers,
+        ]);
+    }
+
+    public function attendanceRate(Request $request, $clubId)
+    {
+        if (!$this->hasAccess($request->user(), $clubId)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
         $sessionIds = AttendanceSession::where('club_id', $clubId)->pluck('id');
 
@@ -80,6 +91,17 @@ class MobileDashboardController extends Controller
         $attendanceRate = $totalAttendances > 0
             ? round(($presentAttendances / $totalAttendances) * 100, 1)
             : 0;
+
+        return response()->json([
+            'attendance_rate' => $attendanceRate,
+        ]);
+    }
+
+    public function monthlyTrend(Request $request, $clubId)
+    {
+        if (!$this->hasAccess($request->user(), $clubId)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
         $monthlyTrend = AttendanceSession::where('club_id', $clubId)
             ->where('date', '>=', now()->subMonths(6)->startOfMonth())
@@ -105,16 +127,6 @@ class MobileDashboardController extends Controller
             ->values();
 
         return response()->json([
-            'club' => [
-                'id' => $club->id,
-                'name' => $club->name,
-                'logo_url' => $club->logo_url,
-            ],
-            'total_members' => $totalMembers,
-            'active_members' => $activeMembers,
-            'inactive_members' => $inactiveMembers,
-            'pending_members' => $pendingMembers,
-            'attendance_rate' => $attendanceRate,
             'monthly_trend' => $monthlyTrend,
         ]);
     }

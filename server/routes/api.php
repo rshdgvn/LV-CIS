@@ -100,7 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/members/{user}/club/{club}/attendances', [AttendanceController::class, 'memberAttendances']);
     Route::get('/attendance-sessions/{sessionId}/attendance', [AttendanceController::class, 'index']);
     Route::patch('/attendance-sessions/{sessionId}/members/{userId}', [AttendanceController::class, 'updateStatus']);
-    
+
     Route::get('/user/profile', [ProfileController::class, 'show']);
     Route::patch('/user/profile', [ProfileController::class, 'update']);
     Route::post('/user/setup-profile', [ProfileController::class, 'setup']);
@@ -135,7 +135,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
     Route::get('/dashboard', [MobileDashboardController::class, 'index']);
-    Route::get('/dashboard/club/{clubId}', [MobileDashboardController::class, 'clubAnalytics']);
+
+    Route::prefix('dashboard/club/{clubId}')->group(function () {
+        Route::get('/members-health', [MobileDashboardController::class, 'membersHealth']);
+        Route::get('/pending-members', [MobileDashboardController::class, 'pendingMembers']);
+        Route::get('/attendance-rate', [MobileDashboardController::class, 'attendanceRate']);
+        Route::get('/monthly-trend', [MobileDashboardController::class, 'monthlyTrend']);
+    });
 });
 
 Route::get('/gmail/oauth/init', function () {

@@ -66,6 +66,10 @@ class MobileDashboardController extends Controller
             ->where('activity_status', 'inactive')
             ->count();
 
+        $pendingMembers = ClubMembership::where('club_id', $clubId)
+            ->where('status', 'pending')
+            ->count();
+
         $sessionIds = AttendanceSession::where('club_id', $clubId)->pluck('id');
 
         $totalAttendances = Attendance::whereIn('attendance_session_id', $sessionIds)->count();
@@ -109,6 +113,7 @@ class MobileDashboardController extends Controller
             'total_members' => $totalMembers,
             'active_members' => $activeMembers,
             'inactive_members' => $inactiveMembers,
+            'pending_members' => $pendingMembers,
             'attendance_rate' => $attendanceRate,
             'monthly_trend' => $monthlyTrend,
         ]);

@@ -14,6 +14,7 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ClubEventController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MobileDashboardController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
@@ -132,6 +133,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::patch('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
+
+    Route::get('/dashboard', [MobileDashboardController::class, 'index']);
+    Route::get('/dashboard/club/{clubId}', [MobileDashboardController::class, 'clubAnalytics']);
 });
 
 Route::get('/gmail/oauth/init', function () {

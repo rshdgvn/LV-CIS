@@ -310,8 +310,9 @@ class TaskController extends Controller
         $event = Event::with('club')->findOrFail($eventId);
 
         $members = ClubMembership::where('club_id', $event->club->id)
+            ->whereIn('role', ['member', 'officer'])
             ->with('user:id,first_name,last_name,avatar')
-            ->get(['id', 'user_id', 'club_id']);
+            ->get(['id', 'user_id', 'club_id', 'role']);
 
         return response()->json([
             "tasks"   => $tasks,

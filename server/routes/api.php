@@ -99,7 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/members/{user}/club/{club}/attendances', [AttendanceController::class, 'memberAttendances']);
     Route::get('/attendance-sessions/{sessionId}/attendance', [AttendanceController::class, 'index']);
     Route::patch('/attendance-sessions/{sessionId}/members/{userId}', [AttendanceController::class, 'updateStatus']);
-
+    
     Route::get('/user/profile', [ProfileController::class, 'show']);
     Route::patch('/user/profile', [ProfileController::class, 'update']);
     Route::post('/user/setup-profile', [ProfileController::class, 'setup']);

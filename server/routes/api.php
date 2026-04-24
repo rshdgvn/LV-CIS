@@ -3,7 +3,7 @@
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AnnouncementController;
-use App\Http\Controllers\Api\SystemOverviewDashboardController;
+use App\Http\Controllers\SystemOverviewDashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSessionController;
 use App\Http\Controllers\AuthController;
@@ -15,7 +15,6 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ClubEventController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MembershipController;
-use App\Http\Controllers\MobileDashboardController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;

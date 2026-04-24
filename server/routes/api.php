@@ -37,16 +37,9 @@ Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
     ->name('verification.verify');
 Route::post('/email/resend', [AuthController::class, 'resendVerification']);
 
-Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory']);
-
 Route::get('/dashboard', [MobileDashboardController::class, 'index']);
 
-    Route::prefix('dashboard/club/{clubId}')->group(function () {
-        Route::get('/members-health', [MobileDashboardController::class, 'membersHealth']);
-        Route::get('/pending-members', [MobileDashboardController::class, 'pendingMembers']);
-        Route::get('/attendance-rate', [MobileDashboardController::class, 'attendanceRate']);
-        Route::get('/monthly-trend', [MobileDashboardController::class, 'monthlyTrend']);
-    });
+Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
@@ -142,6 +135,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::patch('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
+
+    Route::prefix('dashboard/club/{clubId}')->group(function () {
+        Route::get('/members-health', [MobileDashboardController::class, 'membersHealth']);
+        Route::get('/pending-members', [MobileDashboardController::class, 'pendingMembers']);
+        Route::get('/attendance-rate', [MobileDashboardController::class, 'attendanceRate']);
+        Route::get('/monthly-trend', [MobileDashboardController::class, 'monthlyTrend']);
+    });
 });
 
 Route::get('/gmail/oauth/init', function () {

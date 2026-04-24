@@ -10,6 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ClubController;
+use App\Http\Controllers\ClubDashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ClubEventController;
@@ -139,6 +140,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/engagement', [SystemOverviewDashboardController::class, 'getEngagementOverview']);
         Route::get('/attendance-trend', [SystemOverviewDashboardController::class, 'getAttendanceTrend']);
         Route::get('/additional-stats', [SystemOverviewDashboardController::class, 'getAdditionalStats']);
+    });
+
+    Route::prefix('clubs/{club}/manager')->group(function () {
+        Route::get('/stats', [ClubDashboardController::class, 'getManagerStats']);
+        Route::get('/task-summary', [ClubDashboardController::class, 'getManagerTaskSummary']);
+        Route::get('/attendance-trend', [ClubDashboardController::class, 'getManagerAttendanceTrend']);
+    });
+
+    Route::prefix('clubs/{club}/member')->group(function () {
+        Route::get('/overview', [ClubDashboardController::class, 'getMemberOverview']);
+        Route::get('/tasks', [ClubDashboardController::class, 'getMemberTasks']);
+        Route::get('/upcoming-events', [ClubDashboardController::class, 'getMemberUpcomingEvents']); 
     });
 });
 

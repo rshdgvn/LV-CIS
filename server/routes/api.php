@@ -3,6 +3,7 @@
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\Api\SystemOverviewDashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSessionController;
 use App\Http\Controllers\AuthController;
@@ -36,8 +37,6 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
     ->name('verification.verify');
 Route::post('/email/resend', [AuthController::class, 'resendVerification']);
-
-Route::get('/dashboard', [MobileDashboardController::class, 'index']);
 
 Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory']);
 
@@ -136,11 +135,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
-    Route::prefix('dashboard/club/{clubId}')->group(function () {
-        Route::get('/members-health', [MobileDashboardController::class, 'membersHealth']);
-        Route::get('/pending-members', [MobileDashboardController::class, 'pendingMembers']);
-        Route::get('/attendance-rate', [MobileDashboardController::class, 'attendanceRate']);
-        Route::get('/monthly-trend', [MobileDashboardController::class, 'monthlyTrend']);
+    Route::prefix('dashboard/admin')->group(function () {
+        Route::get('/clubs-overview', [SystemOverviewDashboardController::class, 'getClubsOverview']);
+        Route::get('/engagement', [SystemOverviewDashboardController::class, 'getEngagementOverview']);
+        Route::get('/attendance-trend', [SystemOverviewDashboardController::class, 'getAttendanceTrend']);
+        Route::get('/additional-stats', [SystemOverviewDashboardController::class, 'getAdditionalStats']);
     });
 });
 

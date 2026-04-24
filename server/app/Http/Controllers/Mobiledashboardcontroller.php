@@ -52,7 +52,7 @@ class MobileDashboardController extends Controller
     {
         try {
             $baseQuery = ClubMembership::where('club_id', $clubId)->where('status', 'approved');
-
+ 
             return response()->json([
                 'total_members' => (clone $baseQuery)->count(),
                 'active_members' => (clone $baseQuery)->where('activity_status', 'active')->count(),
@@ -82,7 +82,6 @@ class MobileDashboardController extends Controller
     {
         try {
             $sessionIds = AttendanceSession::where('club_id', $clubId)->pluck('id');
-
             $totalAttendances = Attendance::whereIn('attendance_session_id', $sessionIds)->count();
             $presentAttendances = Attendance::whereIn('attendance_session_id', $sessionIds)
                 ->where('status', 'present')

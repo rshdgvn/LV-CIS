@@ -65,17 +65,23 @@ class EventController extends Controller
 
     public function getEventById($id)
     {
-        $event = Event::with('detail')->findOrFail($id);
+        // FIX: Added 'club' so the frontend doesn't crash when opening Event Details
+        $event = Event::with(['detail', 'club'])->findOrFail($id);
         return response()->json($event);
     }
 
     public function addEvent(Request $request)
     {
+        // FIX: Convert literal string "null" from FormData to actual null
+        if ($request->has('club_id') && in_array($request->club_id, ['null', 'undefined', ''])) {
+            $request->merge(['club_id' => null]);
+        }
+
         $user = $request->user();
         $isAdmin = $user->role === 'admin';
         $clubId = $request->input('club_id');
 
-        // Permission Check (Replacing standard authorization)
+        // Permission Check
         if (!$isAdmin) {
             if (!$clubId) {
                 return response()->json(['message' => 'Officers must specify a club.'], 403);
@@ -115,77 +121,30 @@ class EventController extends Controller
 
             $formattedTime = date('H:i:s', strtotime($validated['event_time']));
 
-            // Use database transaction for data consistency
             DB::beginTransaction();
 
             try {
-                // Upload cover image
                 $coverUrl = null;
                 if ($request->hasFile('cover_image')) {
-                    Log::info('Uploading cover image...');
                     $coverUrl = $this->cloudinary->upload($request->file('cover_image'), 'events/covers');
-
-                    if (!$coverUrl) {
-                        throw new \Exception('Failed to upload cover image to Cloudinary');
-                    }
-                    Log::info('Cover image uploaded successfully', ['url' => $coverUrl]);
                 }
 
-                // Upload photos with error handling
                 $photoUrls = [];
                 if ($request->hasFile('photos')) {
-                    $photos = $request->file('photos');
-                    Log::info('Uploading photos...', ['count' => count($photos)]);
-
-                    foreach ($photos as $index => $photo) {
-                        try {
-                            $url = $this->cloudinary->upload($photo, 'events/photos');
-                            if ($url) {
-                                $photoUrls[] = $url;
-                                Log::info("Photo {$index} uploaded", ['url' => $url]);
-                            } else {
-                                Log::warning("Photo {$index} upload returned null");
-                            }
-                        } catch (\Exception $e) {
-                            Log::error("Failed to upload photo {$index}", [
-                                'error' => $e->getMessage(),
-                                'file_size' => $photo->getSize(),
-                                'mime_type' => $photo->getMimeType()
-                            ]);
-                        }
-                    }
-
-                    if (empty($photoUrls) && count($photos) > 0) {
-                        throw new \Exception('All photo uploads failed');
+                    foreach ($request->file('photos') as $photo) {
+                        $url = $this->cloudinary->upload($photo, 'events/photos');
+                        if ($url) $photoUrls[] = $url;
                     }
                 }
 
-                // Upload videos with error handling
                 $videoUrls = [];
                 if ($request->hasFile('videos')) {
-                    $videos = $request->file('videos');
-                    Log::info('Uploading videos...', ['count' => count($videos)]);
-
-                    foreach ($videos as $index => $video) {
-                        try {
-                            $url = $this->cloudinary->upload($video, 'events/videos');
-                            if ($url) {
-                                $videoUrls[] = $url;
-                                Log::info("Video {$index} uploaded", ['url' => $url]);
-                            } else {
-                                Log::warning("Video {$index} upload returned null");
-                            }
-                        } catch (\Exception $e) {
-                            Log::error("Failed to upload video {$index}", [
-                                'error' => $e->getMessage(),
-                                'file_size' => $video->getSize(),
-                                'mime_type' => $video->getMimeType()
-                            ]);
-                        }
+                    foreach ($request->file('videos') as $video) {
+                        $url = $this->cloudinary->upload($video, 'events/videos');
+                        if ($url) $videoUrls[] = $url;
                     }
                 }
 
-                // Create event record
                 $event = Event::create([
                     'club_id' => $validated['club_id'] ?? null,
                     'title' => $validated['title'],
@@ -197,7 +156,6 @@ class EventController extends Controller
                     'status' => $validated['status'],
                 ]);
 
-                // Create event detail
                 EventDetail::create([
                     'event_id' => $event->id,
                     'event_date' => $validated['event_date'],
@@ -210,7 +168,6 @@ class EventController extends Controller
                     'duration' => $validated['duration'],
                 ]);
 
-                // AUTO-CREATE Attendance Session tied to the event
                 AttendanceSession::create([
                     'club_id' => $event->club_id,
                     'event_id' => $event->id,
@@ -218,7 +175,7 @@ class EventController extends Controller
                     'title' => $validated['title'] . ' - Attendance',
                     'venue' => $validated['venue'],
                     'date' => $validated['event_date'],
-                    'is_open' => true, // Enforce always open
+                    'is_open' => true,
                 ]);
 
                 DB::commit();
@@ -226,11 +183,6 @@ class EventController extends Controller
                 return response()->json([
                     'message' => 'Event created successfully.',
                     'event' => $event->load('detail'),
-                    'upload_summary' => [
-                        'photos_uploaded' => count($photoUrls),
-                        'videos_uploaded' => count($videoUrls),
-                        'cover_uploaded' => !is_null($coverUrl),
-                    ]
                 ], 201);
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -239,25 +191,21 @@ class EventController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
-            Log::error('Error creating event: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-            return response()->json([
-                'message' => 'Failed to create event.',
-                'error' => config('app.debug') ? $e->getMessage() : 'An error occurred during event creation.',
-            ], 500);
+            return response()->json(['message' => 'Failed to create event.', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function updateEvent(Request $request, $id)
     {
+        // FIX: Convert literal string "null" from FormData to actual null
+        if ($request->has('club_id') && in_array($request->club_id, ['null', 'undefined', ''])) {
+            $request->merge(['club_id' => null]);
+        }
+
         $user = $request->user();
         $isAdmin = $user->role === 'admin';
         $event = Event::findOrFail($id);
 
-        // Permission Check for Updates
         if (!$isAdmin) {
             if (!$event->club_id) {
                 return response()->json(['message' => 'Only admins can edit general events.'], 403);
@@ -299,93 +247,25 @@ class EventController extends Controller
             DB::beginTransaction();
 
             try {
-                // Handle cover image
                 $coverUrl = $event->cover_image;
                 if ($request->hasFile('cover_image')) {
-                    Log::info('Updating cover image...');
                     $newCoverUrl = $this->cloudinary->upload($request->file('cover_image'), 'events/covers');
-                    if ($newCoverUrl) {
-                        $coverUrl = $newCoverUrl;
-                        Log::info('Cover image updated successfully');
-                    } else {
-                        Log::warning('Cover image upload returned null, keeping existing');
-                    }
+                    if ($newCoverUrl) $coverUrl = $newCoverUrl;
                 } elseif ($request->filled('existing_cover_image')) {
                     $coverUrl = $request->input('existing_cover_image');
                 }
 
-                // Handle photos
-                $existingPhotos = $request->input('existing_photos', []);
-                if (!is_array($existingPhotos)) {
-                    $existingPhotos = is_string($existingPhotos) ? json_decode($existingPhotos, true) : [];
-                }
-                if (!is_array($existingPhotos)) $existingPhotos = [];
-
-                $newPhotoUrls = [];
-                if ($request->hasFile('photos')) {
-                    $photos = $request->file('photos');
-                    Log::info('Uploading new photos...', ['count' => count($photos)]);
-
-                    foreach ($photos as $index => $photo) {
-                        try {
-                            $url = $this->cloudinary->upload($photo, 'events/photos');
-                            if ($url) {
-                                $newPhotoUrls[] = $url;
-                                Log::info("New photo {$index} uploaded");
-                            }
-                        } catch (\Exception $e) {
-                            Log::error("Failed to upload new photo {$index}", [
-                                'error' => $e->getMessage()
-                            ]);
-                        }
-                    }
-                }
-                $photoUrls = array_merge($existingPhotos, $newPhotoUrls);
-
-                // Handle videos
-                $existingVideos = $request->input('existing_videos', []);
-                if (!is_array($existingVideos)) {
-                    $existingVideos = is_string($existingVideos) ? json_decode($existingVideos, true) : [];
-                }
-                if (!is_array($existingVideos)) $existingVideos = [];
-
-                $newVideoUrls = [];
-                if ($request->hasFile('videos')) {
-                    $videos = $request->file('videos');
-                    Log::info('Uploading new videos...', ['count' => count($videos)]);
-
-                    foreach ($videos as $index => $video) {
-                        try {
-                            $url = $this->cloudinary->upload($video, 'events/videos');
-                            if ($url) {
-                                $newVideoUrls[] = $url;
-                                Log::info("New video {$index} uploaded");
-                            }
-                        } catch (\Exception $e) {
-                            Log::error("Failed to upload new video {$index}", [
-                                'error' => $e->getMessage()
-                            ]);
-                        }
-                    }
-                }
-                $videoUrls = array_merge($existingVideos, $newVideoUrls);
-
-                // Update event
                 $event->update([
                     'club_id' => $validated['club_id'] ?? $event->club_id,
                     'title' => $validated['title'],
                     'purpose' => $validated['purpose'],
                     'description' => $validated['description'],
                     'cover_image' => $coverUrl,
-                    'photos' => $photoUrls,
-                    'videos' => $videoUrls,
                     'status' => $validated['status'],
                 ]);
 
-                // Update or create event detail
-                $eventDetail = $event->detail;
-                if ($eventDetail) {
-                    $eventDetail->update([
+                if ($event->detail) {
+                    $event->detail->update([
                         'event_date' => $validated['event_date'],
                         'event_time' => $formattedTime,
                         'venue' => $validated['venue'],
@@ -409,7 +289,6 @@ class EventController extends Controller
                     ]);
                 }
 
-                // Sync the auto-generated Attendance Session's details
                 $session = AttendanceSession::where('event_id', $event->id)->first();
                 if ($session) {
                     $session->update([
@@ -424,12 +303,6 @@ class EventController extends Controller
                 return response()->json([
                     'message' => 'Event updated successfully.',
                     'event' => $event->load('detail'),
-                    'upload_summary' => [
-                        'new_photos_uploaded' => count($newPhotoUrls),
-                        'new_videos_uploaded' => count($newVideoUrls),
-                        'total_photos' => count($photoUrls),
-                        'total_videos' => count($videoUrls),
-                    ]
                 ], 200);
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -438,13 +311,7 @@ class EventController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
-            Log::error('Error updating event: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json([
-                'message' => 'Failed to update event.',
-                'error' => config('app.debug') ? $e->getMessage() : 'An error occurred during event update.',
-            ], 500);
+            return response()->json(['message' => 'Failed to update event.', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -470,8 +337,10 @@ class EventController extends Controller
             }
         }
 
-        $event->detail()->delete();
-        // AttendanceSession will auto-delete due to cascade in migrations
+        // FIX: Safely check if detail exists before deleting
+        if ($event->detail) {
+            $event->detail()->delete();
+        }
         $event->delete();
 
         return response()->json(['message' => 'Event deleted successfully.']);

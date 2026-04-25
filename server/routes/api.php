@@ -80,14 +80,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks', [TaskController::class, 'getAllTasks']);
     Route::get('/task/{id}', [TaskController::class, 'getTaskById']);
     Route::get('/task/{id}', [TaskController::class, 'getTaskDetail']);
-    Route::patch('/task/{id}', [TaskController::class, 'updateTaskById']);
     Route::patch('/tasks/{id}/status', [TaskController::class, 'updateTaskStatus']);
     Route::get('/my/tasks', [TaskController::class, 'getMyTasks']);
 
     Route::post('/tasks/{taskId}/assign', [TaskController::class, 'assignTaskByEmail']);
     Route::post('/create/task', [TaskController::class, 'createTaskForEvent']);
-    Route::put('/update/task/{id}', [TaskController::class, 'updateTaskById']);
-    Route::delete('/delete/task/{id}', [TaskController::class, 'deleteTaskById']);
+    Route::patch('/task/{id}', [TaskController::class, 'updateTask']);
+    Route::put('/update/task/{id}', [TaskController::class, 'updateTask']);
+    Route::delete('/delete/task/{id}', [TaskController::class, 'deleteTask']);
 
     Route::get('/events/{eventId}/tasks', [TaskController::class, 'getTasksByEvent']);
 

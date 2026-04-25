@@ -6,17 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\ClubMembership;
 use App\Models\Event;
-use App\Models\EventTask;
 use App\Models\AttendanceSession;
 use App\Models\Attendance;
+use App\Models\EventTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ClubDashboardController extends Controller
 {
     // ==========================================
-    // MANAGER ENDPOINTS (Officer/Admin View)
+    // MANAGER / ADMIN ENDPOINTS (Club-Specific View)
     // ==========================================
 
     public function getManagerStats(Club $club)
@@ -39,30 +40,49 @@ class ClubDashboardController extends Controller
         ]);
     }
 
-    public function getManagerTaskSummary(Club $club)
+    /**
+     * REPLACED TASKS WITH "CLUB INSIGHTS"
+     * Admins/Officers don't need micro-tasks. They need to know the Event Pipeline
+     * (is the club active?) and Demographics (who is joining?).
+     */
+    public function getManagerInsights(Club $club)
     {
-        // Get the most recent/ongoing event
-        $activeEvent = Event::where('club_id', $club->id)
-            ->where('status', '!=', 'completed')
-            ->latest()
-            ->first();
-
-        if (!$activeEvent) {
-            return response()->json(['message' => 'No active event found', 'tasks' => []]);
-        }
-
-        $taskStats = EventTask::where('event_id', $activeEvent->id)
+        // 1. Event Pipeline (Perfect for replacing the Pie Chart)
+        $eventStats = Event::where('club_id', $club->id)
             ->selectRaw("status, count(*) as count")
             ->groupBy('status')
-            ->pluck('count', 'status');
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $upcoming = $eventStats['upcoming'] ?? 0;
+        $ongoing = $eventStats['ongoing'] ?? 0;
+        $completed = $eventStats['completed'] ?? 0;
+
+        // 2. Member Demographics (What courses are the members from?)
+        $demographics = DB::table('club_memberships')
+            ->join('members', 'club_memberships.user_id', '=', 'members.user_id')
+            ->where('club_memberships.club_id', $club->id)
+            ->where('club_memberships.status', 'approved')
+            ->whereNotNull('members.course')
+            ->select('members.course', DB::raw('count(*) as count'))
+            ->groupBy('members.course')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'label' => $item->course,
+                    'value' => $item->count
+                ];
+            });
 
         return response()->json([
-            'event_title' => $activeEvent->title,
-            'stats' => [
-                'pending' => $taskStats['pending'] ?? 0,
-                'in_progress' => $taskStats['in_progress'] ?? 0,
-                'completed' => $taskStats['completed'] ?? 0,
-            ]
+            'pipeline_title' => 'Event Pipeline Health',
+            'events' => [
+                'upcoming' => $upcoming,
+                'ongoing' => $ongoing,
+                'completed' => $completed,
+                'total' => $upcoming + $ongoing + $completed
+            ],
+            'demographics' => $demographics
         ]);
     }
 
@@ -71,7 +91,8 @@ class ClubDashboardController extends Controller
         // Get last 5 sessions to show trend
         $sessions = AttendanceSession::where('club_id', $club->id)
             ->withCount(['attendances' => function($q) {
-                $q->where('status', 'present')->orWhere('status', 'late');
+                // Ensure we count both present and late
+                $q->whereIn('status', ['present', 'late']); 
             }])
             ->orderBy('date', 'desc')
             ->take(5)
@@ -83,7 +104,7 @@ class ClubDashboardController extends Controller
             'value' => $s->attendances_count,
         ]);
 
-        return response()->json($data);
+        return response()->json($data->values());
     }
 
     // ==========================================
@@ -117,7 +138,6 @@ class ClubDashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Find membership ID to filter assignments
         $membership = ClubMembership::where('club_id', $club->id)
             ->where('user_id', $user->id)
             ->first();
@@ -134,35 +154,34 @@ class ClubDashboardController extends Controller
         return response()->json($tasks);
     }
 
+    public function getMemberUpcomingEvents(Club $club)
+    {
+        $today = now()->format('Y-m-d');
 
-public function getMemberUpcomingEvents(Club $club)
-{
-    $today = now()->format('Y-m-d');
+        $events = Event::where('club_id', $club->id)
+            ->whereIn('status', ['upcoming', 'ongoing']) 
+            ->whereHas('detail', function($query) use ($today) {
+                $query->where('event_date', '>=', $today);
+            })
+            ->with('detail')
+            ->get();
 
-    $events = Event::where('club_id', $club->id)
-        ->whereHas('sessions', function($query) use ($today) {
-            $query->where('date', '>=', $today);
-        })
-        ->with(['sessions' => function($query) use ($today) {
-            $query->where('date', '>=', $today)->orderBy('date', 'asc');
-        }])
-        ->get();
+        $formattedEvents = $events->map(function ($event) use ($today) {
+            $detail = $event->detail;
+            
+            $eventDate = $detail && $detail->event_date ? $detail->event_date->format('Y-m-d') : null;
+            
+            return [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->description,
+                'cover_image' => $event->cover_image,
+                'date' => $eventDate,
+                'venue' => $detail ? $detail->venue : 'TBA',
+                'is_ongoing' => $eventDate === $today,
+            ];
+        })->sortBy('date')->values();
 
-    $formattedEvents = $events->map(function ($event) use ($today) {
-        $firstSession = $event->sessions->first();
-        $eventDate = $firstSession ? $firstSession->date : null;
-        
-        return [
-            'id' => $event->id,
-            'title' => $event->title,
-            'description' => $event->description,
-            'cover_image' => $event->cover_image,
-            'date' => $eventDate,
-            'venue' => $firstSession ? $firstSession->venue : 'TBA',
-            'is_ongoing' => $eventDate === $today,
-        ];
-    })->sortBy('date')->values();
-
-    return response()->json($formattedEvents);
-}
+        return response()->json($formattedEvents);
+    }
 }

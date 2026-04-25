@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Club;
 use App\Models\Event;
-use App\Models\User;
+use App\Models\ClubMembership;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SystemOverviewDashboardController extends Controller
 {
-
     private function ensureAdmin(Request $request)
     {
         if ($request->user()->role !== 'admin') {
@@ -19,7 +19,9 @@ class SystemOverviewDashboardController extends Controller
         }
     }
 
-
+    // ==========================================
+    // OVERVIEW METRIC 1: CLUBS
+    // ==========================================
     public function getClubsOverview(Request $request)
     {
         $this->ensureAdmin($request);
@@ -33,26 +35,31 @@ class SystemOverviewDashboardController extends Controller
         ]);
     }
 
+    // ==========================================
+    // OVERVIEW METRIC 2: ENGAGEMENT
+    // ==========================================
     public function getEngagementOverview(Request $request)
     {
         $this->ensureAdmin($request);
 
         $totalAttendances = Attendance::count();
         $positiveAttendances = Attendance::whereIn('status', ['present', 'late'])->count();
+        
         $overallEngagement = $totalAttendances > 0 
             ? round(($positiveAttendances / $totalAttendances) * 100) 
             : 0;
 
-        $lastMonthStart = now()->subMonth()->startOfMonth();
-        $lastMonthEnd = now()->subMonth()->endOfMonth();
+        $lastMonthStart = now()->subMonth()->startOfMonth()->format('Y-m-d');
+        $lastMonthEnd = now()->subMonth()->endOfMonth()->format('Y-m-d');
         
-        $lastMonthTotal = Attendance::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
-        $lastMonthPositive = Attendance::whereIn('status', ['present', 'late'])
-            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
-            ->count();
-            
-        $lastMonthEngagement = $lastMonthTotal > 0 
-            ? round(($lastMonthPositive / $lastMonthTotal) * 100, 1) 
+        $lastMonthStats = DB::table('attendances')
+            ->join('attendance_sessions', 'attendances.attendance_session_id', '=', 'attendance_sessions.id')
+            ->whereBetween('attendance_sessions.date', [$lastMonthStart, $lastMonthEnd])
+            ->selectRaw('count(*) as total, sum(case when attendances.status in ("present", "late") then 1 else 0 end) as positive')
+            ->first();
+
+        $lastMonthEngagement = $lastMonthStats->total > 0 
+            ? round(($lastMonthStats->positive / $lastMonthStats->total) * 100, 1) 
             : 0;
 
         $trendDiff = round($overallEngagement - $lastMonthEngagement, 1);
@@ -65,7 +72,9 @@ class SystemOverviewDashboardController extends Controller
         ]);
     }
 
-
+    // ==========================================
+    // LINE CHART: ATTENDANCE TREND
+    // ==========================================
     public function getAttendanceTrend(Request $request)
     {
         $this->ensureAdmin($request);
@@ -75,9 +84,11 @@ class SystemOverviewDashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             
-            $count = Attendance::whereIn('status', ['present', 'late'])
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
+            $count = DB::table('attendances')
+                ->join('attendance_sessions', 'attendances.attendance_session_id', '=', 'attendance_sessions.id')
+                ->whereIn('attendances.status', ['present', 'late'])
+                ->whereYear('attendance_sessions.date', $month->year)
+                ->whereMonth('attendance_sessions.date', $month->month)
                 ->count();
 
             $chartData[] = [
@@ -89,17 +100,66 @@ class SystemOverviewDashboardController extends Controller
         return response()->json($chartData);
     }
 
-
+    // ==========================================
+    // PIE CHARTS & GENERAL OVERVIEW
+    // ==========================================
     public function getAdditionalStats(Request $request)
     {
         $this->ensureAdmin($request);
 
-        $totalStudents = User::where('role', 'user')->count();
+        // Base Query: Only approved members and officers (NO ADVISERS)
+        $realMemberships = ClubMembership::where('status', 'approved')
+            ->whereIn('role', ['member', 'officer']); 
+            
+        // 1. Overview Metric
+        $totalRealStudents = (clone $realMemberships)->distinct('user_id')->count('user_id');
         $activeEvents = Event::whereIn('status', ['upcoming', 'ongoing'])->count();
 
+        // 2. Roles Pie Chart (Members vs Officers)
+        $roleCounts = (clone $realMemberships)
+            ->selectRaw('role, count(*) as count')
+            ->groupBy('role')
+            ->pluck('count', 'role')
+            ->toArray();
+
+        // 3. Activity Pie Chart (Active vs Inactive)
+        $activityCounts = (clone $realMemberships)
+            ->selectRaw('activity_status, count(*) as count')
+            ->groupBy('activity_status')
+            ->pluck('count', 'activity_status')
+            ->toArray();
+
         return response()->json([
-            'total_students' => $totalStudents,
-            'active_events' => $activeEvents
+            'overview' => [
+                'total_real_students' => $totalRealStudents,
+                'active_events' => $activeEvents
+            ],
+            'roles_pie_chart' => [
+                'total' => array_sum($roleCounts),
+                'data' => [
+                    [
+                        'value' => $roleCounts['member'] ?? 0, 
+                        'text' => 'Members'
+                    ],
+                    [
+                        'value' => $roleCounts['officer'] ?? 0, 
+                        'text' => 'Officers'
+                    ]
+                ]
+            ],
+            'activity_pie_chart' => [
+                'total' => array_sum($activityCounts),
+                'data' => [
+                    [
+                        'value' => $activityCounts['active'] ?? 0, 
+                        'text' => 'Active'
+                    ],
+                    [
+                        'value' => $activityCounts['inactive'] ?? 0, 
+                        'text' => 'Inactive'
+                    ]
+                ]
+            ]
         ]);
     }
 }

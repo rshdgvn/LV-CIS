@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventDetail;
+use App\Models\AttendanceSession;
+use App\Models\ClubMembership;
 use Illuminate\Http\Request;
 use App\Services\CloudinaryService;
 use Illuminate\Support\Facades\Log;
@@ -22,15 +24,28 @@ class EventController extends Controller
         $this->cloudinary = $cloudinary;
     }
 
-    public function getAllEvents()
+    public function getAllEvents(Request $request)
     {
-        $events = Event::with([
+        $user = $request->user();
+        $isAdmin = $user && $user->role === 'admin';
+        $clubId = $request->query('club_id');
+
+        $query = Event::with([
             'detail',
             'club:id,name',
             'club.users:id,first_name,last_name,email'
-        ])
-            ->latest()
-            ->get();
+        ])->latest();
+
+        if ($clubId) {
+            // Get events for a specific club
+            $query->where('club_id', $clubId);
+        } elseif (!$isAdmin) {
+            // If no club_id and NOT an admin, only show general school events
+            $query->whereNull('club_id');
+        }
+        // If Admin and no club_id, it skips the IFs and fetches EVERYTHING (God Mode)
+
+        $events = $query->get();
 
         $events->transform(function ($event) {
             if ($event->club && $event->club->users) {
@@ -53,11 +68,30 @@ class EventController extends Controller
 
     public function addEvent(Request $request)
     {
-        $this->authorize('create', Event::class);
+        $user = $request->user();
+        $isAdmin = $user->role === 'admin';
+        $clubId = $request->input('club_id');
+
+        // Permission Check (Replacing standard authorization)
+        if (!$isAdmin) {
+            if (!$clubId) {
+                return response()->json(['message' => 'Officers must specify a club.'], 403);
+            }
+
+            $isOfficer = ClubMembership::where('user_id', $user->id)
+                ->where('club_id', $clubId)
+                ->where('role', 'officer')
+                ->where('status', 'approved')
+                ->exists();
+
+            if (!$isOfficer) {
+                return response()->json(['message' => 'Unauthorized. You are not an officer of this club.'], 403);
+            }
+        }
 
         try {
             $validated = $request->validate([
-                'club_id' => 'required|exists:clubs,id',
+                'club_id' => 'nullable|exists:clubs,id',
                 'title' => 'required|string|max:255',
                 'purpose' => 'required|string',
                 'description' => 'required|string',
@@ -115,7 +149,6 @@ class EventController extends Controller
                                 'file_size' => $photo->getSize(),
                                 'mime_type' => $photo->getMimeType()
                             ]);
-                            // Continue with other photos instead of failing completely
                         }
                     }
 
@@ -151,7 +184,7 @@ class EventController extends Controller
 
                 // Create event record
                 $event = Event::create([
-                    'club_id' => $validated['club_id'],
+                    'club_id' => $validated['club_id'] ?? null,
                     'title' => $validated['title'],
                     'purpose' => $validated['purpose'],
                     'description' => $validated['description'],
@@ -172,6 +205,17 @@ class EventController extends Controller
                     'contact_email' => $validated['contact_email'],
                     'event_mode' => $validated['event_mode'],
                     'duration' => $validated['duration'],
+                ]);
+
+                // AUTO-CREATE Attendance Session tied to the event
+                AttendanceSession::create([
+                    'club_id' => $event->club_id,
+                    'event_id' => $event->id,
+                    'created_by' => $user->id,
+                    'title' => $validated['title'] . ' - Attendance',
+                    'venue' => $validated['venue'],
+                    'date' => $validated['event_date'],
+                    'is_open' => true, // Enforce always open
                 ]);
 
                 DB::commit();
@@ -206,9 +250,30 @@ class EventController extends Controller
 
     public function updateEvent(Request $request, $id)
     {
+        $user = $request->user();
+        $isAdmin = $user->role === 'admin';
+        $event = Event::findOrFail($id);
+
+        // Permission Check for Updates
+        if (!$isAdmin) {
+            if (!$event->club_id) {
+                return response()->json(['message' => 'Only admins can edit general events.'], 403);
+            }
+
+            $isOfficer = ClubMembership::where('user_id', $user->id)
+                ->where('club_id', $event->club_id)
+                ->where('role', 'officer')
+                ->where('status', 'approved')
+                ->exists();
+
+            if (!$isOfficer) {
+                return response()->json(['message' => 'Unauthorized. You are not an officer of this club.'], 403);
+            }
+        }
+
         try {
             $validated = $request->validate([
-                'club_id' => 'required|exists:clubs,id',
+                'club_id' => 'nullable|exists:clubs,id',
                 'title' => 'required|string|max:255',
                 'purpose' => 'required|string',
                 'description' => 'required|string',
@@ -226,8 +291,6 @@ class EventController extends Controller
                 'duration' => 'required|string|max:255',
             ]);
 
-            $event = Event::findOrFail($id);
-            $this->authorize('update', $event);
             $formattedTime = date('H:i:s', strtotime($validated['event_time']));
 
             DB::beginTransaction();
@@ -306,7 +369,7 @@ class EventController extends Controller
 
                 // Update event
                 $event->update([
-                    'club_id' => $validated['club_id'],
+                    'club_id' => $validated['club_id'] ?? $event->club_id,
                     'title' => $validated['title'],
                     'purpose' => $validated['purpose'],
                     'description' => $validated['description'],
@@ -343,6 +406,16 @@ class EventController extends Controller
                     ]);
                 }
 
+                // Sync the auto-generated Attendance Session's details
+                $session = AttendanceSession::where('event_id', $event->id)->first();
+                if ($session) {
+                    $session->update([
+                        'title' => $validated['title'] . ' - Attendance',
+                        'venue' => $validated['venue'],
+                        'date' => $validated['event_date'],
+                    ]);
+                }
+
                 DB::commit();
 
                 return response()->json([
@@ -372,11 +445,30 @@ class EventController extends Controller
         }
     }
 
-    public function deleteEvent($id)
+    public function deleteEvent(Request $request, $id)
     {
+        $user = $request->user();
+        $isAdmin = $user->role === 'admin';
         $event = Event::findOrFail($id);
-        $this->authorize('delete', $event);
+
+        if (!$isAdmin) {
+            if (!$event->club_id) {
+                return response()->json(['message' => 'Only admins can delete general events.'], 403);
+            }
+
+            $isOfficer = ClubMembership::where('user_id', $user->id)
+                ->where('club_id', $event->club_id)
+                ->where('role', 'officer')
+                ->where('status', 'approved')
+                ->exists();
+
+            if (!$isOfficer) {
+                return response()->json(['message' => 'Unauthorized to delete this event'], 403);
+            }
+        }
+
         $event->detail()->delete();
+        // AttendanceSession will auto-delete due to cascade in migrations
         $event->delete();
 
         return response()->json(['message' => 'Event deleted successfully.']);

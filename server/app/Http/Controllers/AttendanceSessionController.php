@@ -40,7 +40,11 @@ class AttendanceSessionController extends Controller
                 }
             }
 
-            $query->where('club_id', $clubId);
+            // ✨ NEW: Get this club's sessions AND General Sessions (null club_id) ✨
+            $query->where(function($q) use ($clubId) {
+                $q->where('club_id', $clubId)
+                  ->orWhereNull('club_id');
+            });
 
             // YOUR EXACT ANALYTICS LOGIC
             $userClub = $user->clubs()->where('club_id', $clubId)->first();

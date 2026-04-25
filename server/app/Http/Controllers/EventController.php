@@ -37,8 +37,11 @@ class EventController extends Controller
         ])->latest();
 
         if ($clubId) {
-            // Get events for a specific club
-            $query->where('club_id', $clubId);
+            // Get events for a specific club AND General Events (where club_id is null)
+            $query->where(function($q) use ($clubId) {
+                $q->where('club_id', $clubId)
+                  ->orWhereNull('club_id');
+            });
         } elseif (!$isAdmin) {
             // If no club_id and NOT an admin, only show general school events
             $query->whereNull('club_id');

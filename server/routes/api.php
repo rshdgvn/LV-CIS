@@ -135,24 +135,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
-    Route::prefix('dashboard/admin')->group(function () {
-        Route::get('/clubs-overview', [SystemOverviewDashboardController::class, 'getClubsOverview']);
-        Route::get('/engagement', [SystemOverviewDashboardController::class, 'getEngagementOverview']);
-        Route::get('/attendance-trend', [SystemOverviewDashboardController::class, 'getAttendanceTrend']);
-        Route::get('/additional-stats', [SystemOverviewDashboardController::class, 'getAdditionalStats']);
-    });
+    Route::get('/dashboard/admin/clubs-overview', [SystemOverviewDashboardController::class, 'getClubsOverview']);
+    Route::get('/dashboard/admin/engagement', [SystemOverviewDashboardController::class, 'getEngagementOverview']);
+    Route::get('/dashboard/admin/attendance-trend', [SystemOverviewDashboardController::class, 'getAttendanceTrend']);
+    Route::get('/dashboard/admin/additional-stats', [SystemOverviewDashboardController::class, 'getAdditionalStats']);
 
-    Route::prefix('clubs/{club}/manager')->group(function () {
-        Route::get('/stats', [ClubDashboardController::class, 'getManagerStats']);
-        Route::get('/task-summary', [ClubDashboardController::class, 'getManagerTaskSummary']);
-        Route::get('/attendance-trend', [ClubDashboardController::class, 'getManagerAttendanceTrend']);
-    });
+    Route::get('/clubs/{club}/manager/stats', [ClubDashboardController::class, 'getManagerStats']);
+    Route::get('/clubs/{club}/manager/insights', [ClubDashboardController::class, 'getManagerInsights']);
+    Route::get('/clubs/{club}/manager/attendance-trend', [ClubDashboardController::class, 'getManagerAttendanceTrend']);
 
-    Route::prefix('clubs/{club}/member')->group(function () {
-        Route::get('/overview', [ClubDashboardController::class, 'getMemberOverview']);
-        Route::get('/tasks', [ClubDashboardController::class, 'getMemberTasks']);
-        Route::get('/upcoming-events', [ClubDashboardController::class, 'getMemberUpcomingEvents']); 
-    });
+    Route::get('/clubs/{club}/member/overview', [ClubDashboardController::class, 'getMemberOverview']);
+    Route::get('/clubs/{club}/member/tasks', [ClubDashboardController::class, 'getMemberTasks']);
+    Route::get('/clubs/{club}/member/upcoming-events', [ClubDashboardController::class, 'getMemberUpcomingEvents']);
 });
 
 Route::get('/gmail/oauth/init', function () {

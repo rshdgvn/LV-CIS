@@ -22,32 +22,59 @@ class ClubDashboardController extends Controller
 
     public function getManagerStats(Club $club)
     {
-        $totalMembers = $club->users()->wherePivot('status', 'approved')->count();
+        // 1. Total Members (Strictly excluding 'admin' users and 'adviser' roles)
+        $totalMembers = $club->users()
+            ->wherePivot('status', 'approved')
+            ->wherePivot('role', '!=', 'adviser')
+            ->where('users.role', '!=', 'admin')
+            ->count();
         
         $pendingRequests = ClubMembership::where('club_id', $club->id)
             ->where('status', 'pending')
+            ->where('role', '!=', 'adviser')
+            ->whereHas('user', function ($query) {
+                $query->where('role', '!=', 'admin');
+            })
             ->count();
 
-        $activeCount = ClubMembership::where('club_id', $club->id)
-            ->where('status', 'approved')
-            ->where('activity_status', 'active')
+        $activeCount = $club->users()
+            ->wherePivot('status', 'approved')
+            ->wherePivot('role', '!=', 'adviser')
+            ->where('users.role', '!=', 'admin')
+            ->wherePivot('activity_status', 'active')
+            ->count();
+
+        $inactiveCount = $club->users()
+            ->wherePivot('status', 'approved')
+            ->wherePivot('role', '!=', 'adviser')
+            ->where('users.role', '!=', 'admin')
+            ->wherePivot('activity_status', 'inactive')
             ->count();
 
         return response()->json([
             'total_members' => $totalMembers,
             'pending_requests' => $pendingRequests,
             'engagement_rate' => $totalMembers > 0 ? round(($activeCount / $totalMembers) * 100) : 0,
+            // Added Activity Pie Chart specifically for the Manager view
+            'activity_pie_chart' => [
+                'total' => $activeCount + $inactiveCount,
+                'data' => [
+                    [
+                        'value' => $activeCount, 
+                        'text' => 'Active'
+                    ],
+                    [
+                        'value' => $inactiveCount, 
+                        'text' => 'Inactive'
+                    ]
+                ]
+            ]
         ]);
     }
 
-    /**
-     * REPLACED TASKS WITH "CLUB INSIGHTS"
-     * Admins/Officers don't need micro-tasks. They need to know the Event Pipeline
-     * (is the club active?) and Demographics (who is joining?).
-     */
     public function getManagerInsights(Club $club)
     {
-        // 1. Event Pipeline (Perfect for replacing the Pie Chart)
+        // 1. Event Pipeline
         $eventStats = Event::where('club_id', $club->id)
             ->selectRaw("status, count(*) as count")
             ->groupBy('status')
@@ -58,11 +85,14 @@ class ClubDashboardController extends Controller
         $ongoing = $eventStats['ongoing'] ?? 0;
         $completed = $eventStats['completed'] ?? 0;
 
-        // 2. Member Demographics (What courses are the members from?)
+        // 2. Member Demographics (Strictly excluding 'admin' users and 'adviser' roles)
         $demographics = DB::table('club_memberships')
             ->join('members', 'club_memberships.user_id', '=', 'members.user_id')
+            ->join('users', 'club_memberships.user_id', '=', 'users.id') // Join users to filter admin
             ->where('club_memberships.club_id', $club->id)
             ->where('club_memberships.status', 'approved')
+            ->where('club_memberships.role', '!=', 'adviser')
+            ->where('users.role', '!=', 'admin')
             ->whereNotNull('members.course')
             ->select('members.course', DB::raw('count(*) as count'))
             ->groupBy('members.course')
@@ -88,11 +118,13 @@ class ClubDashboardController extends Controller
 
     public function getManagerAttendanceTrend(Club $club)
     {
-        // Get last 5 sessions to show trend
+        // Get last 5 sessions to show trend (excluding admins from counts just to be strictly accurate)
         $sessions = AttendanceSession::where('club_id', $club->id)
             ->withCount(['attendances' => function($q) {
-                // Ensure we count both present and late
-                $q->whereIn('status', ['present', 'late']); 
+                $q->whereIn('status', ['present', 'late'])
+                  ->whereHas('user', function($u) {
+                      $u->where('role', '!=', 'admin');
+                  }); 
             }])
             ->orderBy('date', 'desc')
             ->take(5)
@@ -118,7 +150,6 @@ class ClubDashboardController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
-        // Calculate personal attendance %
         $totalSessions = AttendanceSession::where('club_id', $club->id)->count();
         $myAttendances = Attendance::where('user_id', $user->id)
             ->whereIn('status', ['present', 'late'])

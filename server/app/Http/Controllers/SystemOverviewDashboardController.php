@@ -42,8 +42,15 @@ class SystemOverviewDashboardController extends Controller
     {
         $this->ensureAdmin($request);
 
-        $totalAttendances = Attendance::count();
-        $positiveAttendances = Attendance::whereIn('status', ['present', 'late'])->count();
+        // Filter out admins globally from attendance counts
+        $totalAttendances = Attendance::whereHas('user', function($q) {
+            $q->where('role', '!=', 'admin');
+        })->count();
+
+        $positiveAttendances = Attendance::whereIn('status', ['present', 'late'])
+            ->whereHas('user', function($q) {
+                $q->where('role', '!=', 'admin');
+            })->count();
         
         $overallEngagement = $totalAttendances > 0 
             ? round(($positiveAttendances / $totalAttendances) * 100) 
@@ -52,8 +59,11 @@ class SystemOverviewDashboardController extends Controller
         $lastMonthStart = now()->subMonth()->startOfMonth()->format('Y-m-d');
         $lastMonthEnd = now()->subMonth()->endOfMonth()->format('Y-m-d');
         
+        // Accurate month check ensuring 'admin' roles aren't counted
         $lastMonthStats = DB::table('attendances')
             ->join('attendance_sessions', 'attendances.attendance_session_id', '=', 'attendance_sessions.id')
+            ->join('users', 'attendances.user_id', '=', 'users.id') // Join users to filter out admins
+            ->where('users.role', '!=', 'admin')
             ->whereBetween('attendance_sessions.date', [$lastMonthStart, $lastMonthEnd])
             ->selectRaw('count(*) as total, sum(case when attendances.status in ("present", "late") then 1 else 0 end) as positive')
             ->first();
@@ -84,8 +94,11 @@ class SystemOverviewDashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             
+            // Accurate filtering to ensure admins aren't artificially raising the trend
             $count = DB::table('attendances')
                 ->join('attendance_sessions', 'attendances.attendance_session_id', '=', 'attendance_sessions.id')
+                ->join('users', 'attendances.user_id', '=', 'users.id') // Join users
+                ->where('users.role', '!=', 'admin') // Exclude admins
                 ->whereIn('attendances.status', ['present', 'late'])
                 ->whereYear('attendance_sessions.date', $month->year)
                 ->whereMonth('attendance_sessions.date', $month->month)
@@ -107,9 +120,12 @@ class SystemOverviewDashboardController extends Controller
     {
         $this->ensureAdmin($request);
 
-        // Base Query: Only approved members and officers (NO ADVISERS)
-        $realMemberships = ClubMembership::where('status', 'approved')
-            ->whereIn('role', ['member', 'officer']); 
+        // STRICT BASE QUERY: Only members and officers. Excludes 'adviser' pivot role and 'admin' user role.
+        $realMemberships = ClubMembership::where('club_memberships.status', 'approved')
+            ->whereIn('club_memberships.role', ['member', 'officer']) // Excludes advisers
+            ->whereHas('user', function ($query) {
+                $query->where('role', '!=', 'admin'); // Excludes admins
+            }); 
             
         // 1. Overview Metric
         $totalRealStudents = (clone $realMemberships)->distinct('user_id')->count('user_id');

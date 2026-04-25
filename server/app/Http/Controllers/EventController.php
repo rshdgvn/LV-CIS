@@ -37,16 +37,13 @@ class EventController extends Controller
         ])->latest();
 
         if ($clubId) {
-            // Get events for a specific club AND General Events (where club_id is null)
             $query->where(function($q) use ($clubId) {
                 $q->where('club_id', $clubId)
                   ->orWhereNull('club_id');
             });
         } elseif (!$isAdmin) {
-            // If no club_id and NOT an admin, only show general school events
             $query->whereNull('club_id');
         }
-        // If Admin and no club_id, it skips the IFs and fetches EVERYTHING (God Mode)
 
         $events = $query->get();
 
@@ -65,23 +62,22 @@ class EventController extends Controller
 
     public function getEventById($id)
     {
-        // FIX: Added 'club' so the frontend doesn't crash when opening Event Details
         $event = Event::with(['detail', 'club'])->findOrFail($id);
         return response()->json($event);
     }
 
     public function addEvent(Request $request)
     {
-        // FIX: Convert literal string "null" from FormData to actual null
-        if ($request->has('club_id') && in_array($request->club_id, ['null', 'undefined', ''])) {
+        // Safe null handling
+        $clubId = $request->input('club_id');
+        if (in_array($clubId, ['null', 'undefined', ''])) {
             $request->merge(['club_id' => null]);
+            $clubId = null;
         }
 
         $user = $request->user();
         $isAdmin = $user->role === 'admin';
-        $clubId = $request->input('club_id');
 
-        // Permission Check
         if (!$isAdmin) {
             if (!$clubId) {
                 return response()->json(['message' => 'Officers must specify a club.'], 403);
@@ -100,23 +96,22 @@ class EventController extends Controller
 
         try {
             $validated = $request->validate([
-                'club_id' => 'nullable|exists:clubs,id',
+                'club_id' => 'nullable',
                 'title' => 'required|string|max:255',
-                'purpose' => 'required|string',
-                'description' => 'required|string',
+                'purpose' => 'nullable|string',
+                'description' => 'nullable|string',
                 'cover_image' => 'nullable|file|image|max:5120',
                 'photos.*' => 'nullable|file|image|max:5120',
                 'videos.*' => 'nullable|file|mimetypes:video/mp4,video/quicktime|max:20480',
                 'status' => 'required|string|in:upcoming,ongoing,completed',
-
                 'event_date' => 'required|date',
                 'event_time' => 'required|string',
                 'venue' => 'required|string|max:255',
-                'organizer' => 'required|string|max:255',
-                'contact_person' => 'required|string|max:255',
-                'contact_email' => 'required|email',
-                'event_mode' => 'required|string|in:online,face_to_face,hybrid',
-                'duration' => 'required|string|max:255',
+                'organizer' => 'nullable|string|max:255',
+                'contact_person' => 'nullable|string|max:255',
+                'contact_email' => 'nullable|email',
+                'event_mode' => 'nullable|string',
+                'duration' => 'nullable|string|max:255',
             ]);
 
             $formattedTime = date('H:i:s', strtotime($validated['event_time']));
@@ -148,8 +143,8 @@ class EventController extends Controller
                 $event = Event::create([
                     'club_id' => $validated['club_id'] ?? null,
                     'title' => $validated['title'],
-                    'purpose' => $validated['purpose'],
-                    'description' => $validated['description'],
+                    'purpose' => $validated['purpose'] ?? 'General Event',
+                    'description' => $validated['description'] ?? '',
                     'cover_image' => $coverUrl,
                     'photos' => $photoUrls,
                     'videos' => $videoUrls,
@@ -161,11 +156,11 @@ class EventController extends Controller
                     'event_date' => $validated['event_date'],
                     'event_time' => $formattedTime,
                     'venue' => $validated['venue'],
-                    'organizer' => $validated['organizer'],
-                    'contact_person' => $validated['contact_person'],
-                    'contact_email' => $validated['contact_email'],
-                    'event_mode' => $validated['event_mode'],
-                    'duration' => $validated['duration'],
+                    'organizer' => $validated['organizer'] ?? 'Admin',
+                    'contact_person' => $validated['contact_person'] ?? 'Admin',
+                    'contact_email' => $validated['contact_email'] ?? 'admin@cis.com',
+                    'event_mode' => $validated['event_mode'] ?? 'face_to_face',
+                    'duration' => $validated['duration'] ?? '2 hours',
                 ]);
 
                 AttendanceSession::create([
@@ -197,9 +192,11 @@ class EventController extends Controller
 
     public function updateEvent(Request $request, $id)
     {
-        // FIX: Convert literal string "null" from FormData to actual null
-        if ($request->has('club_id') && in_array($request->club_id, ['null', 'undefined', ''])) {
+        // Safe null handling
+        $clubId = $request->input('club_id');
+        if (in_array($clubId, ['null', 'undefined', ''])) {
             $request->merge(['club_id' => null]);
+            $clubId = null;
         }
 
         $user = $request->user();
@@ -218,31 +215,31 @@ class EventController extends Controller
                 ->exists();
 
             if (!$isOfficer) {
-                return response()->json(['message' => 'Unauthorized. You are not an officer of this club.'], 403);
+                return response()->json(['message' => 'Unauthorized.'], 403);
             }
         }
 
         try {
+            // FIX: Relaxed validation. 'sometimes' and 'nullable' ensures 
+            // the update doesn't crash if the frontend doesn't send these fields!
             $validated = $request->validate([
-                'club_id' => 'nullable|exists:clubs,id',
-                'title' => 'required|string|max:255',
-                'purpose' => 'required|string',
-                'description' => 'required|string',
-                'cover_image' => 'sometimes|nullable',
-                'photos.*' => 'sometimes|nullable',
+                'club_id' => 'nullable',
+                'title' => 'sometimes|string|max:255',
+                'purpose' => 'nullable|string',
+                'description' => 'nullable|string',
+                'cover_image' => 'nullable',
+                'photos.*' => 'nullable',
                 'videos.*' => 'nullable',
-                'status' => 'required|string|in:upcoming,ongoing,completed',
-                'event_date' => 'required|date',
-                'event_time' => 'required|string',
-                'venue' => 'required|string|max:255',
-                'organizer' => 'required|string|max:255',
-                'contact_person' => 'required|string|max:255',
-                'contact_email' => 'required|email',
-                'event_mode' => 'required|string|in:online,face_to_face,hybrid',
-                'duration' => 'required|string|max:255',
+                'status' => 'nullable|string|in:upcoming,ongoing,completed',
+                'event_date' => 'sometimes|date',
+                'event_time' => 'sometimes|string',
+                'venue' => 'sometimes|string|max:255',
+                'organizer' => 'nullable|string|max:255',
+                'contact_person' => 'nullable|string|max:255',
+                'contact_email' => 'nullable|email',
+                'event_mode' => 'nullable|string',
+                'duration' => 'nullable|string|max:255',
             ]);
-
-            $formattedTime = date('H:i:s', strtotime($validated['event_time']));
 
             DB::beginTransaction();
 
@@ -251,48 +248,28 @@ class EventController extends Controller
                 if ($request->hasFile('cover_image')) {
                     $newCoverUrl = $this->cloudinary->upload($request->file('cover_image'), 'events/covers');
                     if ($newCoverUrl) $coverUrl = $newCoverUrl;
-                } elseif ($request->filled('existing_cover_image')) {
-                    $coverUrl = $request->input('existing_cover_image');
                 }
 
                 $event->update([
                     'club_id' => $validated['club_id'] ?? $event->club_id,
-                    'title' => $validated['title'],
-                    'purpose' => $validated['purpose'],
-                    'description' => $validated['description'],
+                    'title' => $validated['title'] ?? $event->title,
+                    'description' => $validated['description'] ?? $event->description,
                     'cover_image' => $coverUrl,
-                    'status' => $validated['status'],
+                    'status' => $validated['status'] ?? $event->status,
                 ]);
 
-                if ($event->detail) {
+                if ($event->detail && isset($validated['event_date']) && isset($validated['event_time']) && isset($validated['venue'])) {
                     $event->detail->update([
                         'event_date' => $validated['event_date'],
-                        'event_time' => $formattedTime,
+                        'event_time' => date('H:i:s', strtotime($validated['event_time'])),
                         'venue' => $validated['venue'],
-                        'organizer' => $validated['organizer'],
-                        'contact_person' => $validated['contact_person'],
-                        'contact_email' => $validated['contact_email'],
-                        'event_mode' => $validated['event_mode'],
-                        'duration' => $validated['duration'],
-                    ]);
-                } else {
-                    EventDetail::create([
-                        'event_id' => $event->id,
-                        'event_date' => $validated['event_date'],
-                        'event_time' => $formattedTime,
-                        'venue' => $validated['venue'],
-                        'organizer' => $validated['organizer'],
-                        'contact_person' => $validated['contact_person'],
-                        'contact_email' => $validated['contact_email'],
-                        'event_mode' => $validated['event_mode'],
-                        'duration' => $validated['duration'],
                     ]);
                 }
 
                 $session = AttendanceSession::where('event_id', $event->id)->first();
-                if ($session) {
+                if ($session && isset($validated['event_date']) && isset($validated['venue'])) {
                     $session->update([
-                        'title' => $validated['title'] . ' - Attendance',
+                        'title' => ($validated['title'] ?? $event->title) . ' - Attendance',
                         'venue' => $validated['venue'],
                         'date' => $validated['event_date'],
                     ]);
@@ -337,12 +314,37 @@ class EventController extends Controller
             }
         }
 
-        // FIX: Safely check if detail exists before deleting
-        if ($event->detail) {
-            $event->detail()->delete();
-        }
-        $event->delete();
+        DB::beginTransaction();
+        try {
+            // FIX: Manually delete all dependencies to absolutely guarantee NO foreign key constraints fail!
+            
+            // 1. Delete associated Tasks and their assignments
+            $tasks = \App\Models\EventTask::where('event_id', $event->id)->get();
+            foreach ($tasks as $task) {
+                \App\Models\EventTaskAssignment::where('event_task_id', $task->id)->delete();
+                $task->delete();
+            }
 
-        return response()->json(['message' => 'Event deleted successfully.']);
+            // 2. Delete associated Attendance Sessions and their records
+            $sessions = \App\Models\AttendanceSession::where('event_id', $event->id)->get();
+            foreach ($sessions as $session) {
+                \App\Models\Attendance::where('attendance_session_id', $session->id)->delete();
+                $session->delete();
+            }
+
+            // 3. Delete details
+            if ($event->detail) {
+                $event->detail()->delete();
+            }
+
+            // 4. Finally delete the event
+            $event->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Event deleted successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to delete event.', 'error' => $e->getMessage()], 500);
+        }
     }
 }

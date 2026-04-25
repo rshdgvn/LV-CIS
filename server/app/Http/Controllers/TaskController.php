@@ -19,8 +19,7 @@ class TaskController extends Controller
     {
         $event = Event::findOrFail($eventId);
 
-        // FIX: If this is a GENERAL EVENT (no club_id), do not attempt to load tasks.
-        // Return an empty structure immediately.
+        // FIX: Completely bypass the task query if it is a General Event!
         if (is_null($event->club_id)) {
             return response()->json([
                 'tasks' => [],
@@ -29,7 +28,6 @@ class TaskController extends Controller
             ]);
         }
 
-        // Normal Task Logic for Club Events
         $tasks = EventTask::where('event_id', $eventId)
             ->with([
                 'event:id,title',
@@ -38,7 +36,6 @@ class TaskController extends Controller
             ->orderBy('due_date', 'asc')
             ->get();
 
-        // Get club members for assigning tasks
         $members = ClubMembership::with('user:id,first_name,last_name,avatar')
             ->where('club_id', $event->club_id)
             ->where('status', 'approved')
@@ -93,13 +90,11 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'status' => 'required|in:pending,in_progress,completed',
             'due_date' => 'nullable|date',
-            'assigned_members' => 'nullable|array',
-            'assigned_members.*' => 'exists:club_memberships,id'
+            'assigned_members' => 'nullable'
         ]);
 
         $event = Event::findOrFail($request->event_id);
 
-        // FIX: Do not allow task creation for General Events
         if (is_null($event->club_id)) {
             return response()->json(['message' => 'General events do not support tasks.'], 403);
         }
@@ -112,46 +107,21 @@ class TaskController extends Controller
             'due_date' => $request->due_date ? Carbon::parse($request->due_date)->format('Y-m-d H:i:s') : null,
         ]);
 
-        if ($request->has('assigned_members') && is_array($request->assigned_members)) {
-            foreach ($request->assigned_members as $membershipId) {
-                EventTaskAssignment::create([
-                    'event_task_id' => $task->id,
-                    'club_membership_id' => $membershipId,
-                ]);
+        if ($request->has('assigned_members')) {
+            $assigned = $request->input('assigned_members');
+            if (is_string($assigned)) $assigned = json_decode($assigned, true);
+            
+            if (is_array($assigned)) {
+                foreach ($assigned as $membershipId) {
+                    EventTaskAssignment::create([
+                        'event_task_id' => $task->id,
+                        'club_membership_id' => $membershipId,
+                    ]);
+                }
             }
         }
 
         return response()->json(['message' => 'Task created successfully', 'task' => $task], 201);
-    }
-
-    /**
-     * Get all tasks (optionally filter by event)
-     */
-    public function getAllTasks(Request $request)
-    {
-        $query = EventTask::with('event');
-
-        if ($request->has('event_id')) {
-            $query->where('event_id', $request->event_id);
-        }
-
-        $tasks = $query->get();
-
-        return response()->json(["tasks" => $tasks]);
-    }
-
-    /**
-     * Get task by ID
-     */
-    public function getTaskById($id)
-    {
-        $task = EventTask::with('event')->find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
-        }
-
-        return response()->json($task);
     }
 
     /**
@@ -165,20 +135,28 @@ class TaskController extends Controller
             'title' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
             'status' => 'sometimes|in:pending,in_progress,completed',
-            'due_date' => 'nullable|date',
-            'assigned_members' => 'nullable|array',
-            'assigned_members.*' => 'exists:club_memberships,id'
+            'due_date' => 'nullable', 
+            'assigned_members' => 'nullable'
         ]);
 
         $task->update($request->only(['title', 'description', 'status', 'due_date']));
 
         if ($request->has('assigned_members')) {
-            $task->assignments()->delete();
-            foreach ($request->assigned_members as $membershipId) {
-                EventTaskAssignment::create([
-                    'event_task_id' => $task->id,
-                    'club_membership_id' => $membershipId,
-                ]);
+            $assigned = $request->input('assigned_members');
+            if (is_string($assigned)) {
+                $assigned = json_decode($assigned, true) ?? [];
+            }
+            
+            // FIX: Manual safe deletion of assignments to prevent constraint errors
+            EventTaskAssignment::where('event_task_id', $task->id)->delete();
+            
+            if (is_array($assigned)) {
+                foreach ($assigned as $membershipId) {
+                    EventTaskAssignment::create([
+                        'event_task_id' => $task->id,
+                        'club_membership_id' => $membershipId,
+                    ]);
+                }
             }
         }
 
@@ -207,7 +185,9 @@ class TaskController extends Controller
     public function deleteTask($id)
     {
         $task = EventTask::findOrFail($id);
-        $task->assignments()->delete();
+        
+        // FIX: Manual safe deletion of assignments before task deletion
+        EventTaskAssignment::where('event_task_id', $task->id)->delete();
         $task->delete();
 
         return response()->json(['message' => 'Task deleted successfully']);

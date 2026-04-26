@@ -22,7 +22,7 @@ class TaskDeleted extends Notification
     {
         return [
             'type' => 'task.deleted',
-            'title' => '🗑️ Task Removed',
+            'title' => 'Task Removed',
             'body' => "The task \"{$this->taskTitle}\" for the event \"{$this->event->title}\" has been removed by {$this->actor->first_name} {$this->actor->last_name}.",
             'task_title' => $this->taskTitle,
             'event_id' => $this->event->id,

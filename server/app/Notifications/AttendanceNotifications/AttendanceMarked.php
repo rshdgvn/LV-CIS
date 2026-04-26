@@ -38,7 +38,7 @@ class AttendanceMarked extends Notification
 
         return [
             'type' => 'attendance.marked',
-            'title' => "{$info['emoji']} Attendance: {$info['label']}",
+            'title' => "Attendance: {$info['label']}",
             'body' => $info['body'],
             'session_id' => $this->session->id,
             'session_title' => $this->session->title,

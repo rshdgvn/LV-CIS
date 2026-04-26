@@ -31,7 +31,7 @@ class TaskStatusUpdated extends Notification
 
         return [
             'type' => 'task.status_updated',
-            'title' => "{$info['emoji']} Task Status: {$info['label']}",
+            'title' => "Task Status: {$info['label']}",
             'body' => "The task \"{$this->task->title}\" for \"{$this->event->title}\" was updated to **{$info['label']}** by {$this->actor->first_name} {$this->actor->last_name}.",
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,

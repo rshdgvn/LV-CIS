@@ -25,7 +25,7 @@ class EventUpdated extends Notification
 
         return [
             'type' => 'event.updated',
-            'title' => '📝 Event Updated',
+            'title' => 'Event Updated',
             'body' => "Heads up! The event \"{$this->event->title}\" in {$this->club->name} has been updated by {$this->actor->first_name} {$this->actor->last_name}. Check the latest details.",
             'event_id' => $this->event->id,
             'event_title' => $this->event->title,

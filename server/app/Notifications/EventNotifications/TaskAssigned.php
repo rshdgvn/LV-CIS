@@ -26,7 +26,7 @@ class TaskAssigned extends Notification
 
         return [
             'type' => 'task.assigned',
-            'title' => '📌 New Task Assigned to You',
+            'title' => 'New Task Assigned to You',
             'body' => "{$this->actor->first_name} {$this->actor->last_name} assigned you a task: \"{$this->task->title}\" for the event \"{$this->event->title}\". Due: {$due}.",
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,

@@ -29,7 +29,7 @@ class MemberRoleChanged extends Notification
 
         return [
             'type' => 'club.role_changed',
-            'title' => '🏅 Your Role Has Been Updated',
+            'title' => 'Your Role Has Been Updated',
             'body' => "{$this->actor->first_name} {$this->actor->last_name} changed your role in {$this->club->name} to {$roleLabel}.",
             'club_id' => $this->club->id,
             'club_name' => $this->club->name,

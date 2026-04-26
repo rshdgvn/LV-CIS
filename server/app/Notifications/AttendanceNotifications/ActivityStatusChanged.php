@@ -24,7 +24,7 @@ class ActivityStatusChanged extends Notification
         if ($this->newStatus === 'inactive') {
             return [
                 'type' => 'attendance.activity_inactive',
-                'title' => '⚠️ Activity Warning',
+                'title' => 'Activity Warning',
                 'body' => "You've been marked as **inactive** in {$this->club->name} due to 3 consecutive absences. Please attend your next session to stay active!",
                 'club_id' => $this->club->id,
                 'club_name' => $this->club->name,

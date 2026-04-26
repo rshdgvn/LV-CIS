@@ -23,7 +23,7 @@ class NewJoinRequest extends Notification
     {
         return [
             'type' => 'club.new_join_request',
-            'title' => '📩 New Join Request',
+            'title' => 'New Join Request',
             'body' => "{$this->requester->first_name} {$this->requester->last_name} wants to join {$this->club->name}. Review their request.",
             'club_id' => $this->club->id,
             'club_name' => $this->club->name,

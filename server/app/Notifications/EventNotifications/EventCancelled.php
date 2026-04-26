@@ -21,7 +21,7 @@ class EventCancelled extends Notification
     {
         return [
             'type' => 'event.cancelled',
-            'title' => '🚫 Event Cancelled',
+            'title' => 'Event Cancelled',
             'body' => "The event \"{$this->eventTitle}\" in {$this->club->name} has been cancelled by {$this->actor->first_name} {$this->actor->last_name}.",
             'event_title' => $this->eventTitle,
             'club_id' => $this->club->id,

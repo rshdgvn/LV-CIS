@@ -23,7 +23,7 @@ class MemberAddedToClub extends Notification
     {
         return [
             'type' => 'club.member_added',
-            'title' => '🎉 You joined a club!',
+            'title' => 'You joined a club!',
             'body' => "{$this->actor->first_name} {$this->actor->last_name} added you to {$this->club->name}. Welcome aboard!",
             'club_id' => $this->club->id,
             'club_name' => $this->club->name,

@@ -23,7 +23,7 @@ class MembershipRejected extends Notification
     {
         return [
             'type' => 'club.membership_rejected',
-            'title' => '❌ Membership Not Approved',
+            'title' => 'Membership Not Approved',
             'body' => "Unfortunately, your request to join {$this->club->name} was not approved. You may try again or contact the club officers.",
             'club_id' => $this->club->id,
             'club_name' => $this->club->name,

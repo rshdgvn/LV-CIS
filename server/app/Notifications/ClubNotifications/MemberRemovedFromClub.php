@@ -23,7 +23,7 @@ class MemberRemovedFromClub extends Notification
     {
         return [
             'type' => 'club.member_removed',
-            'title' => '🚪 Removed from Club',
+            'title' => 'Removed from Club',
             'body' => "You have been removed from {$this->club->name} by {$this->actor->first_name} {$this->actor->last_name}.",
             'club_id' => $this->club->id,
             'club_name' => $this->club->name,

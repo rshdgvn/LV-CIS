@@ -30,7 +30,7 @@ class EventStatusChanged extends Notification
 
         return [
             'type' => 'event.status_changed',
-            'title' => "{$info['emoji']} Event {$info['label']}",
+            'title' => "Event {$info['label']}",
             'body' => $info['body'],
             'event_id' => $this->event->id,
             'event_title' => $this->event->title,

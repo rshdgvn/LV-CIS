@@ -27,7 +27,7 @@ class EventCreated extends Notification
 
         return [
             'type' => 'event.created',
-            'title' => '📅 New Event in ' . $this->club->name,
+            'title' => 'New Event in ' . $this->club->name,
             'body' => "{$this->actor->first_name} {$this->actor->last_name} created a new event: \"{$this->event->title}\" on {$date} at {$venue}. Don't miss it!",
             'event_id' => $this->event->id,
             'event_title' => $this->event->title,

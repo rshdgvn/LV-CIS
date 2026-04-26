@@ -24,7 +24,7 @@ class AttendanceSessionCreated extends Notification
     {
         return [
             'type' => 'attendance.session_created',
-            'title' => '📋 Attendance Session Started',
+            'title' => 'Attendance Session Started',
             'body' => "{$this->actor->first_name} {$this->actor->last_name} opened an attendance session \"{$this->session->title}\" for {$this->club->name} on {$this->session->date}.",
             'session_id' => $this->session->id,
             'session_title' => $this->session->title,

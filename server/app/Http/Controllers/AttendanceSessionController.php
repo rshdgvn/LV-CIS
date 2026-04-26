@@ -41,9 +41,9 @@ class AttendanceSessionController extends Controller
             }
 
             // ✨ NEW: Get this club's sessions AND General Sessions (null club_id) ✨
-            $query->where(function($q) use ($clubId) {
+            $query->where(function ($q) use ($clubId) {
                 $q->where('club_id', $clubId)
-                  ->orWhereNull('club_id');
+                    ->orWhereNull('club_id');
             });
 
             // YOUR EXACT ANALYTICS LOGIC
@@ -72,7 +72,6 @@ class AttendanceSessionController extends Controller
                 $activeMembers = ClubMembership::where('club_id', $clubId)->where('status', 'approved')->where('role', '!=', 'adviser')->where('activity_status', 'active')->count();
                 $inactiveMembers = ClubMembership::where('club_id', $clubId)->where('status', 'approved')->where('role', '!=', 'adviser')->where('activity_status', 'inactive')->count();
             }
-
         } else {
             // God Mode / General Mode
             if (!$isAdmin) {
@@ -116,69 +115,97 @@ class AttendanceSessionController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $session = AttendanceSession::with(['club.approvedUsers.member', 'event', 'attendances.user.member'])->find($id);
+        $session = AttendanceSession::with([
+            'club.approvedUsers.member',
+            'event',
+            'attendances.user.member'
+        ])->find($id);
 
         if (!$session) {
             return response()->json(['message' => 'Session not found'], 404);
         }
 
+        $authUser = $request->user();
+        $isAdmin = $authUser && $authUser->role === 'admin';
+
         $users = [];
 
-        // If it's a Club Session, list all approved club members using YOUR EXACT FILTER LOGIC
         if ($session->club_id && $session->club && $session->club->approvedUsers) {
             $users = $session->club->approvedUsers
-                ->filter(function ($user) {
-                    // Check the role in the pivot table (club_memberships)
-                    return $user->pivot->role !== 'adviser';
-                })
+                ->filter(fn($user) => $user->pivot->role !== 'adviser')
                 ->map(function ($user) use ($session) {
                     $attendance = $session->attendances->where('user_id', $user->id)->first();
                     $member = $user->member;
-
                     return [
                         'user_id' => $user->id,
-                        'name' => $user->first_name . ' ' . $user->last_name,
-                        'avatar' => $user->avatar,
-                        'course' => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
-                        'status' => $attendance?->status ?? null,
+                        'name'    => $user->first_name . ' ' . $user->last_name,
+                        'avatar'  => $user->avatar,
+                        'course'  => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
+                        'status'  => $attendance?->status ?? null,
                     ];
                 })
-                ->values(); // Reset array keys after filtering
-        } 
-        // If it's a General Session (Admin), list anyone who actually has an attendance record
+                ->values();
+        }
         else {
-            $users = $session->attendances->map(function ($attendance) {
-                $user = $attendance->user;
-                if (!$user) return null;
-                
-                $member = $user->member;
+            if ($isAdmin) {
+                $memberships = ClubMembership::with('user.member')
+                    ->where('status', 'approved')
+                    ->where('role', '!=', 'adviser')
+                    ->get()
+                    ->unique('user_id');
 
-                return [
-                    'user_id' => $user->id,
-                    'name' => $user->first_name . ' ' . $user->last_name,
-                    'avatar' => $user->avatar,
-                    'course' => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
-                    'status' => $attendance->status,
-                ];
-            })->filter()->values();
+                $users = $memberships->map(function ($membership) use ($session) {
+                    $user = $membership->user;
+                    if (!$user) return null;
+                    $attendance = $session->attendances->where('user_id', $user->id)->first();
+                    $member = $user->member;
+                    return [
+                        'user_id' => $user->id,
+                        'name'    => $user->first_name . ' ' . $user->last_name,
+                        'avatar'  => $user->avatar,
+                        'course'  => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
+                        'status'  => $attendance?->status ?? null,
+                    ];
+                })->filter()->values();
+            } else {
+                $membership = ClubMembership::where('user_id', $authUser->id)
+                    ->where('status', 'approved')
+                    ->first();
+
+                if ($membership) {
+                    $clubMembers = ClubMembership::with('user.member')
+                        ->where('club_id', $membership->club_id)
+                        ->where('status', 'approved')
+                        ->where('role', '!=', 'adviser')
+                        ->get();
+
+                    $users = $clubMembers->map(function ($cm) use ($session) {
+                        $user = $cm->user;
+                        if (!$user) return null;
+                        $attendance = $session->attendances->where('user_id', $user->id)->first();
+                        $member = $user->member;
+                        return [
+                            'user_id' => $user->id,
+                            'name'    => $user->first_name . ' ' . $user->last_name,
+                            'avatar'  => $user->avatar,
+                            'course'  => $member ? ($member->course . ' ' . $member->year_level) : 'N/A',
+                            'status'  => $attendance?->status ?? null,
+                        ];
+                    })->filter()->values();
+                }
+            }
         }
 
         return response()->json([
-            'id' => $session->id,
-            'title' => $session->event ? $session->event->title : ($session->title ?? 'Untitled Session'),
-            'venue' => $session->venue ?? optional($session->event)->venue ?? 'N/A',
-            'date' => $session->date,
-            'is_open' => true, // Enforced to always be open
-            'club' => $session->club ? [
-                'id' => $session->club->id,
-                'name' => $session->club->name,
-            ] : null,
-            'event' => $session->event ? [
-                'id' => $session->event->id,
-                'title' => $session->event->title,
-            ] : null,
+            'id'      => $session->id,
+            'title'   => $session->event ? $session->event->title : ($session->title ?? 'Untitled Session'),
+            'venue'   => $session->venue ?? optional($session->event)->venue ?? 'N/A',
+            'date'    => $session->date,
+            'is_open' => true,
+            'club'    => $session->club ? ['id' => $session->club->id, 'name' => $session->club->name] : null,
+            'event'   => $session->event ? ['id' => $session->event->id, 'title' => $session->event->title] : null,
             'members' => $users,
         ]);
     }

@@ -16,6 +16,7 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ClubEventController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
@@ -147,6 +148,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/clubs/{club}/member/overview', [ClubDashboardController::class, 'getMemberOverview']);
     Route::get('/clubs/{club}/member/tasks', [ClubDashboardController::class, 'getMemberTasks']);
     Route::get('/clubs/{club}/member/upcoming-events', [ClubDashboardController::class, 'getMemberUpcomingEvents']);
+
+    Route::prefix('notifications')->group(function () {
+        Route::get('/',              [NotificationController::class, 'index']);
+        Route::get('/unread-count',  [NotificationController::class, 'unreadCount']);
+        Route::post('/{id}/read',    [NotificationController::class, 'markAsRead']);
+        Route::post('/read-all',     [NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{id}',       [NotificationController::class, 'destroy']);
+        Route::delete('/',           [NotificationController::class, 'destroyAll']);
+    });
 });
 
 Route::get('/gmail/oauth/init', function () {

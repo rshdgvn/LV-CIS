@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\EventNotifications\EventCreated;
+use App\Notifications\EventNotifications\EventUpdated;
+use App\Notifications\EventNotifications\EventCancelled;
+use App\Notifications\EventNotifications\EventStatusChanged;
 
 class EventController extends Controller
 {
@@ -37,9 +41,9 @@ class EventController extends Controller
         ])->latest();
 
         if ($clubId) {
-            $query->where(function($q) use ($clubId) {
+            $query->where(function ($q) use ($clubId) {
                 $q->where('club_id', $clubId)
-                  ->orWhereNull('club_id');
+                    ->orWhereNull('club_id');
             });
         } elseif (!$isAdmin) {
             $query->whereNull('club_id');
@@ -175,6 +179,24 @@ class EventController extends Controller
 
                 DB::commit();
 
+                if ($event->club_id) {
+                    $club = \App\Models\Club::find($event->club_id);
+                    if ($club) {
+                        $memberships = \App\Models\ClubMembership::with('user')
+                            ->where('club_id', $event->club_id)
+                            ->where('status', 'approved')
+                            ->where('role', '!=', 'adviser')
+                            ->get();
+
+                        $eventWithDetail = $event->load('detail');
+                        foreach ($memberships as $membership) {
+                            if ($membership->user && $membership->user->id !== $user->id) {
+                                $membership->user->notify(new EventCreated($eventWithDetail, $club, $user));
+                            }
+                        }
+                    }
+                }
+
                 return response()->json([
                     'message' => 'Event created successfully.',
                     'event' => $event->load('detail'),
@@ -277,6 +299,30 @@ class EventController extends Controller
 
                 DB::commit();
 
+                if ($event->club_id) {
+                    $club = \App\Models\Club::find($event->club_id);
+                    if ($club) {
+                        $memberships = \App\Models\ClubMembership::with('user')
+                            ->where('club_id', $event->club_id)
+                            ->where('status', 'approved')
+                            ->where('role', '!=', 'adviser')
+                            ->get();
+
+                        $statusChanged = isset($validated['status']) && $validated['status'] !== $event->getOriginal('status');
+                        $eventWithDetail = $event->load('detail');
+
+                        foreach ($memberships as $membership) {
+                            if ($membership->user && $membership->user->id !== $user->id) {
+                                if ($statusChanged) {
+                                    $membership->user->notify(new EventStatusChanged($eventWithDetail, $club, $user, $validated['status']));
+                                } else {
+                                    $membership->user->notify(new EventUpdated($eventWithDetail, $club, $user));
+                                }
+                            }
+                        }
+                    }
+                }
+
                 return response()->json([
                     'message' => 'Event updated successfully.',
                     'event' => $event->load('detail'),
@@ -315,9 +361,27 @@ class EventController extends Controller
         }
 
         DB::beginTransaction();
+
+        if ($event->club_id) {
+            $club = \App\Models\Club::find($event->club_id);
+            if ($club) {
+                $memberships = \App\Models\ClubMembership::with('user')
+                    ->where('club_id', $event->club_id)
+                    ->where('status', 'approved')
+                    ->where('role', '!=', 'adviser')
+                    ->get();
+
+                $eventTitle = $event->title;
+                foreach ($memberships as $membership) {
+                    if ($membership->user && $membership->user->id !== $user->id) {
+                        $membership->user->notify(new EventCancelled($eventTitle, $club, $user));
+                    }
+                }
+            }
+        }
         try {
             // FIX: Manually delete all dependencies to absolutely guarantee NO foreign key constraints fail!
-            
+
             // 1. Delete associated Tasks and their assignments
             $tasks = \App\Models\EventTask::where('event_id', $event->id)->get();
             foreach ($tasks as $task) {

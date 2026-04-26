@@ -7,6 +7,8 @@ use App\Models\AttendanceSession;
 use App\Models\ClubMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\AttendanceNotifications\AttendanceMarked;
+use App\Notifications\AttendanceNotifications\ActivityStatusChanged;
 
 class AttendanceController extends Controller
 {
@@ -52,6 +54,14 @@ class AttendanceController extends Controller
             ]
         );
 
+        $targetUser = \App\Models\User::find($userId);
+        $actor      = \Illuminate\Support\Facades\Auth::user();
+        $club       = \App\Models\Club::find($session->club_id);
+
+        if ($targetUser && $club) {
+            $targetUser->notify(new AttendanceMarked($session, $club, $actor, $validated['status']));
+        }
+
         $session = AttendanceSession::findOrFail($sessionId);
         $clubId = $session->club_id;
 
@@ -72,11 +82,17 @@ class AttendanceController extends Controller
 
             if ($validated['status'] === 'present') {
                 $membership->update(['activity_status' => 'active']);
+                if ($targetUser && $club) {
+                    $targetUser->notify(new ActivityStatusChanged($club, 'active'));
+                }
             } elseif (
                 count($lastThreeStatuses) === 3 &&
                 collect($lastThreeStatuses)->every(fn($s) => $s === 'absent')
             ) {
                 $membership->update(['activity_status' => 'inactive']);
+                if ($targetUser && $club) {
+                    $targetUser->notify(new ActivityStatusChanged($club, 'inactive'));
+                }
             }
         }
 

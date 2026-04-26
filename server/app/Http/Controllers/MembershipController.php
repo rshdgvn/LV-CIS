@@ -9,6 +9,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\ClubNotifications\MemberAddedToClub;
+use App\Notifications\ClubNotifications\MembershipApproved;
+use App\Notifications\ClubNotifications\MembershipRejected;
+use App\Notifications\ClubNotifications\MemberRemovedFromClub;
+use App\Notifications\ClubNotifications\MemberRoleChanged;
+use App\Notifications\ClubNotifications\NewJoinRequest;
+
 
 class MembershipController extends Controller
 {
@@ -37,6 +44,16 @@ class MembershipController extends Controller
             'status' => 'pending',
             'officer_title' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
         ]);
+
+        $officers = \App\Models\ClubMembership::with('user')
+            ->where('club_id', $clubId)
+            ->where('role', 'officer')
+            ->where('status', 'approved')
+            ->get();
+
+        foreach ($officers as $officerMembership) {
+            $officerMembership->user->notify(new NewJoinRequest($club, $user));
+        }
 
         return response()->json([
             'message' => 'Membership request sent successfully',
@@ -90,6 +107,18 @@ class MembershipController extends Controller
 
         $membership->update(['status' => $validated['status']]);
 
+        $actor  = \Illuminate\Support\Facades\Auth::user();
+        $club   = \App\Models\Club::find($membership->club_id);
+        $member = \App\Models\User::find($membership->user_id);
+
+        if ($member && $club) {
+            if ($validated['status'] === 'approved') {
+                $member->notify(new MembershipApproved($club, $actor));
+            } elseif ($validated['status'] === 'rejected') {
+                $member->notify(new MembershipRejected($club, $actor));
+            }
+        }
+
         return response()->json(['message' => 'Membership status updated successfully']);
     }
 
@@ -111,12 +140,12 @@ class MembershipController extends Controller
                     'first_name'   => $user->first_name,
                     'last_name'    => $user->last_name,
                     'email'        => $user->email,
-                    'avatar'       => $user->avatar,                 
-                    'course'       => $user->member?->course,         
-                    'year_level'   => $user->member?->year_level,      
+                    'avatar'       => $user->avatar,
+                    'course'       => $user->member?->course,
+                    'year_level'   => $user->member?->year_level,
                     'student_id'   => $user->member?->student_id,
-                    'role'         => $user->pivot->role,              
-                    'officer_title' => $user->pivot->officer_title,     
+                    'role'         => $user->pivot->role,
+                    'officer_title' => $user->pivot->officer_title,
                     'joined_at'    => $user->pivot->joined_at,
                 ];
             });
@@ -301,6 +330,9 @@ class MembershipController extends Controller
             'officer_title' => $validated['role'] === 'officer' ? $validated['officerTitle'] : null,
         ]);
 
+        $actor = \Illuminate\Support\Facades\Auth::user();
+        $user->notify(new MemberAddedToClub($club, $actor));
+
         return response()->json(['message' => 'Member added successfully']);
     }
 
@@ -324,6 +356,21 @@ class MembershipController extends Controller
 
         $membership->update($validated);
 
+        if (isset($validated['role'])) {
+            $actor  = \Illuminate\Support\Facades\Auth::user();
+            $club   = \App\Models\Club::find($membership->club_id);
+            $member = \App\Models\User::find($membership->user_id);
+
+            if ($member && $club) {
+                $member->notify(new MemberRoleChanged(
+                    $club,
+                    $actor,
+                    $validated['role'],
+                    $validated['officer_title'] ?? null
+                ));
+            }
+        }
+
         return response()->json(['message' => 'Member info updated successfully']);
     }
 
@@ -339,6 +386,14 @@ class MembershipController extends Controller
         $this->authorize('removeMember', $membership);
 
         $membership->delete();
+
+        $actor  = \Illuminate\Support\Facades\Auth::user();
+        $club   = \App\Models\Club::find($membership->club_id);
+        $member = \App\Models\User::find($membership->user_id);
+
+        if ($member && $club) {
+            $member->notify(new MemberRemovedFromClub($club, $actor));
+        }
 
         return response()->json(['message' => 'Member removed successfully']);
     }

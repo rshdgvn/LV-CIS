@@ -9,6 +9,9 @@ use App\Models\EventTaskAssignment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Notifications\EventNotifications\TaskAssigned;
+use App\Notifications\EventNotifications\TaskStatusUpdated;
+use App\Notifications\EventNotifications\TaskDeleted;
 
 class TaskController extends Controller
 {
@@ -110,13 +113,25 @@ class TaskController extends Controller
         if ($request->has('assigned_members')) {
             $assigned = $request->input('assigned_members');
             if (is_string($assigned)) $assigned = json_decode($assigned, true);
-            
+
             if (is_array($assigned)) {
                 foreach ($assigned as $membershipId) {
                     EventTaskAssignment::create([
                         'event_task_id' => $task->id,
                         'club_membership_id' => $membershipId,
                     ]);
+                }
+            }
+        }
+
+        $actor = \Illuminate\Support\Facades\Auth::user();
+        $club  = \App\Models\Club::find($event->club_id);
+
+        if (is_array($assigned) && $club) {
+            foreach ($assigned as $membershipId) {
+                $membership = \App\Models\ClubMembership::with('user')->find($membershipId);
+                if ($membership && $membership->user && $membership->user->id !== $actor->id) {
+                    $membership->user->notify(new TaskAssigned($task, $event, $club, $actor));
                 }
             }
         }
@@ -135,7 +150,7 @@ class TaskController extends Controller
             'title' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
             'status' => 'sometimes|in:pending,in_progress,completed',
-            'due_date' => 'nullable', 
+            'due_date' => 'nullable',
             'assigned_members' => 'nullable'
         ]);
 
@@ -146,16 +161,29 @@ class TaskController extends Controller
             if (is_string($assigned)) {
                 $assigned = json_decode($assigned, true) ?? [];
             }
-            
+
             // FIX: Manual safe deletion of assignments to prevent constraint errors
             EventTaskAssignment::where('event_task_id', $task->id)->delete();
-            
+
             if (is_array($assigned)) {
                 foreach ($assigned as $membershipId) {
                     EventTaskAssignment::create([
                         'event_task_id' => $task->id,
                         'club_membership_id' => $membershipId,
                     ]);
+                }
+            }
+        }
+
+        $actor = \Illuminate\Support\Facades\Auth::user();
+        $event = \App\Models\Event::find($task->event_id);
+        $club  = $event ? \App\Models\Club::find($event->club_id) : null;
+
+        if (is_array($assigned) && $event && $club) {
+            foreach ($assigned as $membershipId) {
+                $membership = \App\Models\ClubMembership::with('user')->find($membershipId);
+                if ($membership && $membership->user && $membership->user->id !== $actor->id) {
+                    $membership->user->notify(new TaskAssigned($task, $event, $club, $actor));
                 }
             }
         }
@@ -176,6 +204,22 @@ class TaskController extends Controller
 
         $task->update(['status' => $request->status]);
 
+        $actor       = \Illuminate\Support\Facades\Auth::user();
+        $event       = \App\Models\Event::find($task->event_id);
+        $club        = $event ? \App\Models\Club::find($event->club_id) : null;
+        $assignments = \App\Models\EventTaskAssignment::with('clubMembership.user')
+            ->where('event_task_id', $task->id)
+            ->get();
+
+        if ($event && $club) {
+            foreach ($assignments as $assignment) {
+                $assignedUser = optional($assignment->clubMembership)->user;
+                if ($assignedUser && $assignedUser->id !== $actor->id) {
+                    $assignedUser->notify(new TaskStatusUpdated($task, $event, $club, $actor, $request->status));
+                }
+            }
+        }
+
         return response()->json(['message' => 'Task status updated successfully', 'task' => $task]);
     }
 
@@ -185,10 +229,28 @@ class TaskController extends Controller
     public function deleteTask($id)
     {
         $task = EventTask::findOrFail($id);
-        
+
         // FIX: Manual safe deletion of assignments before task deletion
         EventTaskAssignment::where('event_task_id', $task->id)->delete();
         $task->delete();
+
+        $actor       = \Illuminate\Support\Facades\Auth::user();
+        $event       = \App\Models\Event::find($task->event_id);
+        $club        = $event ? \App\Models\Club::find($event->club_id) : null;
+        $assignments = \App\Models\EventTaskAssignment::with('clubMembership.user')
+            ->where('event_task_id', $task->id)
+            ->get();
+
+        if ($event && $club) {
+            $taskTitle = $task->title;
+            foreach ($assignments as $assignment) {
+                $assignedUser = optional($assignment->clubMembership)->user;
+                if ($assignedUser && $assignedUser->id !== $actor->id) {
+                    $assignedUser->notify(new TaskDeleted($taskTitle, $event, $club, $actor));
+                }
+            }
+        }
+
 
         return response()->json(['message' => 'Task deleted successfully']);
     }

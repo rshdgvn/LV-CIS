@@ -7,6 +7,7 @@ use App\Models\AttendanceSession;
 use App\Models\ClubMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\AttendanceNotifications\AttendanceSessionCreated;
 
 class AttendanceSessionController extends Controller
 {
@@ -147,8 +148,7 @@ class AttendanceSessionController extends Controller
                     ];
                 })
                 ->values();
-        }
-        else {
+        } else {
             if ($isAdmin) {
                 $memberships = ClubMembership::with('user.member')
                     ->where('status', 'approved')
@@ -266,6 +266,23 @@ class AttendanceSessionController extends Controller
             'date' => $request->date,
             'is_open' => true, // Forced to open
         ]);
+
+        if ($clubId) {
+            $club = \App\Models\Club::find($clubId);
+            if ($club) {
+                $members = \App\Models\ClubMembership::with('user')
+                    ->where('club_id', $clubId)
+                    ->where('status', 'approved')
+                    ->where('role', '!=', 'adviser')
+                    ->get();
+
+                foreach ($members as $membership) {
+                    if ($membership->user && $membership->user->id !== $user->id) {
+                        $membership->user->notify(new AttendanceSessionCreated($session, $club, $user));
+                    }
+                }
+            }
+        }
 
         return response()->json([
             'message' => 'Attendance session created successfully',

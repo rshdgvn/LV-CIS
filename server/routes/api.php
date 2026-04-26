@@ -43,6 +43,7 @@ Route::get('/clubs/by-category', [LandingPageController::class, 'clubsByCategory
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
+    Route::post('/user/push-token', [UserController::class, 'savePushToken']);
     Route::get('/verify-token', [AuthController::class, 'verifyToken']);
     Route::post('/logout', [AuthController::class, 'logout']);
 

@@ -4,6 +4,7 @@ namespace App\Notifications\ClubNotifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use App\Channels\ExpoChannel;
 
 class MemberRoleChanged extends Notification
 {
@@ -18,7 +19,7 @@ class MemberRoleChanged extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return ['database', ExpoChannel::class];
     }
 
     public function toArray($notifiable): array
@@ -38,6 +39,21 @@ class MemberRoleChanged extends Notification
             'actor_id' => $this->actor->id,
             'actor_name' => "{$this->actor->first_name} {$this->actor->last_name}",
             'actor_avatar' => $this->actor->avatar,
+        ];
+    }
+
+    public function toExpo($notifiable): array
+    {
+        $data = $this->toArray($notifiable);
+
+        return [
+            'title' => $data['title'],
+            'body' => str_replace('**', '', $data['body']),
+            'data' => [
+                'club_id' => $this->club->id,
+                'new_role' => $this->newRole,
+                'type' => $data['type']
+            ]
         ];
     }
 }

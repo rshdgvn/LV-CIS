@@ -24,7 +24,7 @@ class UserController extends Controller
         $search = $request->query('search');
 
         $users = User::with(['member', 'clubs'])
-            ->where('role', 'user') 
+            ->where('role', 'user')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
@@ -172,5 +172,17 @@ class UserController extends Controller
     {
         $user->delete();
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    public function savePushToken(Request $request)
+    {
+        $request->validate([
+            'push_token' => 'required|string'
+        ]);
+
+        $user = $request->user();
+        $user->update(['expo_push_token' => $request->push_token]);
+
+        return response()->json(['message' => 'Token saved successfully']);
     }
 }

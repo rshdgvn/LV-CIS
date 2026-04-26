@@ -4,6 +4,7 @@ namespace App\Notifications\AttendanceNotifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use App\Channels\ExpoChannel;
 
 class ActivityStatusChanged extends Notification
 {
@@ -16,7 +17,7 @@ class ActivityStatusChanged extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return ['database', ExpoChannel::class];
     }
 
     public function toArray($notifiable): array
@@ -25,7 +26,7 @@ class ActivityStatusChanged extends Notification
             return [
                 'type' => 'attendance.activity_inactive',
                 'title' => 'Activity Warning',
-                'body' => "You've been marked as **inactive** in {$this->club->name} due to 3 consecutive absences. Please attend your next session to stay active!",
+                'body' => "You've been marked as **Inactive** in {$this->club->name} due to 3 consecutive absences. Please attend your next session to stay active!",
                 'club_id' => $this->club->id,
                 'club_name' => $this->club->name,
                 'new_status' => $this->newStatus,
@@ -37,14 +38,28 @@ class ActivityStatusChanged extends Notification
 
         return [
             'type' => 'attendance.activity_active',
-            'title' => '🌟 You\'re Active Again!',
-            'body' => "Your activity status in {$this->club->name} has been updated to **active**. Great job showing up!",
+            'title' => 'You\'re Active Again!',
+            'body' => "Your activity status in {$this->club->name} has been updated to **Active**. Great job showing up!",
             'club_id' => $this->club->id,
             'club_name' => $this->club->name,
             'new_status' => $this->newStatus,
             'actor_id' => null,
             'actor_name' => 'System',
             'actor_avatar' => null,
+        ];
+    }
+
+    public function toExpo($notifiable): array
+    {
+        $data = $this->toArray($notifiable);
+
+        return [
+            'title' => $data['title'],
+            'body' => str_replace('**', '', $data['body']), 
+            'data' => [
+                'club_id' => $this->club->id,
+                'type' => $data['type']
+            ]
         ];
     }
 }

@@ -30,5 +30,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         JsonResource::withoutWrapping();
+
+        $this->app->make(\Illuminate\Notifications\ChannelManager::class)
+            ->extend(\App\Channels\ExpoChannel::class, function () {
+                return new \App\Channels\ExpoChannel();
+            });
     }
 }

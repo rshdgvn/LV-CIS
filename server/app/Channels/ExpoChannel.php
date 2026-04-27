@@ -8,36 +8,45 @@ use Illuminate\Support\Facades\Log;
 
 class ExpoChannel
 {
-  public function send($notifiable, Notification $notification)
-  {
-    if (!method_exists($notification, 'toExpo')) {
-      return;
+    public function send($notifiable, Notification $notification)
+    {
+        if (!method_exists($notification, 'toExpo')) {
+            return;
+        }
+
+        $message = $notification->toExpo($notifiable);
+
+        if (!$notifiable->expo_push_token || empty($message)) {
+            Log::warning('ExpoChannel: skipped', [
+                'token'         => $notifiable->expo_push_token,
+                'message_empty' => empty($message),
+            ]);
+            return;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Accept'       => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->post('https://exp.host/--/api/v2/push/send', [
+                'to'       => $notifiable->expo_push_token,
+                'title'    => $message['title'] ?? '',
+                'body'     => $message['body']  ?? '',
+                'sound'    => 'default',
+                'priority' => 'high',
+                'data'     => $message['data'] ?? [],
+            ]);
+
+            Log::info('ExpoChannel response', [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('ExpoChannel: HTTP request failed', [
+                'error' => $e->getMessage(),
+                'token' => $notifiable->expo_push_token,
+            ]);
+        }
     }
-
-    $message = $notification->toExpo($notifiable);
-
-    if (!$notifiable->expo_push_token || empty($message)) {
-      \Log::warning('ExpoChannel: skipped', [
-        'token' => $notifiable->expo_push_token,
-        'message_empty' => empty($message)
-      ]);
-      return;
-    }
-
-    $response = Http::post('https://exp.host/--/api/v2/push/send', [
-      'to' => $notifiable->expo_push_token,
-      'title' => $message['title'],
-      'body' => $message['body'],
-      'sound' => 'default',
-      'data' => [
-        'url' => '/profile/notifications',
-        ...$message['data']
-      ]
-    ]);
-
-    Log::info('ExpoChannel response', [
-      'status' => $response->status(),
-      'body' => $response->json()
-    ]);
-  }
 }

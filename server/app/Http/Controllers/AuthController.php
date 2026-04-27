@@ -96,18 +96,20 @@ class AuthController extends Controller
         $user = User::findOrFail($id);
 
         if (!hash_equals($hash, sha1($user->getEmailForVerification()))) {
-            return response("Invalid or expired verification link.", 400);
+            $mobileAppUrl = $request->query('redirect_url', env('MOBILE_APP_URL'));
+            $separator = str_contains($mobileAppUrl, '?') ? '&' : '?';
+            return redirect()->away($mobileAppUrl . $separator . 'verified=false&error=invalid_link');
         }
 
         if (!$user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
 
-        $mobileAppUrl = $request->query('redirect_url', config('app.mobile_url', env('MOBILE_APP_URL')));
-
+        $mobileAppUrl = $request->query('redirect_url', env('MOBILE_APP_URL'));
         $separator = str_contains($mobileAppUrl, '?') ? '&' : '?';
+        $deepLink = $mobileAppUrl . $separator . 'verified=true';
 
-        return redirect($mobileAppUrl . $separator . "verified=true");
+        return redirect()->away($deepLink);
     }
 
     public function resendVerification(Request $request)

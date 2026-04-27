@@ -21,8 +21,6 @@ class AttendanceController extends Controller
         return response()->json($attendances);
     }
 
-
-
     public function updateStatus(Request $request, $sessionId, $userId)
     {
         $validated = $request->validate([
@@ -30,18 +28,21 @@ class AttendanceController extends Controller
         ]);
 
         $authUser = Auth::user();
+        $isAdmin = $authUser->role === 'admin';
 
         $session = AttendanceSession::findOrFail($sessionId);
         $clubId = $session->club_id;
 
-        $authMembership = ClubMembership::where('user_id', $authUser->id)
-            ->where('club_id', $clubId)
-            ->first();
+        if (!$isAdmin) {
+            $authMembership = ClubMembership::where('user_id', $authUser->id)
+                ->where('club_id', $clubId)
+                ->first();
 
-        if (!$authMembership || $authMembership->role === 'member') {
-            return response()->json([
-                'message' => 'You are not authorized to update attendance.',
-            ], 403);
+            if (!$authMembership || $authMembership->role === 'member') {
+                return response()->json([
+                    'message' => 'You are not authorized to update attendance.',
+                ], 403);
+            }
         }
 
         $attendance = Attendance::updateOrCreate(
@@ -55,43 +56,42 @@ class AttendanceController extends Controller
         );
 
         $targetUser = \App\Models\User::find($userId);
-        $actor      = \Illuminate\Support\Facades\Auth::user();
-        $club       = \App\Models\Club::find($session->club_id);
+        $actor = Auth::user();
+        $club = $clubId ? \App\Models\Club::find($clubId) : null;
 
         if ($targetUser && $club) {
             $targetUser->notify(new AttendanceMarked($session, $club, $actor, $validated['status']));
         }
 
-        $session = AttendanceSession::findOrFail($sessionId);
-        $clubId = $session->club_id;
+        if ($clubId) {
+            $membership = ClubMembership::where('user_id', $userId)
+                ->where('club_id', $clubId)
+                ->first();
 
-        $membership = ClubMembership::where('user_id', $userId)
-            ->where('club_id', $clubId)
-            ->first();
+            if ($membership) {
+                $lastThreeStatuses = Attendance::where('user_id', $userId)
+                    ->whereHas('session', function ($query) use ($clubId) {
+                        $query->where('club_id', $clubId);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->take(3)
+                    ->pluck('status')
+                    ->toArray();
 
-        if ($membership) {
-
-            $lastThreeStatuses = Attendance::where('user_id', $userId)
-                ->whereHas('session', function ($query) use ($clubId) {
-                    $query->where('club_id', $clubId);
-                })
-                ->orderBy('created_at', 'desc')
-                ->take(3)
-                ->pluck('status')
-                ->toArray();
-
-            if ($validated['status'] === 'present') {
-                $membership->update(['activity_status' => 'active']);
-                if ($targetUser && $club) {
-                    $targetUser->notify(new ActivityStatusChanged($club, 'active'));
-                }
-            } elseif (
-                count($lastThreeStatuses) === 3 &&
-                collect($lastThreeStatuses)->every(fn($s) => $s === 'absent')
-            ) {
-                $membership->update(['activity_status' => 'inactive']);
-                if ($targetUser && $club) {
-                    $targetUser->notify(new ActivityStatusChanged($club, 'inactive'));
+                if ($validated['status'] === 'present') {
+                    $wasInactive = $membership->activity_status === 'inactive';
+                    $membership->update(['activity_status' => 'active']);
+                    if ($wasInactive && $targetUser && $club) {
+                        $targetUser->notify(new ActivityStatusChanged($club, 'active'));
+                    }
+                } elseif (
+                    count($lastThreeStatuses) === 3 &&
+                    collect($lastThreeStatuses)->every(fn($s) => $s === 'absent')
+                ) {
+                    $membership->update(['activity_status' => 'inactive']);
+                    if ($targetUser && $club) {
+                        $targetUser->notify(new ActivityStatusChanged($club, 'inactive'));
+                    }
                 }
             }
         }
@@ -101,8 +101,6 @@ class AttendanceController extends Controller
             'attendance' => $attendance,
         ]);
     }
-
-
 
     public function memberAttendances($userId, $clubId)
     {
